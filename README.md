@@ -119,7 +119,6 @@ public partial class Admin_ManageStudents : System.Web.UI.Page
 ```
 SIMS/
 ├── Login.aspx                  ← Public (no auth required)
-├── ForgotPassword.aspx         ← Public
 │
 ├── Admin/
 │   ├── Dashboard.aspx          ← RoleGuard.Require(this, "Admin")
@@ -135,11 +134,6 @@ SIMS/
 │   ├── Dashboard.aspx          ← RoleGuard.Require(this, "Student")
 │   ├── MyCourses.aspx
 │   └── Results.aspx
-│
-└── App_Code/
-    ├── RoleGuard.cs            ← Auth helper (this file)
-    ├── AuthService.cs          ← DB credential verification
-    └── ...
 ```
 
 ---
