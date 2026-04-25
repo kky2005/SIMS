@@ -1,5 +1,5 @@
 # SIMS – Developer Quick-Start Guide
-## Role-Based Access Control (RBAC) for Teammates
+## Role-Based Access Control
 
 ---
 
@@ -114,7 +114,7 @@ public partial class Admin_ManageStudents : System.Web.UI.Page
 
 ---
 
-### Folder structure convention
+### Folder structure convention (an example)
 
 ```
 SIMS/
