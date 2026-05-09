@@ -404,7 +404,6 @@ CREATE TABLE AuditLogs (
     OldValue NVARCHAR(MAX),
     NewValue NVARCHAR(MAX),
     ActionDate DATETIME2 DEFAULT SYSUTCDATETIME(),
-    IPAddress NVARCHAR(50),
 
     CONSTRAINT FK_AuditLogs_Users
         FOREIGN KEY (UserId) REFERENCES Users(UserId)
