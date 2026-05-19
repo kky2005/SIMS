@@ -1,0 +1,410 @@
+﻿<%@ Master Language="C#" AutoEventWireup="true"
+    CodeBehind="LecturerMaster.master.cs"
+    Inherits="SIMS.Lecturer.LecturerMaster" %>
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SIMS – Lecturer</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+          rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+          rel="stylesheet" />
+
+    <style>
+
+        :root {
+            --sidebar-bg: #1e293b;
+            --sidebar-hover: #334155;
+            --sidebar-active: #0d6efd;
+            --sidebar-width: 240px;
+            --topbar-height: 60px;
+            --body-bg: #f1f5f9;
+        }
+
+        body {
+            background: var(--body-bg);
+            font-family: Arial, sans-serif;
+            margin: 0;
+        }
+
+        /* ── Sidebar ── */
+        .sidebar {
+            position: fixed;
+            top: 0; left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--sidebar-bg);
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .sidebar-brand {
+            padding: 20px 20px 16px;
+            border-bottom: 1px solid #334155;
+        }
+
+        .sidebar-brand .brand-title {
+            color: #fff;
+            font-size: 20px;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .sidebar-brand .brand-sub {
+            color: #94a3b8;
+            font-size: 12px;
+        }
+
+        .sidebar-user {
+            padding: 16px 20px;
+            border-bottom: 1px solid #334155;
+        }
+
+        .sidebar-user .user-name {
+            color: #fff;
+            font-size: 14px;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .sidebar-user .user-role {
+            color: #94a3b8;
+            font-size: 12px;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 12px 0;
+        }
+
+        .nav-label {
+            color: #64748b;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 10px 20px 4px;
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            color: #cbd5e1;
+            text-decoration: none;
+            font-size: 14px;
+            border-left: 3px solid transparent;
+            transition: all 0.15s;
+        }
+
+        .sidebar-nav a:hover {
+            background: var(--sidebar-hover);
+            color: #fff;
+        }
+
+        .sidebar-nav a.active {
+            background: rgba(13,110,253,0.15);
+            border-left-color: var(--sidebar-active);
+            color: #60a5fa;
+        }
+
+        .sidebar-nav a i {
+            width: 18px;
+            text-align: center;
+            font-size: 15px;
+        }
+
+        .sidebar-footer {
+            padding: 16px 20px;
+            border-top: 1px solid #334155;
+        }
+
+        .btn-logout {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            padding: 9px 14px;
+            background: #dc2626;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            justify-content: center;
+        }
+
+        .btn-logout:hover {
+            background: #b91c1c;
+            color: #fff;
+        }
+
+        /* ── Main content ── */
+        .main-wrapper {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .topbar {
+            height: var(--topbar-height);
+            background: #fff;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            padding: 0 28px;
+            position: sticky;
+            top: 0;
+            z-index: 900;
+        }
+
+        .topbar-title {
+            font-size: 17px;
+            font-weight: bold;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .topbar-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .notif-badge {
+            position: relative;
+            color: #64748b;
+            font-size: 20px;
+            text-decoration: none;
+        }
+
+        .notif-badge .badge {
+            position: absolute;
+            top: -4px; right: -6px;
+            font-size: 9px;
+            padding: 2px 5px;
+        }
+
+        .page-content {
+            padding: 28px;
+            flex: 1;
+        }
+
+        /* ── Cards ── */
+        .card-sims {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            border: 1px solid #e2e8f0;
+        }
+
+        .card-sims .card-header-sims {
+            padding: 18px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-sims .card-header-sims h5 {
+            font-size: 16px;
+            font-weight: bold;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .card-sims .card-body-sims {
+            padding: 24px;
+        }
+
+        /* ── Stat cards ── */
+        .stat-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px 24px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .stat-icon {
+            width: 48px; height: 48px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .stat-card .stat-label {
+            font-size: 13px;
+            color: #64748b;
+            margin: 0;
+        }
+
+        .stat-card .stat-value {
+            font-size: 26px;
+            font-weight: bold;
+            color: #1e293b;
+            line-height: 1;
+        }
+
+        /* ── Table ── */
+        .table-sims th {
+            background: #f8fafc;
+            color: #475569;
+            font-size: 13px;
+            font-weight: 600;
+            border-color: #e2e8f0;
+        }
+
+        .table-sims td {
+            font-size: 14px;
+            color: #1e293b;
+            border-color: #e2e8f0;
+            vertical-align: middle;
+        }
+
+        /* ── Badges ── */
+        .badge-present  { background:#dcfce7; color:#166534; }
+        .badge-absent   { background:#fee2e2; color:#991b1b; }
+        .badge-late     { background:#fef3c7; color:#92400e; }
+        .badge-active   { background:#dbeafe; color:#1e40af; }
+        .badge-warning  { background:#fee2e2; color:#991b1b; }
+        .badge-ok       { background:#dcfce7; color:#166534; }
+
+        /* ── Alert ── */
+        .sims-alert {
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 14px;
+            margin-bottom: 18px;
+            display: none;
+        }
+        .sims-alert.show { display: flex; align-items: center; gap: 10px; }
+
+    </style>
+
+    <asp:ContentPlaceHolder ID="HeadContent" runat="server" />
+
+</head>
+<body>
+
+<div class="sidebar">
+
+    <!-- Brand -->
+    <div class="sidebar-brand">
+        <p class="brand-title">🎓 SIMS</p>
+        <span class="brand-sub">Student Information System</span>
+    </div>
+
+    <!-- User info -->
+    <div class="sidebar-user">
+        <p class="user-name">
+            <asp:Literal ID="litSidebarName" runat="server" />
+        </p>
+        <span class="user-role">Lecturer</span>
+    </div>
+
+    <!-- Navigation -->
+    <div class="sidebar-nav">
+
+        <div class="nav-label">Main</div>
+
+        <a href="LecturerDashboard.aspx"
+           class='<%= GetActiveClass("LecturerDashboard") %>'>
+            <i class="fa fa-gauge"></i> Dashboard
+        </a>
+
+        <a href="LecturerProfile.aspx"
+           class='<%= GetActiveClass("LecturerProfile") %>'>
+            <i class="fa fa-user"></i> My Profile
+        </a>
+
+        <div class="nav-label">Teaching</div>
+
+        <a href="LecturerCourses.aspx"
+           class='<%= GetActiveClass("LecturerCourses") %>'>
+            <i class="fa fa-book"></i> My Courses
+        </a>
+
+        <a href="LecturerAttendance.aspx"
+           class='<%= GetActiveClass("LecturerAttendance") %>'>
+            <i class="fa fa-calendar-check"></i> Attendance
+        </a>
+
+        <a href="LecturerGrades.aspx"
+           class='<%= GetActiveClass("LecturerGrades") %>'>
+            <i class="fa fa-star"></i> Grades &amp; Marks
+        </a>
+
+        <a href="LecturerMaterials.aspx"
+           class='<%= GetActiveClass("LecturerMaterials") %>'>
+            <i class="fa fa-folder-open"></i> Course Materials
+        </a>
+
+        <div class="nav-label">Reports</div>
+
+        <a href="LecturerStudentProgress.aspx"
+           class='<%= GetActiveClass("LecturerStudentProgress") %>'>
+            <i class="fa fa-chart-line"></i> Student Progress
+        </a>
+
+        <a href="LecturerAnnouncements.aspx"
+           class='<%= GetActiveClass("LecturerAnnouncements") %>'>
+            <i class="fa fa-bullhorn"></i> Announcements
+        </a>
+
+    </div>
+
+    <!-- Logout -->
+    <div class="sidebar-footer">
+        <asp:LinkButton ID="btnSidebarLogout" runat="server"
+            CssClass="btn-logout"
+            OnClick="btnLogout_Click">
+            <i class="fa fa-right-from-bracket"></i> Logout
+        </asp:LinkButton>
+    </div>
+
+</div>
+
+<!-- Main wrapper -->
+<div class="main-wrapper">
+
+    <div class="topbar">
+        <p class="topbar-title">
+            <asp:Literal ID="litPageTitle" runat="server" Text="Lecturer Portal" />
+        </p>
+        <div class="topbar-right">
+            <a href="LecturerAnnouncements.aspx" class="notif-badge" title="Announcements">
+                <i class="fa fa-bell"></i>
+            </a>
+            <span style="color:#64748b; font-size:14px;">
+                <asp:Literal ID="litTopbarName" runat="server" />
+            </span>
+        </div>
+    </div>
+
+    <div class="page-content">
+        <asp:ContentPlaceHolder ID="MainContent" runat="server" />
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<asp:ContentPlaceHolder ID="ScriptContent" runat="server" />
+
+</body>
+</html>
