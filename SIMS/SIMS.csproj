@@ -83,10 +83,28 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Lecturer\LecturerAttendance.aspx" />
+    <Content Include="Lecturer\LecturerCourses.aspx" />
     <Content Include="Lecturer\LecturerDashboard.aspx" />
+    <Content Include="Lecturer\LecturerGrades.aspx" />
+    <Content Include="Lecturer\LecturerMaterials.aspx" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Lecturer\LecturerAttendance.aspx.cs">
+      <DependentUpon>LecturerAttendance.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Lecturer\LecturerAttendance.aspx.designer.cs">
+      <DependentUpon>LecturerAttendance.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Lecturer\LecturerCourses.aspx.cs">
+      <DependentUpon>LecturerCourses.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Lecturer\LecturerCourses.aspx.designer.cs">
+      <DependentUpon>LecturerCourses.aspx</DependentUpon>
+    </Compile>
     <Compile Include="Lecturer\LecturerDashboard.aspx.cs">
       <DependentUpon>LecturerDashboard.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -94,12 +112,26 @@
     <Compile Include="Lecturer\LecturerDashboard.aspx.designer.cs">
       <DependentUpon>LecturerDashboard.aspx</DependentUpon>
     </Compile>
+    <Compile Include="Lecturer\LecturerGrades.aspx.cs">
+      <DependentUpon>LecturerGrades.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Lecturer\LecturerGrades.aspx.designer.cs">
+      <DependentUpon>LecturerGrades.aspx</DependentUpon>
+    </Compile>
     <Compile Include="Lecturer\LecturerMaster.Master.cs">
       <DependentUpon>LecturerMaster.Master</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="Lecturer\LecturerMaster.Master.designer.cs">
       <DependentUpon>LecturerMaster.Master</DependentUpon>
+    </Compile>
+    <Compile Include="Lecturer\LecturerMaterials.aspx.cs">
+      <DependentUpon>LecturerMaterials.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Lecturer\LecturerMaterials.aspx.designer.cs">
+      <DependentUpon>LecturerMaterials.aspx</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
