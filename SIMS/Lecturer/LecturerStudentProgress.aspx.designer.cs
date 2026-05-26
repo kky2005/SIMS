@@ -11,52 +11,52 @@ namespace SIMS.Lecturer
 {
 
 
-    public partial class LecturerCourses
+    public partial class LecturerStudentProgress
     {
 
         /// <summary>
-        /// btnFilterAll control.
+        /// ddlCourse control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.LinkButton btnFilterAll;
+        protected global::System.Web.UI.WebControls.DropDownList ddlCourse;
 
         /// <summary>
-        /// phSemesterFilters control.
+        /// ddlRiskLevel control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.PlaceHolder phSemesterFilters;
+        protected global::System.Web.UI.WebControls.DropDownList ddlRiskLevel;
 
         /// <summary>
-        /// courseContainer control.
+        /// btnApplyFilter control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.HtmlControls.HtmlGenericControl courseContainer;
+        protected global::System.Web.UI.WebControls.Button btnApplyFilter;
 
         /// <summary>
-        /// rptCourses control.
+        /// rptStudentProgress control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Repeater rptCourses;
+        protected global::System.Web.UI.WebControls.Repeater rptStudentProgress;
 
         /// <summary>
-        /// pnlNoCourses control.
+        /// pnlNoData control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Panel pnlNoCourses;
+        protected global::System.Web.UI.WebControls.Panel pnlNoData;
     }
 }

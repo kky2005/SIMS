@@ -376,9 +376,6 @@
             <div class="form-group">
                 <label>Semester:</label>
                 <asp:DropDownList ID="ddlSemester" runat="server">
-                    <asp:ListItem Text="Semester 1" Value="1" />
-                    <asp:ListItem Text="Semester 2" Value="2" />
-                    <asp:ListItem Text="Semester 3" Value="3" />
                 </asp:DropDownList>
             </div>
         </div>
@@ -391,10 +388,6 @@
             <div class="form-group">
                 <label for="txtAcademicYear">Academic Year:</label>
                 <asp:DropDownList ID="ddlAcademicYear" runat="server">
-                    <asp:ListItem Text="2023" Value="2023" />
-                    <asp:ListItem Text="2024" Value="2024" Selected="True" />
-                    <asp:ListItem Text="2025" Value="2025" />
-                    <asp:ListItem Text="2026" Value="2026" />
                 </asp:DropDownList>
             </div>
         </div>

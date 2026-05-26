@@ -72,6 +72,7 @@
             gap: 10px;
             margin-bottom: 30px;
             align-items: center;
+            flex-wrap: wrap;
         }
 
         .filter-badge {
@@ -90,6 +91,10 @@
             border-color: #0d6efd;
         }
 
+        .filter-badge:hover {
+            border-color: #0d6efd;
+        }
+
         .no-courses {
             text-align: center;
             padding: 40px 20px;
@@ -104,6 +109,20 @@
             margin-bottom: 15px;
             display: block;
         }
+
+        .filter-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .filter-section h5 {
+            margin: 0 0 15px 0;
+            color: #1e293b;
+            font-weight: bold;
+        }
     </style>
 </asp:Content>
 
@@ -117,25 +136,16 @@
         <p style="margin: 0; color: #64748b; font-size: 14px;">Manage your assigned courses and view student information</p>
     </div>
 
-    <!-- Semester Filter -->
-    <div class="semester-filter">
-        <label style="font-weight: bold; color: #1e293b; margin: 0;">Filter by Semester:</label>
-        <asp:LinkButton ID="btnFilterAll" runat="server" CssClass="filter-badge active" 
-            OnClick="FilterCourses_Click" CommandArgument="0">
-            All Semesters
-        </asp:LinkButton>
-        <asp:LinkButton ID="btnFilterSem1" runat="server" CssClass="filter-badge" 
-            OnClick="FilterCourses_Click" CommandArgument="1">
-            Semester 1
-        </asp:LinkButton>
-        <asp:LinkButton ID="btnFilterSem2" runat="server" CssClass="filter-badge" 
-            OnClick="FilterCourses_Click" CommandArgument="2">
-            Semester 2
-        </asp:LinkButton>
-        <asp:LinkButton ID="btnFilterSem3" runat="server" CssClass="filter-badge" 
-            OnClick="FilterCourses_Click" CommandArgument="3">
-            Semester 3
-        </asp:LinkButton>
+    <!-- Filters Section -->
+    <div class="filter-section">
+        <h5><i class="fa fa-filter" style="margin-right: 8px;"></i>Filter by Semester</h5>
+        <div class="semester-filter">
+            <asp:LinkButton ID="btnFilterAll" runat="server" CssClass="filter-badge active" 
+                OnClick="FilterCourses_Click" CommandArgument="0">
+                All Semesters
+            </asp:LinkButton>
+            <asp:PlaceHolder ID="phSemesterFilters" runat="server" />
+        </div>
     </div>
 
     <!-- Courses Grid -->

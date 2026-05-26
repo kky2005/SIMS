@@ -5,7 +5,7 @@ using System.Data.SqlClient;
 
 namespace SIMS.Lecturer
 {
-    public partial class LecturerDashboard : System.Web.UI.Page
+    public partial class LecturerDashboard : LecturerBase
     {
         string connStr = ConfigurationManager
             .ConnectionStrings["SIMS_DB"]
@@ -13,18 +13,15 @@ namespace SIMS.Lecturer
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (Session["LecturerID"] == null)
-            {
-                Response.Redirect("LecturerLogin.aspx");
-                return;
-            }
+            // Ensure user is authenticated (inherited method)
+            EnsureAuthenticated();
 
             if (!IsPostBack)
             {
-                litName.Text    = Session["FullName"].ToString();
-                litDept.Text    = Session["Department"].ToString();
-                litStaffNo.Text = Session["StaffNo"].ToString();
-                litDate.Text    = DateTime.Now.ToString("dddd, dd MMMM yyyy");
+                litName.Text = CurrentFullName;
+                litDept.Text = CurrentDepartment;
+                litStaffNo.Text = CurrentStaffNo;
+                litDate.Text = DateTime.Now.ToString("dddd, dd MMMM yyyy");
 
                 LoadDashboardStats();
                 LoadDashboardCourses();
@@ -34,13 +31,11 @@ namespace SIMS.Lecturer
 
         void LoadDashboardStats()
         {
-            int lecturerId = (int)Session["LecturerID"];
-
-            SqlConnection conn = new SqlConnection(connStr);
-
-            // Current academic year and semester (you may read from AcademicCalendar)
+            int lecturerId = CurrentLecturerId;
             int currentYear = DateTime.Now.Year;
             int currentSemester = GetCurrentSemester();
+
+            SqlConnection conn = new SqlConnection(connStr);
 
             string sql = @"
                 SELECT
@@ -67,18 +62,15 @@ namespace SIMS.Lecturer
 
             if (dt.Rows.Count > 0)
             {
-                litTotalCourses.Text  = dt.Rows[0]["TotalCourses"].ToString();
+                litTotalCourses.Text = dt.Rows[0]["TotalCourses"].ToString();
                 litTotalStudents.Text = dt.Rows[0]["TotalStudents"].ToString();
             }
 
-            // Count at-risk (attendance < 80%)
             int atRisk = CountAtRiskStudents(lecturerId, currentYear, currentSemester);
-            litAtRisk.Text      = atRisk.ToString();
+            litAtRisk.Text = atRisk.ToString();
             litAtRiskBadge.Text = atRisk.ToString();
 
-            // Count unpublished assessments
-            litPendingMarks.Text = CountPendingAssessments(
-                lecturerId, currentYear, currentSemester).ToString();
+            litPendingMarks.Text = CountPendingAssessments(lecturerId, currentYear, currentSemester).ToString();
         }
 
         int CountAtRiskStudents(int lecturerId, int year, int semester)
@@ -139,7 +131,7 @@ namespace SIMS.Lecturer
 
         void LoadDashboardCourses()
         {
-            int lecturerId = (int)Session["LecturerID"];
+            int lecturerId = CurrentLecturerId;
             int currentYear = DateTime.Now.Year;
             int currentSemester = GetCurrentSemester();
 
@@ -179,7 +171,7 @@ namespace SIMS.Lecturer
 
         void LoadAtRiskStudents()
         {
-            int lecturerId = (int)Session["LecturerID"];
+            int lecturerId = CurrentLecturerId;
             int currentYear = DateTime.Now.Year;
             int currentSemester = GetCurrentSemester();
 

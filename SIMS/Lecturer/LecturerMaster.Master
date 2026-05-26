@@ -301,110 +301,99 @@
 
 </head>
 <body>
+<form runat="server">
 
-<div class="sidebar">
+    <div class="sidebar">
 
-    <!-- Brand -->
-    <div class="sidebar-brand">
-        <p class="brand-title">🎓 SIMS</p>
-        <span class="brand-sub">Student Information System</span>
-    </div>
-
-    <!-- User info -->
-    <div class="sidebar-user">
-        <p class="user-name">
-            <asp:Literal ID="litSidebarName" runat="server" />
-        </p>
-        <span class="user-role">Lecturer</span>
-    </div>
-
-    <!-- Navigation -->
-    <div class="sidebar-nav">
-
-        <div class="nav-label">Main</div>
-
-        <a href="LecturerDashboard.aspx"
-           class='<%= GetActiveClass("LecturerDashboard") %>'>
-            <i class="fa fa-gauge"></i> Dashboard
-        </a>
-
-        <a href="LecturerProfile.aspx"
-           class='<%= GetActiveClass("LecturerProfile") %>'>
-            <i class="fa fa-user"></i> My Profile
-        </a>
-
-        <div class="nav-label">Teaching</div>
-
-        <a href="LecturerCourses.aspx"
-           class='<%= GetActiveClass("LecturerCourses") %>'>
-            <i class="fa fa-book"></i> My Courses
-        </a>
-
-        <a href="LecturerAttendance.aspx"
-           class='<%= GetActiveClass("LecturerAttendance") %>'>
-            <i class="fa fa-calendar-check"></i> Attendance
-        </a>
-
-        <a href="LecturerGrades.aspx"
-           class='<%= GetActiveClass("LecturerGrades") %>'>
-            <i class="fa fa-star"></i> Grades &amp; Marks
-        </a>
-
-        <a href="LecturerMaterials.aspx"
-           class='<%= GetActiveClass("LecturerMaterials") %>'>
-            <i class="fa fa-folder-open"></i> Course Materials
-        </a>
-
-        <div class="nav-label">Reports</div>
-
-        <a href="LecturerStudentProgress.aspx"
-           class='<%= GetActiveClass("LecturerStudentProgress") %>'>
-            <i class="fa fa-chart-line"></i> Student Progress
-        </a>
-
-        <a href="LecturerAnnouncements.aspx"
-           class='<%= GetActiveClass("LecturerAnnouncements") %>'>
-            <i class="fa fa-bullhorn"></i> Announcements
-        </a>
-
-    </div>
-
-    <!-- Logout -->
-    <div class="sidebar-footer">
-        <asp:LinkButton ID="btnSidebarLogout" runat="server"
-            CssClass="btn-logout"
-            OnClick="btnLogout_Click">
-            <i class="fa fa-right-from-bracket"></i> Logout
-        </asp:LinkButton>
-    </div>
-
-</div>
-
-<!-- Main wrapper -->
-<div class="main-wrapper">
-
-    <div class="topbar">
-        <p class="topbar-title">
-            <asp:Literal ID="litPageTitle" runat="server" Text="Lecturer Portal" />
-        </p>
-        <div class="topbar-right">
-            <a href="LecturerAnnouncements.aspx" class="notif-badge" title="Announcements">
-                <i class="fa fa-bell"></i>
-            </a>
-            <span style="color:#64748b; font-size:14px;">
-                <asp:Literal ID="litTopbarName" runat="server" />
-            </span>
+        <!-- Brand -->
+        <div class="sidebar-brand">
+            <p class="brand-title">🎓 SIMS</p>
+            <span class="brand-sub">Student Information System</span>
         </div>
+
+        <!-- User info -->
+        <div class="sidebar-user">
+            <p class="user-name">
+                <asp:Literal ID="litSidebarName" runat="server" />
+            </p>
+            <span class="user-role">Lecturer</span>
+        </div>
+
+        <!-- Navigation -->
+        <div class="sidebar-nav">
+
+            <div class="nav-label">Main</div>
+
+            <a href="LecturerDashboard.aspx"
+               class='<%= GetActiveClass("LecturerDashboard") %>'>
+                <i class="fa fa-gauge"></i> Dashboard
+            </a>
+
+            <a href="LecturerProfile.aspx"
+               class='<%= GetActiveClass("LecturerProfile") %>'>
+                <i class="fa fa-user"></i> My Profile
+            </a>
+
+            <div class="nav-label">Teaching</div>
+
+            <a href="LecturerCourses.aspx"
+               class='<%= GetActiveClass("LecturerCourses") %>'>
+                <i class="fa fa-book"></i> My Courses
+            </a>
+
+            <a href="LecturerMaterials.aspx"
+               class='<%= GetActiveClass("LecturerMaterials") %>'>
+                <i class="fa fa-folder-open"></i> Course Materials
+            </a>
+
+            <a href="LecturerAnnouncements.aspx"
+                class='<%= GetActiveClass("LecturerAnnouncements") %>'>
+                <i class="fa fa-bullhorn"></i> Announcements
+            </a>
+
+            <div class="nav-label">Reports</div>
+
+            <a href="LecturerStudentProgress.aspx"
+               class='<%= GetActiveClass("LecturerStudentProgress") %>'>
+                <i class="fa fa-chart-line"></i> Student Progress
+            </a>
+
+        </div>
+
+        <!-- Logout -->
+        <div class="sidebar-footer">
+            <asp:LinkButton ID="btnSidebarLogout" runat="server"
+                CssClass="btn-logout"
+                OnClick="btnLogout_Click">
+                <i class="fa fa-right-from-bracket"></i> Logout
+            </asp:LinkButton>
+        </div>
+
     </div>
 
-    <div class="page-content">
-        <asp:ContentPlaceHolder ID="MainContent" runat="server" />
+    <!-- Main wrapper -->
+    <div class="main-wrapper">
+
+        <div class="topbar">
+            <p class="topbar-title">
+                <asp:Literal ID="litPageTitle" runat="server" Text="Lecturer Portal" />
+            </p>
+            <div class="topbar-right">
+                <a href="LecturerAnnouncements.aspx" class="notif-badge" title="Announcements">
+                    <i class="fa fa-bell"></i>
+                </a>
+                <span style="color:#64748b; font-size:14px;">
+                    <asp:Literal ID="litTopbarName" runat="server" />
+                </span>
+            </div>
+        </div>
+
+        <div class="page-content">
+            <asp:ContentPlaceHolder ID="MainContent" runat="server" />
+        </div>
+
     </div>
 
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<asp:ContentPlaceHolder ID="ScriptContent" runat="server" />
-
+</form>
 </body>
 </html>

@@ -83,20 +83,36 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Lecturer\LecturerAnnouncements.aspx" />
     <Content Include="Lecturer\LecturerAttendance.aspx" />
     <Content Include="Lecturer\LecturerCourses.aspx" />
     <Content Include="Lecturer\LecturerDashboard.aspx" />
     <Content Include="Lecturer\LecturerGrades.aspx" />
+    <Content Include="Lecturer\LecturerLogin.aspx" />
     <Content Include="Lecturer\LecturerMaterials.aspx" />
+    <Content Include="Lecturer\LecturerProfile.aspx" />
+    <Content Include="Lecturer\LecturerStudentProgress.aspx" />
+    <Content Include="Login.aspx" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AuthenticationHelper.cs" />
+    <Compile Include="Lecturer\LecturerAnnouncements.aspx.cs">
+      <DependentUpon>LecturerAnnouncements.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Lecturer\LecturerAnnouncements.aspx.designer.cs">
+      <DependentUpon>LecturerAnnouncements.aspx</DependentUpon>
+    </Compile>
     <Compile Include="Lecturer\LecturerAttendance.aspx.cs">
       <DependentUpon>LecturerAttendance.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="Lecturer\LecturerAttendance.aspx.designer.cs">
       <DependentUpon>LecturerAttendance.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Lecturer\LecturerBase.cs">
+      <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="Lecturer\LecturerCourses.aspx.cs">
       <DependentUpon>LecturerCourses.aspx</DependentUpon>
@@ -119,6 +135,13 @@
     <Compile Include="Lecturer\LecturerGrades.aspx.designer.cs">
       <DependentUpon>LecturerGrades.aspx</DependentUpon>
     </Compile>
+    <Compile Include="Lecturer\LecturerLogin.aspx.cs">
+      <DependentUpon>LecturerLogin.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Lecturer\LecturerLogin.aspx.designer.cs">
+      <DependentUpon>LecturerLogin.aspx</DependentUpon>
+    </Compile>
     <Compile Include="Lecturer\LecturerMaster.Master.cs">
       <DependentUpon>LecturerMaster.Master</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -132,6 +155,27 @@
     </Compile>
     <Compile Include="Lecturer\LecturerMaterials.aspx.designer.cs">
       <DependentUpon>LecturerMaterials.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Lecturer\LecturerProfile.aspx.cs">
+      <DependentUpon>LecturerProfile.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Lecturer\LecturerProfile.aspx.designer.cs">
+      <DependentUpon>LecturerProfile.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Lecturer\LecturerStudentProgress.aspx.cs">
+      <DependentUpon>LecturerStudentProgress.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Lecturer\LecturerStudentProgress.aspx.designer.cs">
+      <DependentUpon>LecturerStudentProgress.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Login.aspx.cs">
+      <DependentUpon>Login.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Login.aspx.designer.cs">
+      <DependentUpon>Login.aspx</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
