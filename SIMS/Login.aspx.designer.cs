@@ -33,33 +33,6 @@ namespace SIMS
         protected global::System.Web.UI.WebControls.Literal litErrorMsg;
 
         /// <summary>
-        /// pnlWarning control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Panel pnlWarning;
-
-        /// <summary>
-        /// litWarningMsg control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Literal litWarningMsg;
-
-        /// <summary>
-        /// ddlRole control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.DropDownList ddlRole;
-
-        /// <summary>
         /// txtEmail control.
         /// </summary>
         /// <remarks>
