@@ -96,6 +96,8 @@ namespace SIMS
             }
         }
 
+
+
         private LoginResult AuthenticateUserAnyRole(string emailOrId, string password)
         {
             // 1. HOP from config
