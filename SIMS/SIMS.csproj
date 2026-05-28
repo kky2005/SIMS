@@ -83,6 +83,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="HeadOfProgramme\HOPDashboard.aspx" />
     <Content Include="Lecturer\LecturerAnnouncements.aspx" />
     <Content Include="Lecturer\LecturerAttendance.aspx" />
     <Content Include="Lecturer\LecturerCourses.aspx" />
@@ -97,6 +98,16 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AuthenticationHelper.cs" />
+    <Compile Include="HeadOfProgramme\HOPBase.cs">
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPDashboard.aspx.cs">
+      <DependentUpon>HOPDashboard.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPDashboard.aspx.designer.cs">
+      <DependentUpon>HOPDashboard.aspx</DependentUpon>
+    </Compile>
     <Compile Include="Lecturer\LecturerAnnouncements.aspx.cs">
       <DependentUpon>LecturerAnnouncements.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>

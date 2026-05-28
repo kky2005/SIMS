@@ -98,27 +98,45 @@ namespace SIMS
 
         private LoginResult AuthenticateUserAnyRole(string emailOrId, string password)
         {
-            try
+            // 1. HOP from config
+            var hop = AuthenticateHOPFromConfig(emailOrId, password);
+            if (hop.IsAuthenticated) return hop;
+
+            // 2. Lecturer DB
+            var result = AuthenticateAsRole(emailOrId, password, "Lecturer");
+            if (result.IsAuthenticated) return result;
+
+            // 3. Student DB
+            result = AuthenticateAsRole(emailOrId, password, "Student");
+            if (result.IsAuthenticated) return result;
+
+            return new LoginResult
             {
-                // Try Lecturer first
-                LoginResult result = AuthenticateAsRole(emailOrId, password, "Lecturer");
-                if (result.IsAuthenticated) return result;
+                IsAuthenticated = false,
+                ErrorMessage = "Invalid email/ID or password."
+            };
+        }
 
-                // Try Student
-                result = AuthenticateAsRole(emailOrId, password, "Student");
-                if (result.IsAuthenticated) return result;
+        private LoginResult AuthenticateHOPFromConfig(string email, string password)
+        {
+            string hopUsername = ConfigurationManager.AppSettings["HOP_Username"];
+            string hopPassword = ConfigurationManager.AppSettings["HOP_Password"];
 
-                // Try Head of Programme
-                result = AuthenticateAsRole(emailOrId, password, "HeadOfProgramme");
-                if (result.IsAuthenticated) return result;
-
-                return new LoginResult { IsAuthenticated = false, ErrorMessage = "Invalid email/ID or password." };
-            }
-            catch (Exception ex)
+            if (email == hopUsername && password == hopPassword)
             {
-                System.Diagnostics.Debug.WriteLine($"Login error: {ex.Message}");
-                return new LoginResult { IsAuthenticated = false, ErrorMessage = "An error occurred during login. Please try again." };
+                return new LoginResult
+                {
+                    IsAuthenticated = true,
+                    UserId = 1,
+                    RoleId = 1,
+                    UserRole = "HeadOfProgramme",
+                    FullName = "System Administrator",
+                    Email = hopUsername,
+                    RoleSpecificId = 1
+                };
             }
+
+            return new LoginResult { IsAuthenticated = false };
         }
 
         private LoginResult AuthenticateAsRole(string emailOrId, string password, string role)
@@ -359,7 +377,7 @@ namespace SIMS
             switch (role.ToLower())
             {
                 case "headofprogramme":
-                    Response.Redirect("~/HeadOfProgramme/Dashboard.aspx");
+                    Response.Redirect("~/HeadOfProgramme/HOPDashboard.aspx");
                     break;
                 case "lecturer":
                     Response.Redirect("~/Lecturer/LecturerDashboard.aspx");
