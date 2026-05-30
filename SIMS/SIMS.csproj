@@ -108,6 +108,13 @@
     <Compile Include="HeadOfProgramme\HOPDashboard.aspx.designer.cs">
       <DependentUpon>HOPDashboard.aspx</DependentUpon>
     </Compile>
+    <Compile Include="HeadOfProgramme\HOPMaster.Master.cs">
+      <DependentUpon>HOPMaster.Master</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPMaster.Master.designer.cs">
+      <DependentUpon>HOPMaster.Master</DependentUpon>
+    </Compile>
     <Compile Include="Lecturer\LecturerAnnouncements.aspx.cs">
       <DependentUpon>LecturerAnnouncements.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -192,6 +199,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Lecturer\LecturerMaster.Master" />
+    <Content Include="HeadOfProgramme\HOPMaster.Master" />
     <None Include="packages.config" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>

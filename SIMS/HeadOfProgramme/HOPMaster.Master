@@ -1,0 +1,332 @@
+﻿<%@ Master Language="C#" AutoEventWireup="true"
+    CodeBehind="HOPMaster.master.cs"
+    Inherits="SIMS.HeadOfProgramme.HOPMaster" %>
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <meta charset="utf-8" />
+    <title>SIMS – Head Of Programme</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+
+    <style>
+        :root {
+            --sidebar-bg: #1e293b;
+            --sidebar-hover: #334155;
+            --sidebar-width: 240px;
+            --body-bg: #f8fafc;
+        }
+
+        body {
+            margin: 0;
+            background: var(--body-bg);
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--sidebar-bg);
+            color: white;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-brand {
+            padding: 20px;
+            border-bottom: 1px solid #334155;
+        }
+
+        .brand-title {
+            margin: 0;
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .brand-sub {
+            color: #94a3b8;
+            font-size: 12px;
+        }
+
+        .sidebar-user {
+            padding: 16px 20px;
+            border-bottom: 1px solid #334155;
+        }
+
+        .user-name {
+            margin: 0;
+            font-weight: bold;
+            color: white;
+        }
+
+        .user-role {
+            color: #94a3b8;
+            font-size: 12px;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding-top: 15px;
+        }
+
+        .nav-label {
+            padding: 10px 20px;
+            font-size: 11px;
+            color: #64748b;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 20px;
+            color: #cbd5e1;
+            text-decoration: none;
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar-nav a:hover {
+            background: var(--sidebar-hover);
+            color: white;
+        }
+
+        .sidebar-nav a.active {
+            background: rgba(13,110,253,0.15);
+            border-left-color: #0d6efd;
+            color: #60a5fa;
+        }
+
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid #334155;
+        }
+
+        .btn-logout {
+            width: 100%;
+            background: #dc2626;
+            border: none;
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-logout:hover {
+            background: #b91c1c;
+            color: white;
+        }
+
+        .main-wrapper {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+        }
+
+        .topbar {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 15px 25px;
+            display: flex;
+            align-items: center;
+        }
+
+        .topbar-title {
+            margin: 0;
+            font-size: 18px;
+            font-weight: bold;
+            color: #1e293b;
+        }
+
+        .topbar-right {
+            margin-left: auto;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .announcement-btn {
+            color: #64748b;
+            font-size: 18px;
+            text-decoration: none;
+        }
+
+        .announcement-btn:hover {
+            color: #0d6efd;
+        }
+
+        .page-content {
+            padding: 25px;
+        }
+
+        .card-sims {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            border: 1px solid #e2e8f0;
+        }
+
+        .card-header-sims {
+            padding: 18px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-header-sims h5 {
+            font-size: 16px;
+            font-weight: bold;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .card-body-sims {
+            padding: 24px;
+        }
+
+        .stat-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px 24px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            height: 100%;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .stat-card .stat-label {
+            font-size: 13px;
+            color: #64748b;
+            margin: 0;
+        }
+
+        .stat-card .stat-value {
+            font-size: 26px;
+            font-weight: bold;
+            color: #1e293b;
+            line-height: 1;
+        }
+    </style>
+
+    <asp:ContentPlaceHolder ID="HeadContent" runat="server" />
+</head>
+
+<body>
+<form id="form1" runat="server">
+
+    <div class="sidebar">
+
+        <div class="sidebar-brand">
+            <p class="brand-title">🎓 SIMS</p>
+            <span class="brand-sub">Student Information System</span>
+        </div>
+
+        <div class="sidebar-user">
+            <p class="user-name">
+                <asp:Literal ID="litSidebarName" runat="server" />
+            </p>
+            <span class="user-role">Head Of Programme</span>
+        </div>
+
+        <div class="sidebar-nav">
+
+            <div class="nav-label">Main</div>
+
+            <a href="HOPDashboard.aspx" class="<%= GetActiveClass("HOPDashboard") %>">
+                <i class="fa fa-gauge"></i>
+                Dashboard
+            </a>
+
+            <div class="nav-label">Management</div>
+
+            <a href="Programme.aspx" class="<%= GetActiveClass("Programme") %>">
+                <i class="fa fa-layer-group"></i>
+                Manage Programme
+            </a>
+
+            <a href="Course.aspx" class="<%= GetActiveClass("Course") %>">
+                <i class="fa fa-book"></i>
+                Manage Courses
+            </a>
+
+            <a href="Enrolment.aspx" class="<%= GetActiveClass("Enrolment") %>">
+                <i class="fa fa-user-plus"></i>
+                Enrol Student
+            </a>
+
+            <a href="RegisterLecturer.aspx" class="<%= GetActiveClass("RegisterLecturer") %>">
+                <i class="fa fa-user-tie"></i>
+                Register Lecturer
+            </a>
+
+            <a href="AssignLecturer.aspx" class="<%= GetActiveClass("AssignLecturer") %>">
+                <i class="fa fa-link"></i>
+                Assign Lecturer
+            </a>
+
+        </div>
+
+        <div class="sidebar-footer">
+            <asp:LinkButton ID="btnSidebarLogout"
+                runat="server"
+                CssClass="btn-logout"
+                OnClick="btnLogout_Click">
+                <i class="fa fa-right-from-bracket"></i>
+                <span>Logout</span>
+            </asp:LinkButton>
+        </div>
+
+    </div>
+
+    <div class="main-wrapper">
+
+        <div class="topbar">
+            <h5 class="topbar-title">
+                Head Of Programme Portal
+            </h5>
+
+            <div class="topbar-right">
+                <a href="HOPAnnouncements.aspx" class="announcement-btn" title="Announcements">
+                    <i class="fa fa-bell"></i>
+                </a>
+
+                <span>
+                    <asp:Literal ID="litTopbarName" runat="server" />
+                </span>
+            </div>
+        </div>
+
+        <div class="page-content">
+            <asp:ContentPlaceHolder ID="MainContent" runat="server" />
+        </div>
+
+    </div>
+
+</form>
+</body>
+</html>
