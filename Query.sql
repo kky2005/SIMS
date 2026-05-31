@@ -1,0 +1,458 @@
+/*
+CREATE DATABASE SIMS_DB
+GO
+*/
+USE SIMS_DB
+GO
+
+-- =========================================
+-- Roles
+-- =========================================
+CREATE TABLE Roles (
+    RoleId INT IDENTITY(1,1) PRIMARY KEY,
+    RoleName NVARCHAR(20) NOT NULL UNIQUE,
+    Description NVARCHAR(255),
+    CreatedAt DATETIME2 DEFAULT SYSUTCDATETIME()
+);
+
+-- =========================================
+-- Users
+-- =========================================
+CREATE TABLE Users (
+    UserId INT IDENTITY(1,1) PRIMARY KEY,
+    RoleId INT NOT NULL,
+    FullName NVARCHAR(150) NOT NULL,
+    Email NVARCHAR(150) NOT NULL UNIQUE,
+    PasswordHash NVARCHAR(255) NOT NULL,
+    Phone NVARCHAR(20),
+    PhotoUrl NVARCHAR(500),
+    IsActive BIT DEFAULT 1,
+    CreatedAt DATETIME2 DEFAULT SYSUTCDATETIME(),
+    LastLoginAt DATETIME2,
+
+    CONSTRAINT FK_Users_Roles
+        FOREIGN KEY (RoleId) REFERENCES Roles(RoleId)
+);
+
+-- =========================================
+-- Programmes
+-- =========================================
+CREATE TABLE Programmes (
+    ProgrammeId INT IDENTITY(1,1) PRIMARY KEY,
+    ProgrammeCode NVARCHAR(20) NOT NULL UNIQUE,
+    ProgrammeName NVARCHAR(200) NOT NULL,
+    DurationYears TINYINT DEFAULT 3,
+    Description NVARCHAR(500),
+    IsActive BIT DEFAULT 1,
+    CreatedAt DATETIME2 DEFAULT SYSUTCDATETIME()
+);
+
+-- =========================================
+-- Students
+-- =========================================
+CREATE TABLE Students (
+    StudentId INT IDENTITY(1,1) PRIMARY KEY,
+    UserId INT NOT NULL UNIQUE,
+    ProgrammeId INT NOT NULL,
+    StudentNo NVARCHAR(20) NOT NULL UNIQUE,
+    IntakeYear SMALLINT,
+    IntakeSemester TINYINT,
+    AdmissionDate DATE,
+    CurrentSemester TINYINT,
+    Status NVARCHAR(30) DEFAULT 'Active',
+
+    CONSTRAINT FK_Students_Users
+        FOREIGN KEY (UserId) REFERENCES Users(UserId),
+
+    CONSTRAINT FK_Students_Programmes
+        FOREIGN KEY (ProgrammeId) REFERENCES Programmes(ProgrammeId)
+);
+
+-- =========================================
+-- Lecturers
+-- =========================================
+CREATE TABLE Lecturers (
+    LecturerId INT IDENTITY(1,1) PRIMARY KEY,
+    UserId INT NOT NULL UNIQUE,
+    StaffNo NVARCHAR(20) NOT NULL UNIQUE,
+    Department NVARCHAR(100),
+    Specialisation NVARCHAR(150),
+    EmploymentStatus NVARCHAR(30) DEFAULT 'Active',
+
+    CONSTRAINT FK_Lecturers_Users
+        FOREIGN KEY (UserId) REFERENCES Users(UserId)
+);
+
+-- =========================================
+-- Courses
+-- =========================================
+CREATE TABLE Courses (
+    CourseId INT IDENTITY(1,1) PRIMARY KEY,
+    ProgrammeId INT NOT NULL,
+    CourseCode NVARCHAR(20) NOT NULL UNIQUE,
+    CourseName NVARCHAR(200) NOT NULL,
+    CreditHours TINYINT DEFAULT 3,
+    Semester TINYINT NOT NULL,
+    IsActive BIT DEFAULT 1,
+
+    CONSTRAINT FK_Courses_Programmes
+        FOREIGN KEY (ProgrammeId) REFERENCES Programmes(ProgrammeId)
+);
+
+-- =========================================
+-- CourseAssignments
+-- =========================================
+CREATE TABLE CourseAssignments (
+    AssignmentId INT IDENTITY(1,1) PRIMARY KEY,
+    CourseId INT NOT NULL,
+    LecturerId INT NOT NULL,
+    AcademicYear SMALLINT NOT NULL,
+    Semester TINYINT NOT NULL,
+    AssignedDate DATE DEFAULT CAST(GETDATE() AS DATE),
+
+    CONSTRAINT FK_CourseAssignments_Courses
+        FOREIGN KEY (CourseId) REFERENCES Courses(CourseId),
+
+    CONSTRAINT FK_CourseAssignments_Lecturers
+        FOREIGN KEY (LecturerId) REFERENCES Lecturers(LecturerId)
+);
+
+-- =========================================
+-- RegistrationPeriods
+-- =========================================
+CREATE TABLE RegistrationPeriods (
+    PeriodId INT IDENTITY(1,1) PRIMARY KEY,
+    ProgrammeId INT NOT NULL,
+    AcademicYear SMALLINT NOT NULL,
+    Semester TINYINT NOT NULL,
+    PeriodType NVARCHAR(20) NOT NULL,
+    StartDate DATE NOT NULL,
+    EndDate DATE NOT NULL,
+    IsActive BIT DEFAULT 1,
+
+    CONSTRAINT FK_RegistrationPeriods_Programmes
+        FOREIGN KEY (ProgrammeId) REFERENCES Programmes(ProgrammeId)
+);
+
+-- =========================================
+-- CourseRegistrationRequests
+-- =========================================
+CREATE TABLE CourseRegistrationRequests (
+    RequestId INT IDENTITY(1,1) PRIMARY KEY,
+    StudentId INT NOT NULL,
+    CourseId INT NOT NULL,
+    RequestType NVARCHAR(20) NOT NULL, -- Register or Drop
+    Status NVARCHAR(20) DEFAULT 'Pending', -- Pending, Approved, Rejected
+    RequestedAt DATETIME2 DEFAULT SYSUTCDATETIME(),
+    ReviewedBy INT NULL,
+    ReviewedAt DATETIME2 NULL,
+    AdminRemarks NVARCHAR(300) NULL,
+
+    CONSTRAINT FK_CourseRegistrationRequests_Students
+        FOREIGN KEY (StudentId) REFERENCES Students(StudentId),
+
+    CONSTRAINT FK_CourseRegistrationRequests_Courses
+        FOREIGN KEY (CourseId) REFERENCES Courses(CourseId),
+
+    CONSTRAINT FK_CourseRegistrationRequests_Users
+        FOREIGN KEY (ReviewedBy) REFERENCES Users(UserId)
+);
+
+-- =========================================
+-- Prevent duplicate requests
+-- =========================================
+CREATE UNIQUE INDEX UX_CourseRegistrationRequests_Pending
+ON CourseRegistrationRequests (StudentId, CourseId, RequestType)
+WHERE Status = 'Pending';
+GO
+
+-- =========================================
+-- Enrolments
+-- =========================================
+CREATE TABLE Enrolments (
+    EnrolmentId INT IDENTITY(1,1) PRIMARY KEY,
+    StudentId INT NOT NULL,
+    CourseId INT NOT NULL,
+    AcademicYear SMALLINT NOT NULL,
+    Semester TINYINT NOT NULL,
+    Status NVARCHAR(20) DEFAULT 'Active',
+    EnrolledAt DATETIME2 DEFAULT SYSUTCDATETIME(),
+    DroppedAt DATETIME2,
+
+    CONSTRAINT FK_Enrolments_Students
+        FOREIGN KEY (StudentId) REFERENCES Students(StudentId),
+
+    CONSTRAINT FK_Enrolments_Courses
+        FOREIGN KEY (CourseId) REFERENCES Courses(CourseId)
+);
+
+-- =========================================
+-- Attendance
+-- =========================================
+CREATE TABLE Attendance (
+    AttendanceId INT IDENTITY(1,1) PRIMARY KEY,
+    EnrolmentId INT NOT NULL,
+    AttendanceDate DATE NOT NULL,
+    Status NVARCHAR(10) NOT NULL,
+    Remarks NVARCHAR(300),
+    RecordedBy INT NOT NULL,
+    RecordedAt DATETIME2 DEFAULT SYSUTCDATETIME(),
+
+    CONSTRAINT FK_Attendance_Enrolments
+        FOREIGN KEY (EnrolmentId) REFERENCES Enrolments(EnrolmentId),
+
+    CONSTRAINT FK_Attendance_Users
+        FOREIGN KEY (RecordedBy) REFERENCES Users(UserId)
+);
+
+-- =========================================
+-- Assessments
+-- =========================================
+CREATE TABLE Assessments (
+    AssessmentId INT IDENTITY(1,1) PRIMARY KEY,
+    CourseId INT NOT NULL,
+    AcademicYear SMALLINT NOT NULL,
+    Semester TINYINT NOT NULL,
+    AssessmentName NVARCHAR(100) NOT NULL,
+    MaxMark DECIMAL(5,2) DEFAULT 100,
+    Weightage DECIMAL(5,2) NOT NULL,
+    IsPublished BIT DEFAULT 0,
+
+    CONSTRAINT FK_Assessments_Courses
+        FOREIGN KEY (CourseId) REFERENCES Courses(CourseId)
+);
+
+-- =========================================
+-- GradeScale
+-- =========================================
+CREATE TABLE GradeScale (
+    GradeScaleId INT IDENTITY(1,1) PRIMARY KEY,
+    MinMark DECIMAL(5,2) NOT NULL,
+    MaxMark DECIMAL(5,2) NOT NULL,
+    GradeLetter NVARCHAR(5) NOT NULL,
+    GradePoint DECIMAL(3,2) NOT NULL,
+    Description NVARCHAR(100)
+);
+
+-- =========================================
+-- StudentMarks
+-- =========================================
+CREATE TABLE StudentMarks (
+    MarkId INT IDENTITY(1,1) PRIMARY KEY,
+    AssessmentId INT NOT NULL,
+    StudentId INT NOT NULL,
+    GradeScaleId INT,
+    MarksObtained DECIMAL(5,2) NOT NULL,
+    WeightedMark DECIMAL(5,2),
+    GradedBy INT NOT NULL,
+    GradedAt DATETIME2 DEFAULT SYSUTCDATETIME(),
+    IsPublished BIT DEFAULT 0,
+
+    CONSTRAINT FK_StudentMarks_Assessments
+        FOREIGN KEY (AssessmentId) REFERENCES Assessments(AssessmentId),
+
+    CONSTRAINT FK_StudentMarks_Students
+        FOREIGN KEY (StudentId) REFERENCES Students(StudentId),
+
+    CONSTRAINT FK_StudentMarks_GradeScale
+        FOREIGN KEY (GradeScaleId) REFERENCES GradeScale(GradeScaleId),
+
+    CONSTRAINT FK_StudentMarks_Users
+        FOREIGN KEY (GradedBy) REFERENCES Users(UserId)
+);
+
+-- =========================================
+-- GPARecords
+-- =========================================
+CREATE TABLE GPARecords (
+    GPARecordId INT IDENTITY(1,1) PRIMARY KEY,
+    StudentId INT NOT NULL,
+    AcademicYear SMALLINT NOT NULL,
+    Semester TINYINT NOT NULL,
+    GPA DECIMAL(3,2) NOT NULL,
+    CGPA DECIMAL(3,2) NOT NULL,
+    TotalCreditHours SMALLINT NOT NULL,
+    CalculatedAt DATETIME2 DEFAULT SYSUTCDATETIME(),
+
+    CONSTRAINT FK_GPARecords_Students
+        FOREIGN KEY (StudentId) REFERENCES Students(StudentId)
+);
+
+-- =========================================
+-- Announcements
+-- =========================================
+CREATE TABLE Announcements (
+    AnnouncementId INT IDENTITY(1,1) PRIMARY KEY,
+    AuthorUserId INT NOT NULL,
+    CourseId INT,
+    Title NVARCHAR(200) NOT NULL,
+    Body NVARCHAR(MAX) NOT NULL,
+    Audience NVARCHAR(20) NOT NULL,
+    PublishedAt DATETIME2 DEFAULT SYSUTCDATETIME(),
+    ExpiresAt DATETIME2,
+
+    CONSTRAINT FK_Announcements_Users
+        FOREIGN KEY (AuthorUserId) REFERENCES Users(UserId),
+
+    CONSTRAINT FK_Announcements_Courses
+        FOREIGN KEY (CourseId) REFERENCES Courses(CourseId)
+);
+
+-- =========================================
+-- Notifications
+-- =========================================
+CREATE TABLE Notifications (
+    NotificationId INT IDENTITY(1,1) PRIMARY KEY,
+    UserId INT NOT NULL,
+    Title NVARCHAR(200) NOT NULL,
+    Message NVARCHAR(MAX) NOT NULL,
+    NotificationType NVARCHAR(50) NOT NULL,
+    IsRead BIT DEFAULT 0,
+    CreatedAt DATETIME2 DEFAULT SYSUTCDATETIME(),
+    LinkUrl NVARCHAR(500),
+
+    CONSTRAINT FK_Notifications_Users
+        FOREIGN KEY (UserId) REFERENCES Users(UserId)
+);
+
+-- =========================================
+-- AcademicWarnings
+-- =========================================
+CREATE TABLE AcademicWarnings (
+    WarningId INT IDENTITY(1,1) PRIMARY KEY,
+    StudentId INT NOT NULL,
+    CourseId INT,
+    WarningType NVARCHAR(50) NOT NULL,
+    Reason NVARCHAR(500) NOT NULL,
+    Severity NVARCHAR(20) DEFAULT 'Medium',
+    Status NVARCHAR(20) DEFAULT 'Active',
+    IssuedBy INT,
+    IssuedAt DATETIME2 DEFAULT SYSUTCDATETIME(),
+
+    CONSTRAINT FK_AcademicWarnings_Students
+        FOREIGN KEY (StudentId) REFERENCES Students(StudentId),
+
+    CONSTRAINT FK_AcademicWarnings_Courses
+        FOREIGN KEY (CourseId) REFERENCES Courses(CourseId),
+
+    CONSTRAINT FK_AcademicWarnings_Users
+        FOREIGN KEY (IssuedBy) REFERENCES Users(UserId)
+);
+
+-- =========================================
+-- AcademicCalendar
+-- =========================================
+CREATE TABLE AcademicCalendar (
+    CalendarId INT IDENTITY(1,1) PRIMARY KEY,
+    EventName NVARCHAR(200) NOT NULL,
+    EventType NVARCHAR(50) NOT NULL,
+    StartDate DATE NOT NULL,
+    EndDate DATE NOT NULL,
+    AcademicYear SMALLINT NOT NULL,
+    Semester TINYINT,
+    Description NVARCHAR(MAX)
+);
+
+-- =========================================
+-- CourseMaterials
+-- =========================================
+CREATE TABLE CourseMaterials (
+    MaterialId INT IDENTITY(1,1) PRIMARY KEY,
+    CourseId INT NOT NULL,
+    UploadedBy INT NOT NULL,
+    Title NVARCHAR(200) NOT NULL,
+    Description NVARCHAR(500),
+    FileUrl NVARCHAR(500) NOT NULL,
+    FileType NVARCHAR(50) NOT NULL,
+    FileSizeKB INT,
+    AcademicYear SMALLINT NOT NULL,
+    Semester TINYINT NOT NULL,
+    IsVisible BIT DEFAULT 1,
+    UploadedAt DATETIME2 DEFAULT SYSUTCDATETIME(),
+
+    CONSTRAINT FK_CourseMaterials_Courses
+        FOREIGN KEY (CourseId) REFERENCES Courses(CourseId),
+
+    CONSTRAINT FK_CourseMaterials_Users
+        FOREIGN KEY (UploadedBy) REFERENCES Users(UserId)
+);
+
+-- =========================================
+-- Reports
+-- =========================================
+CREATE TABLE Reports (
+    ReportId INT IDENTITY(1,1) PRIMARY KEY,
+    GeneratedBy INT NOT NULL,
+    ReportType NVARCHAR(100) NOT NULL,
+    AcademicYear SMALLINT,
+    Semester TINYINT,
+    FilterCriteria NVARCHAR(MAX),
+    GeneratedAt DATETIME2 DEFAULT SYSUTCDATETIME(),
+
+    CONSTRAINT FK_Reports_Users
+        FOREIGN KEY (GeneratedBy) REFERENCES Users(UserId)
+);
+
+-- =========================================
+-- ReportExports
+-- =========================================
+CREATE TABLE ReportExports (
+    ExportId INT IDENTITY(1,1) PRIMARY KEY,
+    ReportId INT NOT NULL,
+    ExportFormat NVARCHAR(20) NOT NULL,
+    FilePath NVARCHAR(500) NOT NULL,
+    ExportedAt DATETIME2 DEFAULT SYSUTCDATETIME(),
+
+    CONSTRAINT FK_ReportExports_Reports
+        FOREIGN KEY (ReportId) REFERENCES Reports(ReportId)
+);
+
+-- =========================================
+-- Fees
+-- =========================================
+CREATE TABLE Fees (
+    FeeId INT IDENTITY(1,1) PRIMARY KEY,
+    StudentId INT NOT NULL,
+    AcademicYear SMALLINT NOT NULL,
+    Semester TINYINT NOT NULL,
+    TotalAmount DECIMAL(10,2) NOT NULL,
+    PaidAmount DECIMAL(10,2) DEFAULT 0,
+    Balance DECIMAL(10,2) NOT NULL,
+    DueDate DATE,
+    Status NVARCHAR(20) DEFAULT 'Unpaid',
+
+    CONSTRAINT FK_Fees_Students
+        FOREIGN KEY (StudentId) REFERENCES Students(StudentId)
+);
+
+-- =========================================
+-- AuditLogs
+-- =========================================
+CREATE TABLE AuditLogs (
+    LogId INT IDENTITY(1,1) PRIMARY KEY,
+    UserId INT NOT NULL,
+    Action NVARCHAR(200) NOT NULL,
+    TableAffected NVARCHAR(100),
+    RecordId INT,
+    OldValue NVARCHAR(MAX),
+    NewValue NVARCHAR(MAX),
+    ActionDate DATETIME2 DEFAULT SYSUTCDATETIME(),
+
+    CONSTRAINT FK_AuditLogs_Users
+        FOREIGN KEY (UserId) REFERENCES Users(UserId)
+);
+
+-- =========================================
+-- LoginAttempts
+-- =========================================
+CREATE TABLE LoginAttempts (
+    AttemptId INT IDENTITY(1,1) PRIMARY KEY,
+    UserId INT,
+    Email NVARCHAR(150) NOT NULL,
+    IsSuccessful BIT NOT NULL,
+    AttemptDate DATETIME2 DEFAULT SYSUTCDATETIME(),
+
+    CONSTRAINT FK_LoginAttempts_Users
+        FOREIGN KEY (UserId) REFERENCES Users(UserId)
+);
+GO
