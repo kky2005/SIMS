@@ -81,17 +81,17 @@
             font-weight: bold;
         }
 
-        .risk-high {
+        .risk-High {
             background: #fee2e2;
             color: #991b1b;
         }
 
-        .risk-medium {
+        .risk-Medium {
             background: #fef3c7;
             color: #92400e;
         }
 
-        .risk-low {
+        .risk-Low {
             background: #dcfce7;
             color: #166534;
         }
@@ -131,6 +131,11 @@
             border: 1px solid #e2e8f0;
             color: #64748b;
         }
+
+        @media (max-width: 768px) {
+            .progress-metric { grid-template-columns: 1fr; }
+            .filter-section div { grid-template-columns: 1fr !important; }
+        }
     </style>
 </asp:Content>
 
@@ -162,7 +167,7 @@
                 </asp:DropDownList>
             </div>
             <div class="form-group" style="display: flex; flex-direction: column; justify-content: flex-end;">
-                <asp:Button ID="btnApplyFilter" runat="server" Text="Apply Filter" CssClass="btn btn-primary" />
+                <asp:Button ID="btnApplyFilter" runat="server" Text="Apply Filter" CssClass="btn btn-primary" OnClick="btnApplyFilter_Click" />
             </div>
         </div>
     </div>
@@ -190,7 +195,7 @@
                         <span class="metric-value"><%# Eval("CurrentGPA") %></span>
                     </div>
                     <div class="metric-item">
-                        <span class="metric-label">Assignment Status</span>
+                        <span class="metric-label">Assessments</span>
                         <span class="metric-value"><%# Eval("AssignmentStatus") %></span>
                     </div>
                 </div>

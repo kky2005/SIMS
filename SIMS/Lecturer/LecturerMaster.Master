@@ -341,16 +341,6 @@
                 <i class="fa fa-book"></i> My Courses
             </a>
 
-            <a href="LecturerMaterials.aspx"
-               class='<%= GetActiveClass("LecturerMaterials") %>'>
-                <i class="fa fa-folder-open"></i> Course Materials
-            </a>
-
-            <a href="LecturerAnnouncements.aspx"
-                class='<%= GetActiveClass("LecturerAnnouncements") %>'>
-                <i class="fa fa-bullhorn"></i> Announcements
-            </a>
-
             <div class="nav-label">Reports</div>
 
             <a href="LecturerStudentProgress.aspx"
@@ -379,9 +369,6 @@
                 <asp:Literal ID="litPageTitle" runat="server" Text="Lecturer Portal" />
             </p>
             <div class="topbar-right">
-                <a href="LecturerAnnouncements.aspx" class="notif-badge" title="Announcements">
-                    <i class="fa fa-bell"></i>
-                </a>
                 <span style="color:#64748b; font-size:14px;">
                     <asp:Literal ID="litTopbarName" runat="server" />
                 </span>
