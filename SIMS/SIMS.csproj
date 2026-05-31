@@ -83,7 +83,14 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="HeadOfProgramme\HOPAssignUserRole.aspx" />
     <Content Include="HeadOfProgramme\HOPDashboard.aspx" />
+    <Content Include="HeadOfProgramme\HOPManageAdmissions.aspx" />
+    <Content Include="HeadOfProgramme\HOPManageCourses.aspx" />
+    <Content Include="HeadOfProgramme\HOPManageEnrolments.aspx" />
+    <Content Include="HeadOfProgramme\HOPManageProgrammes.aspx" />
+    <Content Include="HeadOfProgramme\HOPRegisterLecturer.aspx" />
+    <Content Include="HeadOfProgramme\HOPRegisterStudent.aspx" />
     <Content Include="Lecturer\LecturerAnnouncements.aspx" />
     <Content Include="Lecturer\LecturerAttendance.aspx" />
     <Content Include="Lecturer\LecturerCourses.aspx" />
@@ -98,7 +105,17 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AuthenticationHelper.cs" />
+    <Compile Include="HeadOfProgramme\HOPAssignUserRole.aspx.cs">
+      <DependentUpon>HOPAssignUserRole.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPAssignUserRole.aspx.designer.cs">
+      <DependentUpon>HOPAssignUserRole.aspx</DependentUpon>
+    </Compile>
     <Compile Include="HeadOfProgramme\HOPBase.cs">
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPCrudBase.cs">
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="HeadOfProgramme\HOPDashboard.aspx.cs">
@@ -108,12 +125,54 @@
     <Compile Include="HeadOfProgramme\HOPDashboard.aspx.designer.cs">
       <DependentUpon>HOPDashboard.aspx</DependentUpon>
     </Compile>
+    <Compile Include="HeadOfProgramme\HOPManageAdmissions.aspx.cs">
+      <DependentUpon>HOPManageAdmissions.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPManageAdmissions.aspx.designer.cs">
+      <DependentUpon>HOPManageAdmissions.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPManageCourses.aspx.cs">
+      <DependentUpon>HOPManageCourses.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPManageCourses.aspx.designer.cs">
+      <DependentUpon>HOPManageCourses.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPManageEnrolments.aspx.cs">
+      <DependentUpon>HOPManageEnrolments.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPManageEnrolments.aspx.designer.cs">
+      <DependentUpon>HOPManageEnrolments.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPManageProgrammes.aspx.cs">
+      <DependentUpon>HOPManageProgrammes.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPManageProgrammes.aspx.designer.cs">
+      <DependentUpon>HOPManageProgrammes.aspx</DependentUpon>
+    </Compile>
     <Compile Include="HeadOfProgramme\HOPMaster.Master.cs">
       <DependentUpon>HOPMaster.Master</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="HeadOfProgramme\HOPMaster.Master.designer.cs">
       <DependentUpon>HOPMaster.Master</DependentUpon>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPRegisterLecturer.aspx.cs">
+      <DependentUpon>HOPRegisterLecturer.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPRegisterLecturer.aspx.designer.cs">
+      <DependentUpon>HOPRegisterLecturer.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPRegisterStudent.aspx.cs">
+      <DependentUpon>HOPRegisterStudent.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPRegisterStudent.aspx.designer.cs">
+      <DependentUpon>HOPRegisterStudent.aspx</DependentUpon>
     </Compile>
     <Compile Include="Lecturer\LecturerAnnouncements.aspx.cs">
       <DependentUpon>LecturerAnnouncements.aspx</DependentUpon>

@@ -86,21 +86,29 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 12px 20px;
-            color: #cbd5e1;
-            text-decoration: none;
+            padding: 10px 20px;
+            color: #cbd5e1 !important;
+            text-decoration: none !important;
+            font-size: 14px;
             border-left: 3px solid transparent;
+            transition: all 0.15s;
         }
 
         .sidebar-nav a:hover {
             background: var(--sidebar-hover);
-            color: white;
+            color: #fff !important;
         }
 
         .sidebar-nav a.active {
             background: rgba(13,110,253,0.15);
             border-left-color: #0d6efd;
-            color: #60a5fa;
+            color: #60a5fa !important;
+        }
+
+        .sidebar-nav a i {
+            width: 18px;
+            text-align: center;
+            font-size: 15px;
         }
 
         .sidebar-footer {
@@ -176,7 +184,7 @@
             box-shadow: 0 1px 4px rgba(0,0,0,0.08);
             border: 1px solid #e2e8f0;
         }
-
+        
         .card-header-sims {
             padding: 18px 24px;
             border-bottom: 1px solid #e2e8f0;
@@ -184,18 +192,18 @@
             justify-content: space-between;
             align-items: center;
         }
-
+        
         .card-header-sims h5 {
             font-size: 16px;
             font-weight: bold;
             color: #1e293b;
             margin: 0;
         }
-
+        
         .card-body-sims {
             padding: 24px;
         }
-
+        
         .stat-card {
             background: #fff;
             border-radius: 12px;
@@ -207,7 +215,7 @@
             gap: 16px;
             height: 100%;
         }
-
+        
         .stat-icon {
             width: 48px;
             height: 48px;
@@ -218,13 +226,13 @@
             font-size: 20px;
             flex-shrink: 0;
         }
-
+        
         .stat-card .stat-label {
             font-size: 13px;
             color: #64748b;
             margin: 0;
         }
-
+        
         .stat-card .stat-value {
             font-size: 26px;
             font-weight: bold;
@@ -257,36 +265,46 @@
 
             <div class="nav-label">Main</div>
 
-            <a href="HOPDashboard.aspx" class="<%= GetActiveClass("HOPDashboard") %>">
+            <a href="HOPDashboard.aspx" class='<%= GetActiveClass("HOPDashboard") %>'>
                 <i class="fa fa-gauge"></i>
                 Dashboard
             </a>
 
             <div class="nav-label">Management</div>
 
-            <a href="Programme.aspx" class="<%= GetActiveClass("Programme") %>">
+            <a href="HOPManageProgrammes.aspx" class='<%= GetActiveClass("HOPManageProgrammes") %>'>
                 <i class="fa fa-layer-group"></i>
-                Manage Programme
+                Manage Programmes
             </a>
 
-            <a href="Course.aspx" class="<%= GetActiveClass("Course") %>">
+            <a href="HOPManageCourses.aspx" class='<%= GetActiveClass("HOPManageCourses") %>'>
                 <i class="fa fa-book"></i>
                 Manage Courses
             </a>
 
-            <a href="Enrolment.aspx" class="<%= GetActiveClass("Enrolment") %>">
-                <i class="fa fa-user-plus"></i>
-                Enrol Student
-            </a>
-
-            <a href="RegisterLecturer.aspx" class="<%= GetActiveClass("RegisterLecturer") %>">
+            <a href="HOPRegisterLecturer.aspx" class='<%= GetActiveClass("HOPRegisterLecturer") %>'>
                 <i class="fa fa-user-tie"></i>
                 Register Lecturer
             </a>
 
-            <a href="AssignLecturer.aspx" class="<%= GetActiveClass("AssignLecturer") %>">
-                <i class="fa fa-link"></i>
-                Assign Lecturer
+            <a href="HOPRegisterStudent.aspx" class='<%= GetActiveClass("HOPRegisterStudent") %>'>
+                <i class="fa fa-user-graduate"></i>
+                Register Student
+            </a>
+
+            <a href="HOPAssignUserRole.aspx" class='<%= GetActiveClass("HOPAssignUserRole") %>'>
+                <i class="fa fa-users-gear"></i>
+                Assign User Roles
+            </a>
+
+            <a href="HOPManageAdmissions.aspx" class='<%= GetActiveClass("HOPManageAdmissions") %>'>
+                <i class="fa fa-clipboard-check"></i>
+                Manage Admissions
+            </a>
+
+            <a href="HOPManageEnrolments.aspx" class='<%= GetActiveClass("HOPManageEnrolments") %>'>
+                <i class="fa fa-user-plus"></i>
+                Manage Enrolments
             </a>
 
         </div>
@@ -306,9 +324,7 @@
     <div class="main-wrapper">
 
         <div class="topbar">
-            <h5 class="topbar-title">
-                Head Of Programme Portal
-            </h5>
+            <h5 class="topbar-title">Head Of Programme Portal</h5>
 
             <div class="topbar-right">
                 <a href="HOPAnnouncements.aspx" class="announcement-btn" title="Announcements">

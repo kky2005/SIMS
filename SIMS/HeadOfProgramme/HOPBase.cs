@@ -21,6 +21,20 @@ namespace SIMS.HeadOfProgramme
         /// <summary>
         /// Gets the current logged-in User ID.
         /// </summary>
+        /// 
+
+        public bool IsAuthenticated
+        {
+            get
+            {
+                return Session[SESSION_USER_ID] != null &&
+                       Session[SESSION_USER_ROLE] != null &&
+                       Session[SESSION_USER_ROLE].ToString()
+                           .Equals("HeadOfProgramme",
+                                   StringComparison.OrdinalIgnoreCase);
+            }
+        }
+
         public int CurrentUserId
         {
             get
