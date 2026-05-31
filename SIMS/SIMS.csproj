@@ -104,6 +104,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AuthenticationHelper.cs" />
+    <Compile Include="BLL\StudentCourseBLL.cs" />
+    <Compile Include="DAL\StudentCourseDAL.cs" />
     <Compile Include="Lecturer\LecturerAnnouncements.aspx.cs">
       <DependentUpon>LecturerAnnouncements.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>

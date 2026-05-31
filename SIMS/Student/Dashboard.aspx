@@ -193,6 +193,42 @@
             box-shadow: 0 1px 4px rgba(0,0,0,0.06);
         }
 
+        .stat-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px 24px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            min-height: 92px;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: #64748b;
+            margin: 0 0 6px 0;
+        }
+
+        .stat-value {
+            font-size: 26px;
+            font-weight: bold;
+            color: #1e293b;
+            line-height: 1;
+        }
+
         .card-sims {
             background: #fff;
             border-radius: 12px;
@@ -217,41 +253,6 @@
 
         .card-body-sims {
             padding: 24px;
-        }
-
-        .stat-card {
-            background: #fff;
-            border-radius: 12px;
-            padding: 20px 24px;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .stat-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            flex-shrink: 0;
-        }
-
-        .stat-label {
-            font-size: 13px;
-            color: #64748b;
-            margin: 0;
-        }
-
-        .stat-value {
-            font-size: 26px;
-            font-weight: bold;
-            color: #1e293b;
-            line-height: 1;
         }
 
         .quick-link {
@@ -347,9 +348,7 @@
                     <a href="Notifications.aspx" style="color:#64748b; font-size:20px;">
                         <i class="fa fa-bell"></i>
                     </a>
-                    <span style="color:#64748b; font-size:14px;">
-                        Student
-                    </span>
+                    <span style="color:#64748b; font-size:14px;">Student</span>
                 </div>
             </div>
 
@@ -376,6 +375,7 @@
                 <!-- Stat cards -->
                 <div class="row g-3 mb-4">
 
+                    <!-- Current Semester -->
                     <div class="col-md-3">
                         <div class="stat-card">
                             <div class="stat-icon" style="background:#dbeafe;">
@@ -384,12 +384,13 @@
                             <div>
                                 <p class="stat-label">Current Semester</p>
                                 <div class="stat-value">
-                                    <asp:Label ID="lblCurrentSemester" runat="server" Text="3"></asp:Label>
+                                    <asp:Label ID="lblCurrentSemester" runat="server" Text="-"></asp:Label>
                                 </div>
                             </div>
                         </div>
                     </div>
 
+                    <!-- Enrolled Courses -->
                     <div class="col-md-3">
                         <div class="stat-card">
                             <div class="stat-icon" style="background:#dcfce7;">
@@ -404,6 +405,7 @@
                         </div>
                     </div>
 
+                    <!-- CGPA -->
                     <div class="col-md-3">
                         <div class="stat-card">
                             <div class="stat-icon" style="background:#fef3c7;">
@@ -418,6 +420,7 @@
                         </div>
                     </div>
 
+                    <!-- Notifications -->
                     <div class="col-md-3">
                         <div class="stat-card">
                             <div class="stat-icon" style="background:#ede9fe;">
