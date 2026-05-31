@@ -9,35 +9,25 @@ namespace SIMS.Lecturer
 {
     public partial class LecturerCourses : LecturerBase
     {
-        string connStr = ConfigurationManager
-            .ConnectionStrings["SIMS_DB"]
-            .ConnectionString;
+        string connStr = ConfigurationManager.ConnectionStrings["SIMS_DB"].ConnectionString;
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            // Ensure user is authenticated
             EnsureAuthenticated();
 
             if (!IsPostBack)
             {
-                // Load available semesters from database
                 LoadAvailableSemesters();
-                
-                // Load all courses
                 LoadCourses(0);
                 btnFilterAll.CssClass = "filter-badge active";
             }
         }
 
-        /// <summary>
-        /// Dynamically loads available semesters from the database for the current lecturer's courses.
-        /// </summary>
         private void LoadAvailableSemesters()
         {
             try
             {
                 int lecturerId = CurrentLecturerId;
-                int currentYear = DateTime.Now.Year;
 
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
@@ -46,19 +36,16 @@ namespace SIMS.Lecturer
                         FROM CourseAssignments ca
                         INNER JOIN Courses c ON c.CourseId = ca.CourseId
                         WHERE ca.LecturerId = @LecturerId
-                          AND ca.AcademicYear = @Year
                         ORDER BY c.Semester ASC";
 
                     using (SqlCommand cmd = new SqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@LecturerId", lecturerId);
-                        cmd.Parameters.AddWithValue("@Year", currentYear);
 
                         SqlDataAdapter da = new SqlDataAdapter(cmd);
                         DataTable dt = new DataTable();
                         da.Fill(dt);
 
-                        // Create filter buttons for each available semester
                         foreach (DataRow row in dt.Rows)
                         {
                             int semester = (int)row["Semester"];
@@ -79,7 +66,7 @@ namespace SIMS.Lecturer
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error loading available semesters: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error loading semesters: {ex.Message}");
             }
         }
 
@@ -88,7 +75,6 @@ namespace SIMS.Lecturer
             try
             {
                 int lecturerId = CurrentLecturerId;
-                int currentYear = DateTime.Now.Year;
 
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
@@ -100,7 +86,7 @@ namespace SIMS.Lecturer
                             c.CreditHours,
                             c.Semester,
                             ca.AcademicYear,
-                            COUNT(e.EnrolmentId) AS TotalStudents
+                            COUNT(DISTINCT e.EnrolmentId) AS TotalStudents
                         FROM CourseAssignments ca
                         INNER JOIN Courses c ON c.CourseId = ca.CourseId
                         LEFT JOIN Enrolments e
@@ -108,8 +94,7 @@ namespace SIMS.Lecturer
                             AND e.AcademicYear = ca.AcademicYear
                             AND e.Semester = ca.Semester
                             AND e.Status = 'Active'
-                        WHERE ca.LecturerId = @LecturerId
-                          AND ca.AcademicYear = @Year";
+                        WHERE ca.LecturerId = @LecturerId";
 
                     if (semester > 0)
                     {
@@ -118,20 +103,18 @@ namespace SIMS.Lecturer
 
                     sql += @" GROUP BY c.CourseId, c.CourseCode, c.CourseName, 
                              c.CreditHours, c.Semester, ca.AcademicYear
-                             ORDER BY c.Semester ASC, c.CourseCode ASC";
+                             ORDER BY ca.AcademicYear DESC, c.Semester ASC, c.CourseCode ASC";
 
                     using (SqlCommand cmd = new SqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@LecturerId", lecturerId);
-                        cmd.Parameters.AddWithValue("@Year", currentYear);
-                        if (semester > 0)
-                        {
-                            cmd.Parameters.AddWithValue("@Semester", semester);
-                        }
+                        if (semester > 0) cmd.Parameters.AddWithValue("@Semester", semester);
 
+                        conn.Open();
                         SqlDataAdapter da = new SqlDataAdapter(cmd);
                         DataTable dt = new DataTable();
                         da.Fill(dt);
+                        conn.Close();
 
                         if (dt.Rows.Count > 0)
                         {
@@ -155,31 +138,42 @@ namespace SIMS.Lecturer
 
         protected void FilterCourses_Click(object sender, EventArgs e)
         {
-            // Reset all filter buttons to inactive
-            btnFilterAll.CssClass = "filter-badge";
-            
-            foreach (Control ctrl in phSemesterFilters.Controls)
+            try
             {
-                if (ctrl is LinkButton btn)
-                {
-                    btn.CssClass = "filter-badge";
-                }
+                btnFilterAll.CssClass = "filter-badge";
+                foreach (Control ctrl in phSemesterFilters.Controls)
+                    if (ctrl is LinkButton btn) btn.CssClass = "filter-badge";
+
+                LinkButton clickedBtn = (LinkButton)sender;
+                int semester = int.Parse(clickedBtn.CommandArgument);
+                clickedBtn.CssClass = "filter-badge active";
+
+                LoadCourses(semester);
             }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in FilterCourses_Click: {ex.Message}");
+            }
+        }
 
-            // Get the clicked button
-            LinkButton clickedBtn = (LinkButton)sender;
-            int semester = int.Parse(clickedBtn.CommandArgument);
+        protected void btnFilterAll_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                btnFilterAll.CssClass = "filter-badge active";
+                foreach (Control ctrl in phSemesterFilters.Controls)
+                    if (ctrl is LinkButton btn) btn.CssClass = "filter-badge";
 
-            // Set clicked button to active
-            clickedBtn.CssClass = "filter-badge active";
-
-            // Load courses with filter
-            LoadCourses(semester);
+                LoadCourses(0);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in btnFilterAll_Click: {ex.Message}");
+            }
         }
 
         protected void rptCourses_ItemDataBound(object sender, RepeaterItemEventArgs e)
         {
-            // Additional logic for repeater items can be added here
         }
     }
 }

@@ -340,140 +340,106 @@
                 flex-direction: column;
             }
         }
+            .upload-form { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+            .form-group { display:flex; flex-direction:column; margin-bottom:12px; }
+            .form-group label { font-weight:600; margin-bottom:6px; }
+            .form-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
+            .materials-table { background:white; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; }
+            .table-sims th, .table-sims td { padding:10px 12px; border-bottom:1px solid #e2e8f0; }
     </style>
 </asp:Content>
 
 <asp:Content ID="Main" ContentPlaceHolderID="MainContent" runat="server">
 
-    <!-- Header -->
     <div class="materials-header">
-        <h3>
-            <i class="fa fa-upload" style="margin-right: 10px;"></i>Course Materials Management
-        </h3>
-        <p>Upload and manage course materials for your students</p>
+        <h3><i class="fa fa-file" style="margin-right:8px;"></i>Course Materials</h3>
+        <p style="margin:0;"><asp:Literal ID="litCourseHeader" runat="server" Text="Loading..." /></p>
     </div>
 
-    <!-- Success Message -->
-    <asp:Panel ID="pnlSuccess" runat="server" Visible="false" CssClass="success-message">
+    <asp:Panel ID="pnlMaterialSuccess" runat="server" Visible="false" CssClass="success-message">
         <i class="fa fa-check-circle"></i>
-        <span><asp:Literal ID="litSuccessMsg" runat="server" /></span>
+        <span><asp:Literal ID="litMaterialSuccessMsg" runat="server" /></span>
     </asp:Panel>
 
-    <!-- Error Message -->
-    <asp:Panel ID="pnlError" runat="server" Visible="false" CssClass="error-message">
+    <asp:Panel ID="pnlMaterialError" runat="server" Visible="false" CssClass="error-message">
         <i class="fa fa-exclamation-circle"></i>
-        <span><asp:Literal ID="litErrorMsg" runat="server" /></span>
+        <span><asp:Literal ID="litMaterialErrorMsg" runat="server" /></span>
     </asp:Panel>
 
-    <!-- Upload Section -->
     <div class="upload-form">
-        <div class="form-row">
-            <div class="form-group">
-                <label>Select Course:</label>
-                <asp:DropDownList ID="ddlCourse" runat="server">
-                </asp:DropDownList>
+        <!-- Read-only course & assignment -->
+        <div class="form-group">
+            <label>Course</label>
+            <asp:Literal ID="litCourseName" runat="server" />
+        </div>
+
+        <div style="display:flex; gap:16px; margin-bottom:12px;">
+            <div class="form-group" style="flex:1;">
+                <label>Academic Year</label>
+                <asp:Literal ID="litAcademicYear" runat="server" />
             </div>
-            <div class="form-group">
-                <label>Semester:</label>
-                <asp:DropDownList ID="ddlSemester" runat="server">
-                </asp:DropDownList>
+            <div class="form-group" style="width:160px;">
+                <label>Semester</label>
+                <asp:Literal ID="litSemester" runat="server" />
             </div>
         </div>
 
-        <div class="form-row">
-            <div class="form-group">
-                <label for="txtTitle">Material Title:</label>
-                <asp:TextBox ID="txtTitle" runat="server" placeholder="Enter material title" />
-            </div>
-            <div class="form-group">
-                <label for="txtAcademicYear">Academic Year:</label>
-                <asp:DropDownList ID="ddlAcademicYear" runat="server">
-                </asp:DropDownList>
-            </div>
+        <div class="form-group">
+            <label>Material Title</label>
+            <asp:TextBox ID="txtTitle" runat="server" placeholder="Enter material title" />
         </div>
 
-        <div class="form-group" style="grid-column: 1 / -1;">
-            <label for="txtDescription">Description (Optional):</label>
-            <asp:TextBox ID="txtDescription" runat="server" TextMode="MultiLine" placeholder="Enter material description" />
+        <div class="form-group">
+            <label>Description (optional)</label>
+            <asp:TextBox ID="txtDescription" runat="server" TextMode="MultiLine" placeholder="Enter description" />
         </div>
 
-        <div class="form-group" style="grid-column: 1 / -1;">
-            <label>Upload File:</label>
-            <div class="file-input-wrapper">
-                <label class="file-input-label">
-                    <i class="fa fa-cloud-upload"></i> Choose File
-                    <span class="file-name" id="fileName"></span>
-                    <asp:FileUpload ID="fuMaterial" runat="server" />
-                </label>
-            </div>
-            <small style="color: #64748b; display: block; margin-top: 8px;">
-                Allowed formats: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, ZIP (Max 50MB)
-            </small>
+        <div class="form-group">
+            <label>Upload File</label>
+            <asp:FileUpload ID="fuMaterial" runat="server" />
+            <small style="color:#64748b;">Allowed: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, ZIP (Max 50MB)</small>
         </div>
 
-        <div class="form-group" style="grid-column: 1 / -1;">
-            <asp:CheckBox ID="chkIsVisible" runat="server" Text="Make material visible to students" Checked="true" style="margin-bottom: 0;" />
+        <div class="form-group">
+            <asp:CheckBox ID="chkIsVisible" runat="server" Checked="true" Text="Make visible to students" />
         </div>
 
         <div class="form-actions">
-            <asp:Button ID="btnUpload" runat="server" Text="Upload Material" 
-                CssClass="btn btn-primary" OnClick="btnUpload_Click" />
-            <asp:Button ID="btnClear" runat="server" Text="Clear" 
-                CssClass="btn btn-outline-secondary" OnClick="btnClear_Click" />
+            <asp:Button ID="btnUpload" runat="server" Text="Upload Material" CssClass="btn btn-primary" OnClick="btnUpload_Click" />
+            <asp:Button ID="btnClear" runat="server" Text="Clear" CssClass="btn btn-outline-secondary" OnClick="btnClear_Click" />
         </div>
+
+        <!-- Hidden fields -->
+        <asp:HiddenField ID="hidCourseId" runat="server" />
+        <asp:HiddenField ID="hidAcademicYear" runat="server" />
+        <asp:HiddenField ID="hidSemester" runat="server" />
     </div>
 
-    <!-- Materials List -->
-    <h4 style="color: #1e293b; margin-bottom: 20px; font-weight: bold;">
-        <i class="fa fa-folder" style="color: #7c3aed; margin-right: 8px;"></i>Uploaded Materials
-    </h4>
-
-    <div class="materials-table">
-        <table class="table-sims">
+    <h4 style="margin-top:8px;">Uploaded Materials</h4>
+    <div class="materials-table" style="margin-top:8px;">
+        <table class="table-sims" style="width:100%; border-collapse:collapse;">
             <thead>
                 <tr>
                     <th>Title</th>
                     <th>File Type</th>
-                    <th>Course</th>
-                    <th>Semester</th>
-                    <th style="width: 100px;">Visibility</th>
-                    <th style="width: 150px;">Uploaded</th>
-                    <th style="width: 120px;">Action</th>
+                    <th>Uploaded At</th>
+                    <th style="width:120px;">Visibility</th>
+                    <th style="width:160px;">Action</th>
                 </tr>
             </thead>
             <tbody>
                 <asp:Repeater ID="rptMaterials" runat="server" OnItemDataBound="rptMaterials_ItemDataBound">
                     <ItemTemplate>
                         <tr>
+                            <td><strong><%# Eval("Title") %></strong><div style="font-size:12px;color:#64748b;"><%# Eval("Description") %></div></td>
+                            <td><%# Eval("FileType") %></td>
+                            <td><%# ((DateTime)Eval("UploadedAt")).ToString("dd MMM yyyy HH:mm") %></td>
                             <td>
-                                <i class="fa fa-file" style="color: #7c3aed; margin-right: 8px;"></i>
-                                <strong><%# Eval("Title") %></strong>
+                                <asp:Label ID="lblVisible" runat="server" Text='<%# Convert.ToBoolean(Eval("IsVisible")) ? "Visible" : "Hidden" %>' />
                             </td>
                             <td>
-                                <span class="file-type-badge"><%# Eval("FileType") %></span>
-                            </td>
-                            <td><%# Eval("CourseName") %></td>
-                            <td>Semester <%# Eval("Semester") %></td>
-                            <td>
-                                <span class='<%# Convert.ToBoolean(Eval("IsVisible")) ? "status-visible" : "status-hidden" %>'>
-                                    <%# Convert.ToBoolean(Eval("IsVisible")) ? "Visible" : "Hidden" %>
-                                </span>
-                            </td>
-                            <td style="font-size: 13px;">
-                                <%# ((DateTime)Eval("UploadedAt")).ToString("dd MMM yyyy") %>
-                            </td>
-                            <td>
-                                <asp:Button ID="btnToggleVisibility" runat="server" 
-                                    Text='<%# Convert.ToBoolean(Eval("IsVisible")) ? "Hide" : "Show" %>'
-                                    CssClass='<%# Convert.ToBoolean(Eval("IsVisible")) ? "btn btn-sm btn-warning" : "btn btn-sm btn-success" %>'
-                                    OnClick="btnToggleVisibility_Click"
-                                    CommandArgument='<%# Eval("MaterialId") %>' />
-                                <asp:Button ID="btnDelete" runat="server" 
-                                    Text="Delete"
-                                    CssClass="btn btn-sm btn-danger"
-                                    OnClick="btnDelete_Click"
-                                    CommandArgument='<%# Eval("MaterialId") %>'
-                                    OnClientClick="return confirm('Are you sure you want to delete this material?');" />
+                                <asp:HyperLink ID="hlDownload" runat="server" NavigateUrl='<%# Eval("FileUrl") %>' Text="Download" Target="_blank" CssClass="btn btn-sm btn-outline-primary"></asp:HyperLink>
+                                <asp:Button ID="btnDelete" runat="server" Text="Delete" CssClass="btn btn-sm btn-danger" CommandArgument='<%# Eval("MaterialId") %>' OnClick="btnDelete_Click" OnClientClick="return confirm('Delete this material?');" />
                             </td>
                         </tr>
                     </ItemTemplate>
@@ -481,22 +447,24 @@
             </tbody>
         </table>
 
-        <asp:Panel ID="pnlNoMaterials" runat="server" Visible="false" CssClass="no-materials">
-            <i class="fa fa-folder-open"></i>
-            <h5 style="color: #1e293b; margin: 0 0 10px 0;">No Materials Uploaded</h5>
-            <p style="margin: 0;">Start by uploading course materials above.</p>
+        <asp:Panel ID="pnlNoMaterials" runat="server" Visible="false" CssClass="no-materials" style="padding:16px;">
+            <i class="fa fa-folder-open" style="font-size:28px;color:#cbd5e1;display:block;margin-bottom:8px;"></i>
+            <strong>No materials uploaded for this course.</strong>
         </asp:Panel>
     </div>
 
     <script type="text/javascript">
         document.addEventListener('DOMContentLoaded', function () {
-            var fileInput = document.querySelector('input[type="file"]');
-            if (fileInput) {
-                fileInput.addEventListener('change', function () {
-                    var fileName = this.files.length > 0 ? this.files[0].name : '';
-                    document.getElementById('fileName').textContent = fileName ? ' - ' + fileName : '';
-                });
-            }
+            var successEl = document.getElementById('<%= pnlMaterialSuccess.ClientID %>');
+            var errorEl = document.getElementById('<%= pnlMaterialError.ClientID %>');
+
+            [successEl, errorEl].forEach(function (el) {
+                if (!el) return;
+                // If element is visible (rendered and not display:none), hide after 5s
+                if (el.offsetParent !== null) {
+                    setTimeout(function () { el.style.display = 'none'; }, 5000);
+                }
+            });
         });
     </script>
 

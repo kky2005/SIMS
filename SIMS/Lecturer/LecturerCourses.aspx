@@ -59,12 +59,14 @@
             display: flex;
             gap: 8px;
             margin-top: 15px;
+            flex-wrap: wrap;
         }
 
         .course-actions .btn {
             flex: 1;
+            min-width: 100px;
             padding: 8px 12px;
-            font-size: 13px;
+            font-size: 12px;
         }
 
         .semester-filter {
@@ -83,6 +85,8 @@
             cursor: pointer;
             font-size: 14px;
             transition: all 0.3s ease;
+            text-decoration: none;
+            color: #1e293b;
         }
 
         .filter-badge.active {
@@ -123,6 +127,133 @@
             color: #1e293b;
             font-weight: bold;
         }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: #1e293b;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #64748b;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            font-weight: bold;
+            color: #1e293b;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            padding: 10px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .alert-message {
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-success {
+            background: #dcfce7;
+            border: 1px solid #86efac;
+            color: #166534;
+        }
+
+        .alert-danger {
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            color: #991b1b;
+        }
+
+        @media (max-width: 768px) {
+            .course-actions {
+                flex-direction: column;
+            }
+            .course-actions .btn {
+                flex: 1;
+            }
+        }
     </style>
 </asp:Content>
 
@@ -133,7 +264,7 @@
         <h3 style="margin: 0 0 5px 0; color: #1e293b; font-weight: bold;">
             <i class="fa fa-book" style="color: #0d6efd; margin-right: 10px;"></i>My Courses
         </h3>
-        <p style="margin: 0; color: #64748b; font-size: 14px;">Manage your assigned courses and view student information</p>
+        <p style="margin: 0; color: #64748b; font-size: 14px;">Manage your assigned courses, materials, and announcements</p>
     </div>
 
     <!-- Filters Section -->
@@ -141,9 +272,7 @@
         <h5><i class="fa fa-filter" style="margin-right: 8px;"></i>Filter by Semester</h5>
         <div class="semester-filter">
             <asp:LinkButton ID="btnFilterAll" runat="server" CssClass="filter-badge active" 
-                OnClick="FilterCourses_Click" CommandArgument="0">
-                All Semesters
-            </asp:LinkButton>
+                OnClick="btnFilterAll_Click" Text="All Semesters" />
             <asp:PlaceHolder ID="phSemesterFilters" runat="server" />
         </div>
     </div>
@@ -185,6 +314,18 @@
                            class="btn btn-sm btn-outline-success">
                             <i class="fa fa-star"></i> Grades
                         </a>
+
+                        <!-- New: navigate to course-specific Materials page -->
+                        <a href='<%# "LecturerMaterials.aspx?CourseID=" + Eval("CourseId") %>' 
+                           class="btn btn-sm btn-outline-warning">
+                            <i class="fa fa-file"></i> Materials
+                        </a>
+
+                        <!-- New: navigate to course-specific Announcements page -->
+                        <a href='<%# "LecturerAnnouncements.aspx?CourseID=" + Eval("CourseId") %>' 
+                           class="btn btn-sm btn-outline-info">
+                            <i class="fa fa-bullhorn"></i> Announce
+                        </a>
                     </div>
                 </div>
             </ItemTemplate>
@@ -195,7 +336,7 @@
     <asp:Panel ID="pnlNoCourses" runat="server" Visible="false" CssClass="no-courses">
         <i class="fa fa-book"></i>
         <h5 style="margin: 0 0 10px 0; color: #1e293b;">No Courses Found</h5>
-        <p style="margin: 0;">You don't have any courses assigned for this semester.</p>
+        <p style="margin: 0;">You don't have any courses assigned.</p>
     </asp:Panel>
 
 </asp:Content>
