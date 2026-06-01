@@ -11,17 +11,17 @@ namespace SIMS.Lecturer
 {
 
 
-    public partial class LecturerAttendance
+    public partial class LecturerAssessments
     {
 
         /// <summary>
-        /// litCourseName control.
+        /// litCourseHeader control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Literal litCourseName;
+        protected global::System.Web.UI.WebControls.Literal litCourseHeader;
 
         /// <summary>
         /// pnlSuccess control.
@@ -60,103 +60,76 @@ namespace SIMS.Lecturer
         protected global::System.Web.UI.WebControls.Literal litErrorMsg;
 
         /// <summary>
-        /// litPresentCount control.
+        /// litCourseName control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Literal litPresentCount;
+        protected global::System.Web.UI.WebControls.Literal litCourseName;
 
         /// <summary>
-        /// litAbsentCount control.
+        /// litAcademicYear control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Literal litAbsentCount;
+        protected global::System.Web.UI.WebControls.Literal litAcademicYear;
 
         /// <summary>
-        /// litTotalCount control.
+        /// txtAssessmentName control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Literal litTotalCount;
+        protected global::System.Web.UI.WebControls.TextBox txtAssessmentName;
 
         /// <summary>
-        /// txtAttendanceDate control.
+        /// txtMaxMark control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtAttendanceDate;
+        protected global::System.Web.UI.WebControls.TextBox txtMaxMark;
 
         /// <summary>
-        /// ddlStatusFilter control.
+        /// ddlSemester control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.DropDownList ddlStatusFilter;
+        protected global::System.Web.UI.WebControls.DropDownList ddlSemester;
 
         /// <summary>
-        /// btnRefresh control.
+        /// txtWeightage control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnRefresh;
+        protected global::System.Web.UI.WebControls.TextBox txtWeightage;
 
         /// <summary>
-        /// btnMarkAllPresent control.
+        /// btnCreate control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnMarkAllPresent;
+        protected global::System.Web.UI.WebControls.Button btnCreate;
 
         /// <summary>
-        /// btnMarkAllAbsent control.
+        /// btnClear control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnMarkAllAbsent;
-
-        /// <summary>
-        /// btnSaveAttendance control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnSaveAttendance;
-
-        /// <summary>
-        /// rptAttendance control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Repeater rptAttendance;
-
-        /// <summary>
-        /// pnlNoData control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Panel pnlNoData;
+        protected global::System.Web.UI.WebControls.Button btnClear;
 
         /// <summary>
         /// hidCourseId control.
@@ -177,12 +150,21 @@ namespace SIMS.Lecturer
         protected global::System.Web.UI.WebControls.HiddenField hidAcademicYear;
 
         /// <summary>
-        /// hidSemester control.
+        /// rptAssessments control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.HiddenField hidSemester;
+        protected global::System.Web.UI.WebControls.Repeater rptAssessments;
+
+        /// <summary>
+        /// pnlNoAssessments control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Panel pnlNoAssessments;
     }
 }

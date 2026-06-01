@@ -326,6 +326,10 @@
                            class="btn btn-sm btn-outline-info">
                             <i class="fa fa-bullhorn"></i> Announce
                         </a>
+                        <a href='<%# "LecturerAssessment.aspx?CourseID=" + Eval("CourseId") %>' 
+                           class="btn btn-sm btn-outline-secondary">
+                            <i class="fa fa-clipboard"></i> Assessments
+                        </a>
                     </div>
                 </div>
             </ItemTemplate>
