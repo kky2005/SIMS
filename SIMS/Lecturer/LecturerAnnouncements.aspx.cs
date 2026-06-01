@@ -15,284 +15,256 @@ namespace SIMS.Lecturer
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            // Ensure user is authenticated
             EnsureAuthenticated();
 
             if (!IsPostBack)
             {
-                LoadCourses();
-                LoadAnnouncements();
+                // Require CourseID (same UX as Attendance/Grades)
+                if (string.IsNullOrEmpty(Request.QueryString["CourseID"]) ||
+                    !int.TryParse(Request.QueryString["CourseID"], out int courseId))
+                {
+                    Response.Redirect("LecturerCourses.aspx");
+                    return;
+                }
+
+                // Verify lecturer teaches this course
+                if (!LecturerTeachesCourse(courseId))
+                {
+                    Response.Redirect("LecturerCourses.aspx");
+                    return;
+                }
+
+                hidCourseId.Value = courseId.ToString();
+
+                LoadCourseHeader(courseId);
+                LoadAnnouncements(courseId);
             }
         }
 
-        /// <summary>
-        /// Load lecturer's courses into dropdown
-        /// </summary>
-        void LoadCourses()
+        private bool LecturerTeachesCourse(int courseId)
         {
             try
             {
-                int lecturerId = CurrentLecturerId;
-                int currentYear = DateTime.Now.Year;
-                int currentSemester = GetCurrentSemester();
-
-                SqlConnection conn = new SqlConnection(connStr);
-
-                string sql = @"
-                    SELECT DISTINCT
-                        c.CourseId,
-                        c.CourseCode,
-                        c.CourseName
-                    FROM CourseAssignments ca
-                    INNER JOIN Courses c ON c.CourseId = ca.CourseId
-                    WHERE ca.LecturerId = @LecturerId
-                      AND ca.AcademicYear = @Year
-                      AND ca.Semester = @Semester
-                    ORDER BY c.CourseCode";
-
-                SqlCommand cmd = new SqlCommand(sql, conn);
-                cmd.Parameters.AddWithValue("@LecturerId", lecturerId);
-                cmd.Parameters.AddWithValue("@Year", currentYear);
-                cmd.Parameters.AddWithValue("@Semester", currentSemester);
-
-                SqlDataAdapter da = new SqlDataAdapter(cmd);
-                DataTable dt = new DataTable();
-                da.Fill(dt);
-
-                ddlCourse.DataSource = dt;
-                ddlCourse.DataTextField = "CourseName";
-                ddlCourse.DataValueField = "CourseId";
-                ddlCourse.DataBind();
-
-                ddlCourse.Items.Insert(0, new ListItem("-- Select Course --", ""));
+                using (SqlConnection conn = new SqlConnection(connStr))
+                {
+                    string sql = "SELECT COUNT(1) FROM CourseAssignments WHERE CourseId = @CourseId AND LecturerId = @LecturerId";
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@CourseId", courseId);
+                        cmd.Parameters.AddWithValue("@LecturerId", CurrentLecturerId);
+                        conn.Open();
+                        int c = Convert.ToInt32(cmd.ExecuteScalar());
+                        conn.Close();
+                        return c > 0;
+                    }
+                }
             }
-            catch (Exception ex)
+            catch
             {
-                System.Diagnostics.Debug.WriteLine($"Error loading courses: {ex.Message}");
+                return false;
             }
         }
 
-        /// <summary>
-        /// Load all announcements posted by this lecturer
-        /// </summary>
-        void LoadAnnouncements()
+        private void LoadCourseHeader(int courseId)
         {
             try
             {
-                int userId = CurrentUserId;
-
-                SqlConnection conn = new SqlConnection(connStr);
-
-                string sql = @"
-                    SELECT
-                        a.AnnouncementId,
-                        a.Title,
-                        a.Body,
-                        CASE
-                            WHEN a.CourseId IS NULL THEN 'AllStudents'
-                            ELSE 'CourseStudents'
-                        END AS Audience,
-                        a.PublishedAt,
-                        CASE
-                            WHEN a.ExpiresAt IS NULL THEN 'No expiry'
-                            WHEN a.ExpiresAt > GETDATE() THEN 'Active'
-                            ELSE 'Expired'
-                        END AS Status,
-                        a.ExpiresAt
-                    FROM Announcements a
-                    WHERE a.AuthorUserId = @UserId
-                    ORDER BY a.PublishedAt DESC";
-
-                SqlCommand cmd = new SqlCommand(sql, conn);
-                cmd.Parameters.AddWithValue("@UserId", userId);
-
-                SqlDataAdapter da = new SqlDataAdapter(cmd);
-                DataTable dt = new DataTable();
-                da.Fill(dt);
-
-                rptAnnouncements.DataSource = dt;
-                rptAnnouncements.DataBind();
-
-                // Show message if no announcements
-                pnlNoAnnouncements.Visible = (dt.Rows.Count == 0);
+                using (SqlConnection conn = new SqlConnection(connStr))
+                {
+                    string sql = "SELECT CourseCode, CourseName FROM Courses WHERE CourseId = @CourseId";
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@CourseId", courseId);
+                        conn.Open();
+                        using (SqlDataReader r = cmd.ExecuteReader())
+                        {
+                            if (r.Read())
+                            {
+                                string code = r["CourseCode"].ToString();
+                                string name = r["CourseName"].ToString();
+                                litCourseName.Text = $"{code} - {name}";
+                                litCourseHeader.Text = $"{code} - {name} (Announcements)";
+                            }
+                        }
+                        conn.Close();
+                    }
+                }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error loading announcements: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine("Error loading course header: " + ex.Message);
+            }
+        }
+
+        private void LoadAnnouncements(int courseId)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(connStr))
+                {
+                    string sql = @"
+                        SELECT AnnouncementId, Title, Body, Audience, PublishedAt, ExpiresAt
+                        FROM Announcements
+                        WHERE CourseId = @CourseId
+                          AND AuthorUserId = @AuthorUserId
+                        ORDER BY PublishedAt DESC";
+
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@CourseId", courseId);
+                        cmd.Parameters.AddWithValue("@AuthorUserId", CurrentUserId);
+
+                        SqlDataAdapter da = new SqlDataAdapter(cmd);
+                        DataTable dt = new DataTable();
+                        da.Fill(dt);
+
+                        rptAnnouncements.DataSource = dt;
+                        rptAnnouncements.DataBind();
+
+                        pnlNoAnnouncements.Visible = (dt.Rows.Count == 0);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Error loading announcements: " + ex.Message);
                 pnlNoAnnouncements.Visible = true;
             }
         }
 
-        /// <summary>
-        /// Publish a new announcement
-        /// </summary>
         protected void btnPublish_Click(object sender, EventArgs e)
         {
-            // Validation
-            if (string.IsNullOrWhiteSpace(txtTitle.Text))
-            {
-                ShowAlert("Please enter an announcement title.", "error");
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(txtBody.Text))
-            {
-                ShowAlert("Please enter announcement content.", "error");
-                return;
-            }
-
-            if (txtBody.Text.Length > 5000)
-            {
-                ShowAlert("Announcement content cannot exceed 5000 characters.", "error");
-                return;
-            }
-
             try
             {
-                int userId = CurrentUserId;
-                int? courseId = null;
+                int courseId = int.Parse(hidCourseId.Value);
 
-                // Check if a specific course is selected
-                if (!string.IsNullOrEmpty(ddlCourse.SelectedValue) && ddlCourse.SelectedValue != "")
+                if (string.IsNullOrWhiteSpace(txtTitle.Text))
                 {
-                    courseId = int.Parse(ddlCourse.SelectedValue);
+                    ShowError("Please enter an announcement title.");
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(txtBody.Text))
+                {
+                    ShowError("Please enter announcement content.");
+                    return;
                 }
 
                 DateTime? expiresAt = null;
                 if (!string.IsNullOrWhiteSpace(txtExpiresAt.Text))
                 {
-                    if (DateTime.TryParse(txtExpiresAt.Text, out DateTime expDate))
+                    if (DateTime.TryParse(txtExpiresAt.Text, out DateTime dt))
+                        expiresAt = dt;
+                    else
                     {
-                        expiresAt = expDate;
+                        ShowError("Invalid expiration date.");
+                        return;
                     }
                 }
 
-                SqlConnection conn = new SqlConnection(connStr);
+                using (SqlConnection conn = new SqlConnection(connStr))
+                {
+                    string sql = @"
+                        INSERT INTO Announcements
+                        (AuthorUserId, CourseId, Title, Body, Audience, PublishedAt, ExpiresAt)
+                        VALUES
+                        (@AuthorUserId, @CourseId, @Title, @Body, @Audience, GETDATE(), @ExpiresAt)";
 
-                string sql = @"
-                    INSERT INTO Announcements
-                    (AuthorUserId, CourseId, Title, Body, Audience, PublishedAt, ExpiresAt)
-                    VALUES
-                    (@AuthorUserId, @CourseId, @Title, @Body, @Audience, GETDATE(), @ExpiresAt)";
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@AuthorUserId", CurrentUserId);
+                        cmd.Parameters.AddWithValue("@CourseId", courseId);
+                        cmd.Parameters.AddWithValue("@Title", txtTitle.Text.Trim());
+                        cmd.Parameters.AddWithValue("@Body", txtBody.Text.Trim());
+                        cmd.Parameters.AddWithValue("@Audience", "CourseStudents");
+                        cmd.Parameters.AddWithValue("@ExpiresAt", expiresAt.HasValue ? (object)expiresAt.Value : DBNull.Value);
 
-                SqlCommand cmd = new SqlCommand(sql, conn);
-                cmd.Parameters.AddWithValue("@AuthorUserId", userId);
-                cmd.Parameters.AddWithValue("@CourseId", courseId.HasValue ? (object)courseId : DBNull.Value);
-                cmd.Parameters.AddWithValue("@Title", txtTitle.Text);
-                cmd.Parameters.AddWithValue("@Body", txtBody.Text);
-                cmd.Parameters.AddWithValue("@Audience", courseId.HasValue ? "CourseStudents" : "AllStudents");
-                cmd.Parameters.AddWithValue("@ExpiresAt", expiresAt.HasValue ? (object)expiresAt : DBNull.Value);
+                        conn.Open();
+                        cmd.ExecuteNonQuery();
+                        conn.Close();
+                    }
+                }
 
-                conn.Open();
-                cmd.ExecuteNonQuery();
-                conn.Close();
+                litSuccessMsg.Text = "Announcement posted successfully!";
+                pnlSuccess.Visible = true;
+                pnlError.Visible = false;
 
-                ShowAlert("Announcement posted successfully!", "success");
-                ClearAnnouncementForm();
-                LoadAnnouncements();
+                txtTitle.Text = "";
+                txtBody.Text = "";
+                txtExpiresAt.Text = "";
+
+                LoadAnnouncements(courseId);
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error posting announcement: {ex.Message}");
-                ShowAlert("Error posting announcement: " + ex.Message, "error");
+                System.Diagnostics.Debug.WriteLine("Error posting announcement: " + ex.Message);
+                ShowError("Error posting announcement: " + ex.Message);
             }
         }
 
-        /// <summary>
-        /// Delete announcement
-        /// </summary>
         protected void btnDelete_Click(object sender, EventArgs e)
         {
             try
             {
-                if (int.TryParse(((Button)sender).CommandArgument, out int announcementId))
+                if (!int.TryParse(((Button)sender).CommandArgument, out int announcementId))
+                    return;
+
+                using (SqlConnection conn = new SqlConnection(connStr))
                 {
-                    SqlConnection conn = new SqlConnection(connStr);
+                    // Ensure the current user is the author of this announcement
+                    string checkSql = "SELECT COUNT(1) FROM Announcements WHERE AnnouncementId = @Id AND AuthorUserId = @AuthorUserId";
+                    using (SqlCommand checkCmd = new SqlCommand(checkSql, conn))
+                    {
+                        checkCmd.Parameters.AddWithValue("@Id", announcementId);
+                        checkCmd.Parameters.AddWithValue("@AuthorUserId", CurrentUserId);
+                        conn.Open();
+                        int exists = Convert.ToInt32(checkCmd.ExecuteScalar());
+                        conn.Close();
 
-                    string sql = "DELETE FROM Announcements WHERE AnnouncementId = @AnnouncementId";
+                        if (exists == 0)
+                        {
+                            ShowError("You are not authorized to delete this announcement.");
+                            return;
+                        }
+                    }
 
-                    SqlCommand cmd = new SqlCommand(sql, conn);
-                    cmd.Parameters.AddWithValue("@AnnouncementId", announcementId);
-
-                    conn.Open();
-                    cmd.ExecuteNonQuery();
-                    conn.Close();
-
-                    ShowAlert("Announcement deleted successfully!", "success");
-                    LoadAnnouncements();
+                    string delSql = "DELETE FROM Announcements WHERE AnnouncementId = @Id";
+                    using (SqlCommand delCmd = new SqlCommand(delSql, conn))
+                    {
+                        delCmd.Parameters.AddWithValue("@Id", announcementId);
+                        conn.Open();
+                        delCmd.ExecuteNonQuery();
+                        conn.Close();
+                    }
                 }
+
+                litSuccessMsg.Text = "Announcement deleted.";
+                pnlSuccess.Visible = true;
+                pnlError.Visible = false;
+
+                LoadAnnouncements(int.Parse(hidCourseId.Value));
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error deleting announcement: {ex.Message}");
-                ShowAlert("Error deleting announcement: " + ex.Message, "error");
+                System.Diagnostics.Debug.WriteLine("Error deleting announcement: " + ex.Message);
+                ShowError("Error deleting announcement: " + ex.Message);
             }
         }
 
-        /// <summary>
-        /// Edit announcement (placeholder - implement as needed)
-        /// </summary>
-        protected void btnEdit_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                if (int.TryParse(((Button)sender).CommandArgument, out int announcementId))
-                {
-                    // TODO: Implement edit functionality
-                    ShowAlert("Edit functionality coming soon.", "error");
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error editing announcement: {ex.Message}");
-                ShowAlert("Error: " + ex.Message, "error");
-            }
-        }
-
-        /// <summary>
-        /// Clear form button
-        /// </summary>
         protected void btnClear_Click(object sender, EventArgs e)
-        {
-            ClearAnnouncementForm();
-        }
-
-        /// <summary>
-        /// Repeater item data bound event
-        /// </summary>
-        protected void rptAnnouncements_ItemDataBound(object sender, RepeaterItemEventArgs e)
-        {
-            // Custom binding logic can be added here if needed
-        }
-
-        /// <summary>
-        /// Clear form fields
-        /// </summary>
-        void ClearAnnouncementForm()
         {
             txtTitle.Text = "";
             txtBody.Text = "";
-            ddlCourse.SelectedIndex = 0;
             txtExpiresAt.Text = "";
+            pnlSuccess.Visible = false;
+            pnlError.Visible = false;
         }
 
-        /// <summary>
-        /// Show alert messages using Panel controls
-        /// </summary>
-        void ShowAlert(string message, string type)
+        private void ShowError(string message)
         {
-            if (type == "success")
-            {
-                litSuccessMsg.Text = message;
-                pnlSuccess.Visible = true;
-                pnlError.Visible = false;
-            }
-            else
-            {
-                litErrorMsg.Text = message;
-                pnlError.Visible = true;
-                pnlSuccess.Visible = false;
-            }
+            pnlError.Visible = true;
+            litErrorMsg.Text = message;
+            pnlSuccess.Visible = false;
         }
     }
 }

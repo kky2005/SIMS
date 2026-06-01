@@ -15,6 +15,15 @@ namespace SIMS.Lecturer
     {
 
         /// <summary>
+        /// litCourseHeader control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Literal litCourseHeader;
+
+        /// <summary>
         /// pnlSuccess control.
         /// </summary>
         /// <remarks>
@@ -51,22 +60,13 @@ namespace SIMS.Lecturer
         protected global::System.Web.UI.WebControls.Literal litErrorMsg;
 
         /// <summary>
-        /// ddlCourse control.
+        /// litCourseName control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.DropDownList ddlCourse;
-
-        /// <summary>
-        /// ddlAudience control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.DropDownList ddlAudience;
+        protected global::System.Web.UI.WebControls.Literal litCourseName;
 
         /// <summary>
         /// txtTitle control.
@@ -114,6 +114,15 @@ namespace SIMS.Lecturer
         protected global::System.Web.UI.WebControls.Button btnClear;
 
         /// <summary>
+        /// hidCourseId control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HiddenField hidCourseId;
+
+        /// <summary>
         /// rptAnnouncements control.
         /// </summary>
         /// <remarks>
@@ -130,14 +139,5 @@ namespace SIMS.Lecturer
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Panel pnlNoAnnouncements;
-
-        /// <summary>
-        /// hidEditingAnnouncementId control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.HiddenField hidEditingAnnouncementId;
     }
 }

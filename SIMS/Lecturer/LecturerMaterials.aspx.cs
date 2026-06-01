@@ -3,205 +3,180 @@ using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 using System.IO;
+using System.Web.UI;
 using System.Web.UI.WebControls;
 
 namespace SIMS.Lecturer
 {
     public partial class LecturerMaterials : LecturerBase
     {
-        string connStr = ConfigurationManager
-            .ConnectionStrings["SIMS_DB"]
-            .ConnectionString;
+        string connStr = ConfigurationManager.ConnectionStrings["SIMS_DB"].ConnectionString;
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            // Ensure user is authenticated
             EnsureAuthenticated();
+
+            // required for FileUpload to work reliably
+            if (Page.Form != null && string.IsNullOrEmpty(Page.Form.Enctype))
+                Page.Form.Enctype = "multipart/form-data";
 
             if (!IsPostBack)
             {
-                LoadAcademicYears();
-                LoadSemesters();
-                LoadCourses();
-                LoadMaterials();    
+                // Expect CourseID from query string (like Attendance/Grades)
+                if (string.IsNullOrEmpty(Request.QueryString["CourseID"]) || !int.TryParse(Request.QueryString["CourseID"], out int courseId))
+                {
+                    Response.Redirect("LecturerCourses.aspx");
+                    return;
+                }
+
+                // Verify lecturer has assignment for this course (any year/semester)
+                if (!LecturerTeachesCourse(courseId))
+                {
+                    // unauthorized or no assignment
+                    Response.Redirect("LecturerCourses.aspx");
+                    return;
+                }
+
+                hidCourseId.Value = courseId.ToString();
+
+                LoadCourseHeader(courseId);
+                // derive the most recent academic year & semester for this lecturer assignment
+                var assigned = GetMostRecentAssignment(courseId);
+                int academicYear = assigned.academicYear > 0 ? assigned.academicYear : DateTime.Now.Year;
+                int semester = assigned.semester > 0 ? assigned.semester : GetCurrentSemester();
+
+                hidAcademicYear.Value = academicYear.ToString();
+                hidSemester.Value = semester.ToString();
+
+                litAcademicYear.Text = academicYear.ToString();
+                litSemester.Text = semester.ToString();
+
+                LoadMaterials();
             }
         }
 
-        /// <summary>
-        /// Dynamically loads available academic years from the database for the current lecturer's courses.
-        /// </summary>
-        private void LoadAcademicYears()
+        private void LoadCourseHeader(int courseId)
         {
             try
             {
-                int lecturerId = CurrentLecturerId;
-
-                SqlConnection conn = new SqlConnection(connStr);
-
-                string sql = @"
-                    SELECT DISTINCT ca.AcademicYear
-                    FROM CourseAssignments ca
-                    WHERE ca.LecturerId = @LecturerId
-                    ORDER BY ca.AcademicYear DESC";
-
-                SqlCommand cmd = new SqlCommand(sql, conn);
-                cmd.Parameters.AddWithValue("@LecturerId", lecturerId);
-
-                SqlDataAdapter da = new SqlDataAdapter(cmd);
-                DataTable dt = new DataTable();
-                da.Fill(dt);
-
-                ddlAcademicYear.DataSource = dt;
-                ddlAcademicYear.DataTextField = "AcademicYear";
-                ddlAcademicYear.DataValueField = "AcademicYear";
-                ddlAcademicYear.DataBind();
-
-                // Select current year by default
-                int currentYear = DateTime.Now.Year;
-                if (ddlAcademicYear.Items.FindByValue(currentYear.ToString()) != null)
+                using (SqlConnection conn = new SqlConnection(connStr))
                 {
-                    ddlAcademicYear.SelectedValue = currentYear.ToString();
+                    string sql = "SELECT CourseName, CourseCode FROM Courses WHERE CourseId = @CourseId";
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@CourseId", courseId);
+                        conn.Open();
+                        using (SqlDataReader r = cmd.ExecuteReader())
+                        {
+                            if (r.Read())
+                            {
+                                string name = r["CourseName"].ToString();
+                                string code = r["CourseCode"].ToString();
+                                litCourseName.Text = $"{code} - {name}";
+                                litCourseHeader.Text = $"{code} - {name} (Materials)";
+                            }
+                        }
+                        conn.Close();
+                    }
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error loading academic years: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error loading course header: {ex.Message}");
             }
         }
 
-        /// <summary>
-        /// Dynamically loads available semesters from the database for the current lecturer's courses.
-        /// </summary>
-        private void LoadSemesters()
+        private (int academicYear, int semester) GetMostRecentAssignment(int courseId)
         {
             try
             {
-                int lecturerId = CurrentLecturerId;
-
-                SqlConnection conn = new SqlConnection(connStr);
-
-                string sql = @"
-                    SELECT DISTINCT c.Semester
-                    FROM CourseAssignments ca
-                    INNER JOIN Courses c ON c.CourseId = ca.CourseId
-                    WHERE ca.LecturerId = @LecturerId
-                    ORDER BY c.Semester ASC";
-
-                SqlCommand cmd = new SqlCommand(sql, conn);
-                cmd.Parameters.AddWithValue("@LecturerId", lecturerId);
-
-                SqlDataAdapter da = new SqlDataAdapter(cmd);
-                DataTable dt = new DataTable();
-                da.Fill(dt);
-
-                ddlSemester.Items.Clear();
-                foreach (DataRow row in dt.Rows)
+                using (SqlConnection conn = new SqlConnection(connStr))
                 {
-                    int semester = (int)row["Semester"];
-                    ddlSemester.Items.Add(new ListItem($"Semester {semester}", semester.ToString()));
-                }
-
-                // Select current semester by default
-                int currentSemester = GetCurrentSemester();
-                if (ddlSemester.Items.FindByValue(currentSemester.ToString()) != null)
-                {
-                    ddlSemester.SelectedValue = currentSemester.ToString();
-                }
-                else if (ddlSemester.Items.Count > 0)
-                {
-                    ddlSemester.SelectedIndex = 0;
+                    string sql = @"
+                        SELECT TOP 1 AcademicYear, Semester
+                        FROM CourseAssignments
+                        WHERE CourseId = @CourseId
+                          AND LecturerId = @LecturerId
+                        ORDER BY AcademicYear DESC, Semester DESC, AssignedDate DESC";
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@CourseId", courseId);
+                        cmd.Parameters.AddWithValue("@LecturerId", CurrentLecturerId);
+                        conn.Open();
+                        using (SqlDataReader r = cmd.ExecuteReader())
+                        {
+                            if (r.Read())
+                            {
+                                int y = r["AcademicYear"] != DBNull.Value ? Convert.ToInt32(r["AcademicYear"]) : 0;
+                                int s = r["Semester"] != DBNull.Value ? Convert.ToInt32(r["Semester"]) : 0;
+                                return (y, s);
+                            }
+                        }
+                        conn.Close();
+                    }
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error loading semesters: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error getting assignment: {ex.Message}");
             }
+            return (0, 0);
         }
 
-        void LoadCourses()
+        private bool LecturerTeachesCourse(int courseId)
         {
             try
             {
-                int lecturerId = CurrentLecturerId;
-                int currentYear = DateTime.Now.Year;
-
-                SqlConnection conn = new SqlConnection(connStr);
-
-                string sql = @"
-                    SELECT DISTINCT
-                        c.CourseId,
-                        c.CourseCode,
-                        c.CourseName
-                    FROM CourseAssignments ca
-                    INNER JOIN Courses c ON c.CourseId = ca.CourseId
-                    WHERE ca.LecturerId = @LecturerId
-                      AND ca.AcademicYear = @Year
-                    ORDER BY c.CourseCode ASC";
-
-                SqlCommand cmd = new SqlCommand(sql, conn);
-                cmd.Parameters.AddWithValue("@LecturerId", lecturerId);
-                cmd.Parameters.AddWithValue("@Year", currentYear);
-
-                SqlDataAdapter da = new SqlDataAdapter(cmd);
-                DataTable dt = new DataTable();
-                da.Fill(dt);
-
-                ddlCourse.DataSource = dt;
-                ddlCourse.DataTextField = "CourseName";
-                ddlCourse.DataValueField = "CourseId";
-                ddlCourse.DataBind();
+                using (SqlConnection conn = new SqlConnection(connStr))
+                {
+                    string sql = "SELECT COUNT(1) FROM CourseAssignments WHERE CourseId = @CourseId AND LecturerId = @LecturerId";
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@CourseId", courseId);
+                        cmd.Parameters.AddWithValue("@LecturerId", CurrentLecturerId);
+                        conn.Open();
+                        int c = Convert.ToInt32(cmd.ExecuteScalar());
+                        conn.Close();
+                        return c > 0;
+                    }
+                }
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error loading courses: {ex.Message}");
-            }
+            catch { return false; }
         }
 
         void LoadMaterials()
         {
             try
             {
-                int lecturerId = CurrentLecturerId;
-                int currentYear = DateTime.Now.Year;
+                int courseId = int.Parse(hidCourseId.Value);
+                int year = int.TryParse(hidAcademicYear.Value, out int y) ? y : DateTime.Now.Year;
+                int semester = int.TryParse(hidSemester.Value, out int s) ? s : GetCurrentSemester();
 
-                SqlConnection conn = new SqlConnection(connStr);
-
-                string sql = @"
-                    SELECT
-                        cm.MaterialId,
-                        cm.Title,
-                        cm.FileType,
-                        c.CourseName,
-                        cm.Semester,
-                        cm.IsVisible,
-                        cm.UploadedAt,
-                        cm.FileSizeKB
-                    FROM CourseMaterials cm
-                    INNER JOIN Courses c ON c.CourseId = cm.CourseId
-                    INNER JOIN CourseAssignments ca 
-                        ON ca.CourseId = cm.CourseId
-                        AND ca.AcademicYear = cm.AcademicYear
-                    WHERE ca.LecturerId = @LecturerId
-                      AND cm.AcademicYear = @Year
-                    ORDER BY cm.UploadedAt DESC";
-
-                SqlCommand cmd = new SqlCommand(sql, conn);
-                cmd.Parameters.AddWithValue("@LecturerId", lecturerId);
-                cmd.Parameters.AddWithValue("@Year", currentYear);
-
-                SqlDataAdapter da = new SqlDataAdapter(cmd);
-                DataTable dt = new DataTable();
-                da.Fill(dt);
-
-                if (dt.Rows.Count > 0)
+                using (SqlConnection conn = new SqlConnection(connStr))
                 {
-                    rptMaterials.DataSource = dt;
-                    rptMaterials.DataBind();
-                    pnlNoMaterials.Visible = false;
-                }
-                else
-                {
-                    pnlNoMaterials.Visible = true;
+                    string sql = @"
+                        SELECT MaterialId, Title, Description, FileUrl, FileType, FileSizeKB, AcademicYear, Semester, IsVisible, UploadedAt
+                        FROM CourseMaterials
+                        WHERE CourseId = @CourseId
+                          AND AcademicYear = @Year
+                          AND Semester = @Semester
+                        ORDER BY UploadedAt DESC";
+
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@CourseId", courseId);
+                        cmd.Parameters.AddWithValue("@Year", year);
+                        cmd.Parameters.AddWithValue("@Semester", semester);
+
+                        SqlDataAdapter da = new SqlDataAdapter(cmd);
+                        DataTable dt = new DataTable();
+                        da.Fill(dt);
+
+                        rptMaterials.DataSource = dt;
+                        rptMaterials.DataBind();
+
+                        pnlNoMaterials.Visible = (dt.Rows.Count == 0);
+                    }
                 }
             }
             catch (Exception ex)
@@ -213,87 +188,79 @@ namespace SIMS.Lecturer
 
         protected void btnUpload_Click(object sender, EventArgs e)
         {
-            if (!fuMaterial.HasFile)
-            {
-                ShowError("Please select a file to upload.");
-                return;
-            }
-
-            if (string.IsNullOrEmpty(txtTitle.Text))
-            {
-                ShowError("Please enter a material title.");
-                return;
-            }
-
             try
             {
-                // Validate file type
-                string[] allowedExtensions = { ".pdf", ".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx", ".txt", ".zip" };
-                string fileExtension = Path.GetExtension(fuMaterial.FileName).ToLower();
+                int courseId = int.Parse(hidCourseId.Value);
+                int year = int.TryParse(hidAcademicYear.Value, out int y) ? y : DateTime.Now.Year;
+                int semester = int.TryParse(hidSemester.Value, out int s) ? s : GetCurrentSemester();
 
-                if (Array.IndexOf(allowedExtensions, fileExtension) == -1)
+                if (!fuMaterial.HasFile)
                 {
-                    ShowError("File type not allowed. Allowed types: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, ZIP");
+                    ShowMaterialError("Please select a file to upload.");
                     return;
                 }
 
-                // Check file size (50MB max)
+                if (string.IsNullOrWhiteSpace(txtTitle.Text))
+                {
+                    ShowMaterialError("Please enter a material title.");
+                    return;
+                }
+
+                string[] allowed = { ".pdf", ".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx", ".txt", ".zip" };
+                string ext = Path.GetExtension(fuMaterial.FileName).ToLower();
+                if (Array.IndexOf(allowed, ext) < 0)
+                {
+                    ShowMaterialError("File type not allowed.");
+                    return;
+                }
+
                 if (fuMaterial.PostedFile.ContentLength > 52428800)
                 {
-                    ShowError("File size exceeds 50MB limit.");
+                    ShowMaterialError("File size exceeds 50MB.");
                     return;
                 }
 
-                int lecturerId = CurrentLecturerId;
-                int courseId = int.Parse(ddlCourse.SelectedValue);
-                int semester = int.Parse(ddlSemester.SelectedValue);
-                int academicYear = int.Parse(ddlAcademicYear.SelectedValue);
+                string fileName = Guid.NewGuid().ToString() + ext;
+                string folder = Server.MapPath("~/UploadedMaterials/");
+                if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
+                string path = Path.Combine(folder, fileName);
+                fuMaterial.SaveAs(path);
 
-                // Generate unique filename
-                string fileName = Guid.NewGuid().ToString() + fileExtension;
-                string filePath = Server.MapPath("~/UploadedMaterials/") + fileName;
-
-                // Create directory if not exists
-                if (!Directory.Exists(Server.MapPath("~/UploadedMaterials/")))
+                using (SqlConnection conn = new SqlConnection(connStr))
                 {
-                    Directory.CreateDirectory(Server.MapPath("~/UploadedMaterials/"));
+                    string sql = @"
+                        INSERT INTO CourseMaterials
+                        (CourseId, UploadedBy, Title, Description, FileUrl, FileType, FileSizeKB, AcademicYear, Semester, IsVisible, UploadedAt)
+                        VALUES (@CourseId, @UploadedBy, @Title, @Description, @FileUrl, @FileType, @FileSizeKB, @AcademicYear, @Semester, @IsVisible, GETDATE())";
+
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@CourseId", courseId);
+                        cmd.Parameters.AddWithValue("@UploadedBy", CurrentUserId);
+                        cmd.Parameters.AddWithValue("@Title", txtTitle.Text.Trim());
+                        cmd.Parameters.AddWithValue("@Description", string.IsNullOrWhiteSpace(txtDescription.Text) ? "" : txtDescription.Text.Trim());
+                        cmd.Parameters.AddWithValue("@FileUrl", "/UploadedMaterials/" + fileName);
+                        cmd.Parameters.AddWithValue("@FileType", ext.TrimStart('.').ToUpper());
+                        cmd.Parameters.AddWithValue("@FileSizeKB", fuMaterial.PostedFile.ContentLength / 1024);
+                        cmd.Parameters.AddWithValue("@AcademicYear", year);
+                        cmd.Parameters.AddWithValue("@Semester", semester);
+                        cmd.Parameters.AddWithValue("@IsVisible", chkIsVisible.Checked ? 1 : 0);
+
+                        conn.Open();
+                        cmd.ExecuteNonQuery();
+                        conn.Close();
+                    }
                 }
 
-                // Save file
-                fuMaterial.SaveAs(filePath);
-
-                // Insert into database
-                SqlConnection conn = new SqlConnection(connStr);
-
-                string sql = @"
-                    INSERT INTO CourseMaterials 
-                    (CourseId, UploadedBy, Title, Description, FileUrl, FileType, FileSizeKB, AcademicYear, Semester, IsVisible, UploadedAt)
-                    VALUES (@CourseId, @UploadedBy, @Title, @Description, @FileUrl, @FileType, @FileSizeKB, @AcademicYear, @Semester, @IsVisible, @UploadedAt)";
-
-                SqlCommand cmd = new SqlCommand(sql, conn);
-                cmd.Parameters.AddWithValue("@CourseId", courseId);
-                cmd.Parameters.AddWithValue("@UploadedBy", CurrentUserId);
-                cmd.Parameters.AddWithValue("@Title", txtTitle.Text);
-                cmd.Parameters.AddWithValue("@Description", string.IsNullOrEmpty(txtDescription.Text) ? "" : txtDescription.Text);
-                cmd.Parameters.AddWithValue("@FileUrl", "/UploadedMaterials/" + fileName);
-                cmd.Parameters.AddWithValue("@FileType", fileExtension.Substring(1).ToUpper());
-                cmd.Parameters.AddWithValue("@FileSizeKB", fuMaterial.PostedFile.ContentLength / 1024);
-                cmd.Parameters.AddWithValue("@AcademicYear", academicYear);
-                cmd.Parameters.AddWithValue("@Semester", semester);
-                cmd.Parameters.AddWithValue("@IsVisible", chkIsVisible.Checked ? 1 : 0);
-                cmd.Parameters.AddWithValue("@UploadedAt", DateTime.Now);
-
-                conn.Open();
-                cmd.ExecuteNonQuery();
-                conn.Close();
-
-                ShowSuccess("Material uploaded successfully!");
-                btnClear_Click(null, null);
+                ShowMaterialSuccess("Material uploaded successfully.");
+                txtTitle.Text = "";
+                txtDescription.Text = "";
                 LoadMaterials();
             }
             catch (Exception ex)
             {
-                ShowError("Error uploading file: " + ex.Message);
+                System.Diagnostics.Debug.WriteLine($"Upload error: {ex.Message}");
+                ShowMaterialError("Error uploading material: " + ex.Message);
             }
         }
 
@@ -304,97 +271,65 @@ namespace SIMS.Lecturer
             chkIsVisible.Checked = true;
         }
 
-        protected void btnToggleVisibility_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                Button btn = (Button)sender;
-                int materialId = int.Parse(btn.CommandArgument);
-
-                SqlConnection conn = new SqlConnection(connStr);
-
-                string sql = @"
-                    UPDATE CourseMaterials 
-                    SET IsVisible = CASE WHEN IsVisible = 1 THEN 0 ELSE 1 END
-                    WHERE MaterialId = @MaterialId";
-
-                SqlCommand cmd = new SqlCommand(sql, conn);
-                cmd.Parameters.AddWithValue("@MaterialId", materialId);
-
-                conn.Open();
-                cmd.ExecuteNonQuery();
-                conn.Close();
-
-                ShowSuccess("Material visibility updated successfully!");
-                LoadMaterials();
-            }
-            catch (Exception ex)
-            {
-                ShowError("Error updating visibility: " + ex.Message);
-            }
-        }
-
         protected void btnDelete_Click(object sender, EventArgs e)
         {
             try
             {
-                Button btn = (Button)sender;
-                int materialId = int.Parse(btn.CommandArgument);
+                int materialId = int.Parse(((Button)sender).CommandArgument);
 
-                SqlConnection conn = new SqlConnection(connStr);
-
-                // Get file path first
-                string selectSql = "SELECT FileUrl FROM CourseMaterials WHERE MaterialId = @MaterialId";
-                SqlCommand selectCmd = new SqlCommand(selectSql, conn);
-                selectCmd.Parameters.AddWithValue("@MaterialId", materialId);
-                conn.Open();
-                object fileUrl = selectCmd.ExecuteScalar();
-                conn.Close();
-
-                // Delete from database
-                string deleteSql = "DELETE FROM CourseMaterials WHERE MaterialId = @MaterialId";
-                SqlCommand deleteCmd = new SqlCommand(deleteSql, conn);
-                deleteCmd.Parameters.AddWithValue("@MaterialId", materialId);
-                conn.Open();
-                deleteCmd.ExecuteNonQuery();
-                conn.Close();
-
-                // Delete file from server
-                if (fileUrl != null)
+                string fileUrl = null;
+                using (SqlConnection conn = new SqlConnection(connStr))
                 {
-                    string filePath = Server.MapPath("~" + fileUrl.ToString());
-                    if (File.Exists(filePath))
+                    string sel = "SELECT FileUrl FROM CourseMaterials WHERE MaterialId = @MaterialId";
+                    using (SqlCommand cmd = new SqlCommand(sel, conn))
                     {
-                        File.Delete(filePath);
+                        cmd.Parameters.AddWithValue("@MaterialId", materialId);
+                        conn.Open();
+                        object o = cmd.ExecuteScalar();
+                        conn.Close();
+                        if (o != null) fileUrl = o.ToString();
+                    }
+
+                    string del = "DELETE FROM CourseMaterials WHERE MaterialId = @MaterialId";
+                    using (SqlCommand cmd = new SqlCommand(del, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@MaterialId", materialId);
+                        conn.Open();
+                        cmd.ExecuteNonQuery();
+                        conn.Close();
                     }
                 }
 
-                ShowSuccess("Material deleted successfully!");
+                if (!string.IsNullOrEmpty(fileUrl))
+                {
+                    string fp = Server.MapPath("~" + fileUrl);
+                    if (File.Exists(fp)) File.Delete(fp);
+                }
+
+                ShowMaterialSuccess("Material deleted.");
                 LoadMaterials();
             }
             catch (Exception ex)
             {
-                ShowError("Error deleting material: " + ex.Message);
+                System.Diagnostics.Debug.WriteLine($"Delete error: {ex.Message}");
+                ShowMaterialError("Error deleting material: " + ex.Message);
             }
         }
 
         protected void rptMaterials_ItemDataBound(object sender, RepeaterItemEventArgs e)
         {
-            // Additional logic for material items if needed
+            // optional: wire client-side download links or format rows
         }
 
-        private void ShowSuccess(string message)
-        {
-            pnlSuccess.Visible = true;
-            litSuccessMsg.Text = message;
-            pnlError.Visible = false;
-        }
+        private void ShowMaterialSuccess(string msg) { pnlMaterialSuccess.Visible = true; litMaterialSuccessMsg.Text = msg; pnlMaterialError.Visible = false; }
+        private void ShowMaterialError(string msg) { pnlMaterialError.Visible = true; litMaterialErrorMsg.Text = msg; pnlMaterialSuccess.Visible = false; }
 
-        private void ShowError(string message)
+        private int GetCurrentSemester()
         {
-            pnlError.Visible = true;
-            litErrorMsg.Text = message;
-            pnlSuccess.Visible = false;
+            int m = DateTime.Now.Month;
+            if (m <= 4) return 1;
+            if (m <= 8) return 2;
+            return 3;
         }
     }
 }

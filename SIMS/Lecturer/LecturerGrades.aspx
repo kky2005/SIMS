@@ -12,16 +12,8 @@
             border-radius: 8px;
             margin-bottom: 30px;
         }
-
-        .grades-header h3 {
-            margin: 0 0 5px 0;
-        }
-
-        .grades-header p {
-            margin: 0;
-            opacity: 0.9;
-            font-size: 14px;
-        }
+        .grades-header h3 { margin: 0 0 5px 0; }
+        .grades-header p { margin: 0; opacity: 0.9; font-size: 14px; }
 
         .grades-controls {
             background: white;
@@ -46,8 +38,7 @@
             font-size: 14px;
         }
 
-        .control-group input,
-        .control-group select {
+        .control-group input, .control-group select {
             width: 100%;
             padding: 10px 12px;
             border: 1px solid #cbd5e1;
@@ -55,8 +46,7 @@
             font-size: 14px;
         }
 
-        .control-group input:focus,
-        .control-group select:focus {
+        .control-group input:focus, .control-group select:focus {
             outline: none;
             border-color: #059669;
             box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
@@ -66,6 +56,7 @@
             display: flex;
             gap: 10px;
             justify-content: flex-end;
+            flex-wrap: wrap;
         }
 
         .action-buttons .btn {
@@ -96,13 +87,8 @@
             border-bottom-color: #059669;
         }
 
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
 
         .grades-table-wrapper {
             background: white;
@@ -137,14 +123,9 @@
             color: #475569;
         }
 
-        .table-sims tbody tr:hover {
-            background: #f8fafc;
-        }
+        .table-sims tbody tr:hover { background: #f8fafc; }
 
-        .student-name {
-            font-weight: 500;
-            color: #1e293b;
-        }
+        .student-name { font-weight: 500; color: #1e293b; }
 
         .mark-input {
             width: 80px;
@@ -169,48 +150,15 @@
             font-size: 12px;
         }
 
-        .grade-a {
-            background: #dcfce7;
-            color: #166534;
-        }
+        .grade-a { background: #dcfce7; color: #166534; }
+        .grade-b { background: #dbeafe; color: #1e40af; }
+        .grade-c { background: #fef3c7; color: #92400e; }
+        .grade-d { background: #fee2e2; color: #991b1b; }
+        .grade-f { background: #dc2626; color: white; }
+        .grade-n-a { background: #f1f5f9; color: #64748b; }
 
-        .grade-b {
-            background: #dbeafe;
-            color: #1e40af;
-        }
-
-        .grade-c {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
-        .grade-d {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
-        .grade-f {
-            background: #dc2626;
-            color: white;
-        }
-
-        .status-published {
-            background: #dcfce7;
-            color: #166534;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-
-        .status-unpublished {
-            background: #fef3c7;
-            color: #92400e;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-        }
+        .status-published { background: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .status-unpublished { background: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
 
         .no-data {
             text-align: center;
@@ -240,11 +188,7 @@
             margin-bottom: 15px;
         }
 
-        .assessment-title {
-            font-weight: bold;
-            color: #1e293b;
-            font-size: 16px;
-        }
+        .assessment-title { font-weight: bold; color: #1e293b; font-size: 16px; }
 
         .assessment-meta {
             display: flex;
@@ -279,67 +223,38 @@
         }
 
         @media (max-width: 768px) {
-            .control-row {
-                grid-template-columns: 1fr;
-            }
-
-            .action-buttons {
-                flex-direction: column;
-            }
-
-            .tabs {
-                flex-wrap: wrap;
-            }
-
-            .tab-btn {
-                font-size: 13px;
-                padding: 10px 15px;
-            }
+            .control-row { grid-template-columns: 1fr; }
+            .action-buttons { flex-direction: column; }
         }
     </style>
 </asp:Content>
 
 <asp:Content ID="Main" ContentPlaceHolderID="MainContent" runat="server">
 
-    <!-- Header -->
     <div class="grades-header">
-        <h3>
-            <i class="fa fa-star" style="margin-right: 10px;"></i>Manage Grades & Assessment
-        </h3>
+        <h3><i class="fa fa-star" style="margin-right: 10px;"></i>Manage Grades & Assessment</h3>
         <p>Course: <strong><asp:Literal ID="litCourseName" runat="server" /></strong></p>
     </div>
 
-    <!-- Success Message -->
     <asp:Panel ID="pnlSuccess" runat="server" Visible="false" CssClass="success-message">
         <i class="fa fa-check-circle"></i>
         <span><asp:Literal ID="litSuccessMsg" runat="server" /></span>
     </asp:Panel>
 
-    <!-- Error Message -->
     <asp:Panel ID="pnlError" runat="server" Visible="false" CssClass="error-message">
         <i class="fa fa-exclamation-circle"></i>
         <span><asp:Literal ID="litErrorMsg" runat="server" /></span>
     </asp:Panel>
 
-    <!-- Controls -->
     <div class="grades-controls">
         <div class="control-row">
             <div class="control-group">
-                <label>Academic Year:</label>
-                <asp:DropDownList ID="ddlAcademicYear" runat="server">
-                    <asp:ListItem Text="2023" Value="2023" />
-                    <asp:ListItem Text="2024" Value="2024" Selected="True" />
-                    <asp:ListItem Text="2025" Value="2025" />
-                    <asp:ListItem Text="2026" Value="2026" />
-                </asp:DropDownList>
+                <label for="ddlAcademicYear">Academic Year:</label>
+                <asp:DropDownList ID="ddlAcademicYear" runat="server" />
             </div>
             <div class="control-group">
-                <label>Semester:</label>
-                <asp:DropDownList ID="ddlSemester" runat="server">
-                    <asp:ListItem Text="Semester 1" Value="1" />
-                    <asp:ListItem Text="Semester 2" Value="2" />
-                    <asp:ListItem Text="Semester 3" Value="3" />
-                </asp:DropDownList>
+                <label for="ddlSemester">Semester:</label>
+                <asp:DropDownList ID="ddlSemester" runat="server" />
             </div>
             <div class="control-group" style="display: flex; flex-direction: column; justify-content: flex-end;">
                 <asp:Button ID="btnLoadAssessments" runat="server" Text="Load Assessments" 
@@ -348,7 +263,6 @@
         </div>
     </div>
 
-    <!-- Tabs for Assessments -->
     <div class="tabs">
         <asp:LinkButton ID="btnTabEnterGrades" runat="server" CssClass="tab-btn active" 
             OnClick="SwitchTab" CommandArgument="enterGrades">
@@ -360,7 +274,6 @@
         </asp:LinkButton>
     </div>
 
-    <!-- Tab 1: Enter Grades -->
     <div id="tabEnterGrades" class="tab-content active">
         <asp:Panel ID="pnlEnterGrades" runat="server">
             <asp:Repeater ID="rptAssessments" runat="server" OnItemDataBound="rptAssessments_ItemDataBound">
@@ -368,9 +281,8 @@
                     <div class="assessment-card">
                         <div class="assessment-header">
                             <div class="assessment-title"><%# Eval("AssessmentName") %></div>
-                            <span class="status-unpublished">
-                                <asp:Literal ID="litPublishStatus" runat="server" 
-                                    Text='<%# Convert.ToBoolean(Eval("IsPublished")) ? "Published" : "Unpublished" %>' />
+                            <span class='<%# Convert.ToBoolean(Eval("IsPublished")) ? "status-published" : "status-unpublished" %>'>
+                                <%# Convert.ToBoolean(Eval("IsPublished")) ? "Published" : "Unpublished" %>
                             </span>
                         </div>
                         <div class="assessment-meta">
@@ -384,36 +296,31 @@
                                         <th>Student No</th>
                                         <th>Student Name</th>
                                         <th>Email</th>
-                                        <th style="width: 100px;">Mark Obtained</th>
-                                        <th style="width: 100px;">Grade</th>
-                                        <th style="width: 120px;">Action</th>
+                                        <th style="width: 100px;">Mark</th>
+                                        <th style="width: 80px;">Grade</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <asp:Repeater ID="rptStudentMarks" runat="server" OnItemDataBound="rptStudentMarks_ItemDataBound">
+                                    <asp:Repeater ID="rptStudentMarks" runat="server">
                                         <ItemTemplate>
                                             <tr>
                                                 <td><%# Eval("StudentNo") %></td>
                                                 <td class="student-name"><%# Eval("FullName") %></td>
                                                 <td><%# Eval("Email") %></td>
                                                 <td>
-                                                    <input type="number" class="mark-input" 
+                                                    <input type="number" 
+                                                        id="mark_<%# Eval("StudentId") %>"
+                                                        class="mark-input" 
                                                         name="txtMark_<%# Eval("StudentId") %>" 
-                                                        value="<%# Eval("MarksObtained") %>"
-                                                        min="0" max="<%# Eval("MaxMark") %>"
+                                                        value="<%# Eval("MarksObtained", "{0:F2}") %>"
+                                                        min="0" 
+                                                        max="<%# Eval("MaxMark") %>"
                                                         step="0.01" />
                                                 </td>
                                                 <td>
-                                                    <span class='grade-badge grade-<%# GetGradeLetter(Eval("MarksObtained").ToString()) %>'>
+                                                    <span class='grade-badge grade-<%# GetGradeLetter(Eval("MarksObtained").ToString()).ToLower() %>'>
                                                         <%# GetGradeLetter(Eval("MarksObtained").ToString()) %>
                                                     </span>
-                                                </td>
-                                                <td>
-                                                    <asp:Button ID="btnSaveMark" runat="server" 
-                                                        Text="Save"
-                                                        CssClass="btn btn-sm btn-success"
-                                                        OnClick="btnSaveMark_Click"
-                                                        CommandArgument='<%# Eval("MarkId") %>' />
                                                 </td>
                                             </tr>
                                         </ItemTemplate>
@@ -423,7 +330,7 @@
                         </div>
                         <div style="text-align: right; margin-top: 15px;">
                             <asp:Button ID="btnSaveAllMarks" runat="server" 
-                                Text="Save All Marks"
+                                Text="Save All Marks for this Assessment"
                                 CssClass="btn btn-success"
                                 OnClick="btnSaveAllMarks_Click"
                                 CommandArgument='<%# Eval("AssessmentId") %>' />
@@ -440,14 +347,13 @@
         </asp:Panel>
     </div>
 
-    <!-- Tab 2: Publish Grades -->
     <div id="tabPublishGrades" class="tab-content">
         <asp:Panel ID="pnlPublishGrades" runat="server">
             <div class="grades-table-wrapper">
                 <table class="table-sims">
                     <thead>
                         <tr>
-                            <th>Assessment</th>
+                            <th>Assessment Name</th>
                             <th>Max Mark</th>
                             <th>Weightage</th>
                             <th style="width: 120px;">Status</th>
@@ -472,7 +378,7 @@
                                             CssClass='<%# Convert.ToBoolean(Eval("IsPublished")) ? "btn btn-sm btn-warning" : "btn btn-sm btn-success" %>'
                                             OnClick="btnTogglePublish_Click"
                                             CommandArgument='<%# Eval("AssessmentId") %>' />
-                                    </asp:Button>
+                                    </td>
                                 </tr>
                             </ItemTemplate>
                         </asp:Repeater>
@@ -488,28 +394,44 @@
         </asp:Panel>
     </div>
 
-    <!-- Hidden field to track course ID -->
     <asp:HiddenField ID="hidCourseId" runat="server" />
 
     <script type="text/javascript">
-        function switchTab(tabName) {
-            // Hide all tabs
-            document.getElementById('tabEnterGrades').style.display = 'none';
-            document.getElementById('tabPublishGrades').style.display = 'none';
+        document.addEventListener('DOMContentLoaded', function () {
+            var btnEnter = document.getElementById('<%= btnTabEnterGrades.ClientID %>');
+            var btnPublish = document.getElementById('<%= btnTabPublish.ClientID %>');
+            var tabEnter = document.getElementById('tabEnterGrades');
+            var tabPublish = document.getElementById('tabPublishGrades');
 
-            // Remove active class from all buttons
-            document.getElementById('<%= btnTabEnterGrades.ClientID %>').classList.remove('active');
-            document.getElementById('<%= btnTabPublish.ClientID %>').classList.remove('active');
-
-            // Show selected tab
-            if (tabName === 'enterGrades') {
-                document.getElementById('tabEnterGrades').style.display = 'block';
-                document.getElementById('<%= btnTabEnterGrades.ClientID %>').classList.add('active');
-            } else {
-                document.getElementById('tabPublishGrades').style.display = 'block';
-                document.getElementById('<%= btnTabPublish.ClientID %>').classList.add('active');
+            if (btnEnter) {
+                btnEnter.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    tabEnter.classList.add('active');
+                    tabPublish.classList.remove('active');
+                    btnEnter.classList.add('active');
+                    btnPublish.classList.remove('active');
+                });
             }
-        }
+
+            if (btnPublish) {
+                btnPublish.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    tabPublish.classList.add('active');
+                    tabEnter.classList.remove('active');
+                    btnPublish.classList.add('active');
+                    btnEnter.classList.remove('active');
+                });
+            }
+
+            // Hide messages after 5 seconds
+            var successPanel = document.querySelector('.success-message');
+            var errorPanel = document.querySelector('.error-message');
+            [successPanel, errorPanel].forEach(function (panel) {
+                if (panel && panel.offsetParent !== null) {
+                    setTimeout(function () { panel.style.display = 'none'; }, 5000);
+                }
+            });
+        });
     </script>
 
 </asp:Content>

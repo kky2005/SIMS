@@ -92,6 +92,7 @@
     <Content Include="HeadOfProgramme\HOPRegisterLecturer.aspx" />
     <Content Include="HeadOfProgramme\HOPRegisterStudent.aspx" />
     <Content Include="Lecturer\LecturerAnnouncements.aspx" />
+    <Content Include="Lecturer\LecturerAssessment.aspx" />
     <Content Include="Lecturer\LecturerAttendance.aspx" />
     <Content Include="Lecturer\LecturerCourses.aspx" />
     <Content Include="Lecturer\LecturerDashboard.aspx" />
@@ -181,6 +182,13 @@
     <Compile Include="Lecturer\LecturerAnnouncements.aspx.designer.cs">
       <DependentUpon>LecturerAnnouncements.aspx</DependentUpon>
     </Compile>
+    <Compile Include="Lecturer\LecturerAssessment.aspx.cs">
+      <DependentUpon>LecturerAssessment.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Lecturer\LecturerAssessment.aspx.designer.cs">
+      <DependentUpon>LecturerAssessment.aspx</DependentUpon>
+    </Compile>
     <Compile Include="Lecturer\LecturerAttendance.aspx.cs">
       <DependentUpon>LecturerAttendance.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -267,7 +275,9 @@
       <DependentUpon>Web.config</DependentUpon>
     </None>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="UploadedMaterials\" />
+  </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>

@@ -11,7 +11,7 @@ namespace SIMS.Lecturer
 {
 
 
-    public partial class LecturerMaterials
+    public partial class LecturerAssessments
     {
 
         /// <summary>
@@ -24,40 +24,40 @@ namespace SIMS.Lecturer
         protected global::System.Web.UI.WebControls.Literal litCourseHeader;
 
         /// <summary>
-        /// pnlMaterialSuccess control.
+        /// pnlSuccess control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Panel pnlMaterialSuccess;
+        protected global::System.Web.UI.WebControls.Panel pnlSuccess;
 
         /// <summary>
-        /// litMaterialSuccessMsg control.
+        /// litSuccessMsg control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Literal litMaterialSuccessMsg;
+        protected global::System.Web.UI.WebControls.Literal litSuccessMsg;
 
         /// <summary>
-        /// pnlMaterialError control.
+        /// pnlError control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Panel pnlMaterialError;
+        protected global::System.Web.UI.WebControls.Panel pnlError;
 
         /// <summary>
-        /// litMaterialErrorMsg control.
+        /// litErrorMsg control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Literal litMaterialErrorMsg;
+        protected global::System.Web.UI.WebControls.Literal litErrorMsg;
 
         /// <summary>
         /// litCourseName control.
@@ -78,58 +78,49 @@ namespace SIMS.Lecturer
         protected global::System.Web.UI.WebControls.Literal litAcademicYear;
 
         /// <summary>
-        /// litSemester control.
+        /// txtAssessmentName control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Literal litSemester;
+        protected global::System.Web.UI.WebControls.TextBox txtAssessmentName;
 
         /// <summary>
-        /// txtTitle control.
+        /// txtMaxMark control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtTitle;
+        protected global::System.Web.UI.WebControls.TextBox txtMaxMark;
 
         /// <summary>
-        /// txtDescription control.
+        /// ddlSemester control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtDescription;
+        protected global::System.Web.UI.WebControls.DropDownList ddlSemester;
 
         /// <summary>
-        /// fuMaterial control.
+        /// txtWeightage control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.FileUpload fuMaterial;
+        protected global::System.Web.UI.WebControls.TextBox txtWeightage;
 
         /// <summary>
-        /// chkIsVisible control.
+        /// btnCreate control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.CheckBox chkIsVisible;
-
-        /// <summary>
-        /// btnUpload control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnUpload;
+        protected global::System.Web.UI.WebControls.Button btnCreate;
 
         /// <summary>
         /// btnClear control.
@@ -159,30 +150,21 @@ namespace SIMS.Lecturer
         protected global::System.Web.UI.WebControls.HiddenField hidAcademicYear;
 
         /// <summary>
-        /// hidSemester control.
+        /// rptAssessments control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.HiddenField hidSemester;
+        protected global::System.Web.UI.WebControls.Repeater rptAssessments;
 
         /// <summary>
-        /// rptMaterials control.
+        /// pnlNoAssessments control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Repeater rptMaterials;
-
-        /// <summary>
-        /// pnlNoMaterials control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Panel pnlNoMaterials;
+        protected global::System.Web.UI.WebControls.Panel pnlNoAssessments;
     }
 }
