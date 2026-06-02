@@ -12,16 +12,8 @@
             border-radius: 8px;
             margin-bottom: 30px;
         }
-
-        .attendance-header h3 {
-            margin: 0 0 5px 0;
-        }
-
-        .attendance-header p {
-            margin: 0;
-            opacity: 0.9;
-            font-size: 14px;
-        }
+        .attendance-header h3 { margin: 0 0 5px 0; }
+        .attendance-header p { margin: 0; opacity: 0.9; font-size: 14px; }
 
         .attendance-controls {
             background: white;
@@ -67,6 +59,7 @@
             gap: 10px;
             justify-content: flex-end;
             margin-top: 15px;
+            flex-wrap: wrap;
         }
 
         .action-buttons .btn {
@@ -130,6 +123,7 @@
             border-radius: 4px;
             font-size: 12px;
             font-weight: bold;
+            display: inline-block;
         }
 
         .status-absent {
@@ -139,6 +133,7 @@
             border-radius: 4px;
             font-size: 12px;
             font-weight: bold;
+            display: inline-block;
         }
 
         .no-data {
@@ -203,44 +198,44 @@
             gap: 10px;
         }
 
+        .error-message {
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            color: #991b1b;
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
         @media (max-width: 768px) {
-            .control-row {
-                grid-template-columns: 1fr;
-            }
-
-            .action-buttons {
-                flex-direction: column;
-            }
-
-            .table-sims {
-                font-size: 12px;
-            }
-
-            .table-sims td,
-            .table-sims th {
-                padding: 8px 10px;
-            }
+            .control-row { grid-template-columns: 1fr; }
+            .action-buttons { flex-direction: column; }
+            .table-sims { font-size: 12px; }
+            .table-sims td, .table-sims th { padding: 8px 10px; }
         }
     </style>
 </asp:Content>
 
 <asp:Content ID="Main" ContentPlaceHolderID="MainContent" runat="server">
 
-    <!-- Header -->
     <div class="attendance-header">
-        <h3>
-            <i class="fa fa-calendar-check" style="margin-right: 10px;"></i>Record Attendance
-        </h3>
+        <h3><i class="fa fa-calendar-check" style="margin-right: 10px;"></i>Record Attendance</h3>
         <p>Course: <strong><asp:Literal ID="litCourseName" runat="server" /></strong></p>
     </div>
 
-    <!-- Success Message -->
     <asp:Panel ID="pnlSuccess" runat="server" Visible="false" CssClass="success-message">
         <i class="fa fa-check-circle"></i>
         <span><asp:Literal ID="litSuccessMsg" runat="server" /></span>
     </asp:Panel>
 
-    <!-- Statistics -->
+    <asp:Panel ID="pnlError" runat="server" Visible="false" CssClass="error-message">
+        <i class="fa fa-exclamation-circle"></i>
+        <span><asp:Literal ID="litErrorMsg" runat="server" /></span>
+    </asp:Panel>
+
     <div class="stats-row">
         <div class="stat-box present">
             <div class="stat-label">Students Present</div>
@@ -256,7 +251,6 @@
         </div>
     </div>
 
-    <!-- Controls -->
     <div class="attendance-controls">
         <div class="control-row">
             <div class="control-group">
@@ -286,14 +280,11 @@
         </div>
     </div>
 
-    <!-- Attendance Table -->
     <div class="attendance-table-wrapper">
         <table class="table-sims">
             <thead>
                 <tr>
-                    <th style="width: 50px;">
-                        <input type="checkbox" id="chkSelectAll" />
-                    </th>
+                    <th style="width: 50px;"><input type="checkbox" id="chkSelectAll" /></th>
                     <th>Student No</th>
                     <th>Student Name</th>
                     <th>Email</th>
@@ -302,21 +293,19 @@
                 </tr>
             </thead>
             <tbody>
-                <asp:Repeater ID="rptAttendance" runat="server" OnItemDataBound="rptAttendance_ItemDataBound">
+                <asp:Repeater ID="rptAttendance" runat="server">
                     <ItemTemplate>
                         <tr>
-                            <td>
-                                <input type="checkbox" class="attendance-checkbox" 
-                                    name="chkAttendance" value="<%# Eval("EnrolmentId") %>" />
-                            </td>
+                            <td><input type="checkbox" class="attendance-checkbox" 
+                                name="chkAttendance" value="<%# Eval("EnrolmentId") %>" /></td>
                             <td><%# Eval("StudentNo") %></td>
                             <td class="student-name"><%# Eval("FullName") %></td>
                             <td><%# Eval("Email") %></td>
                             <td><%# Eval("ProgrammeName") %></td>
                             <td>
-                                <asp:Label ID="lblStatus" runat="server" 
-                                    CssClass='<%# Eval("Status").ToString() == "Present" ? "status-present" : "status-absent" %>'
-                                    Text='<%# Eval("Status") %>' />
+                                <span class='<%# Eval("Status").ToString() == "Present" ? "status-present" : "status-absent" %>'>
+                                    <%# Eval("Status") %>
+                                </span>
                             </td>
                         </tr>
                     </ItemTemplate>
@@ -327,12 +316,13 @@
         <asp:Panel ID="pnlNoData" runat="server" Visible="false" CssClass="no-data">
             <i class="fa fa-inbox"></i>
             <h5 style="color: #1e293b; margin: 0 0 10px 0;">No Students Enrolled</h5>
-            <p style="margin: 0;">There are no students enrolled in this course.</p>
+            <p style="margin: 0;">There are no active students enrolled in this course for the selected date.</p>
         </asp:Panel>
     </div>
 
-    <!-- Hidden field to track course ID -->
     <asp:HiddenField ID="hidCourseId" runat="server" />
+    <asp:HiddenField ID="hidAcademicYear" runat="server" />
+    <asp:HiddenField ID="hidSemester" runat="server" />
 
     <script type="text/javascript">
         document.addEventListener('DOMContentLoaded', function () {
@@ -341,21 +331,28 @@
 
             if (chkSelectAll) {
                 chkSelectAll.addEventListener('change', function () {
-                    chkboxes.forEach(function (checkbox) {
-                        checkbox.checked = chkSelectAll.checked;
-                    });
+                    chkboxes.forEach(function (cb) { cb.checked = chkSelectAll.checked; });
                 });
             }
 
-            chkboxes.forEach(function (checkbox) {
-                checkbox.addEventListener('change', function () {
-                    var allChecked = Array.from(chkboxes).every(cb => cb.checked);
-                    var anyChecked = Array.from(chkboxes).some(cb => cb.checked);
+            chkboxes.forEach(function (cb) {
+                cb.addEventListener('change', function () {
+                    var allChecked = Array.from(chkboxes).every(c => c.checked);
+                    var anyChecked = Array.from(chkboxes).some(c => c.checked);
                     if (chkSelectAll) {
                         chkSelectAll.checked = allChecked;
                         chkSelectAll.indeterminate = anyChecked && !allChecked;
                     }
                 });
+            });
+
+            // Hide success/error messages after 5 seconds
+            var successPanel = document.querySelector('.success-message');
+            var errorPanel = document.querySelector('.error-message');
+            [successPanel, errorPanel].forEach(function (panel) {
+                if (panel && panel.offsetParent !== null) {
+                    setTimeout(function () { panel.style.display = 'none'; }, 5000);
+                }
             });
         });
     </script>
