@@ -14,16 +14,27 @@ namespace SIMS.DAL
             using (SqlConnection conn = new SqlConnection(connStr))
             {
                 string query = @"
-                    SELECT TOP 1
-                        AcademicYear,
-                        Semester,
-                        GPA,
-                        CGPA,
-                        TotalCreditHours,
-                        CalculatedAt
-                    FROM GPARecords
-                    WHERE StudentId = @StudentId
-                    ORDER BY AcademicYear DESC, Semester DESC, CalculatedAt DESC";
+            SELECT TOP 1
+                gr.AcademicYear,
+                gr.Semester,
+                gr.GPA,
+                gr.CGPA,
+                gr.TotalCreditHours,
+                gr.CalculatedAt
+            FROM GPARecords gr
+            WHERE gr.StudentId = @StudentId
+              AND EXISTS (
+                    SELECT 1
+                    FROM StudentMarks sm
+                    INNER JOIN Assessments a 
+                        ON sm.AssessmentId = a.AssessmentId
+                    WHERE sm.StudentId = gr.StudentId
+                      AND a.AcademicYear = gr.AcademicYear
+                      AND a.Semester = gr.Semester
+                      AND sm.IsPublished = 1
+                      AND a.IsPublished = 1
+              )
+            ORDER BY gr.AcademicYear DESC, gr.Semester DESC, gr.CalculatedAt DESC";
 
                 SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@StudentId", studentId);
@@ -317,17 +328,28 @@ namespace SIMS.DAL
             {
                 string query = @"
             SELECT TOP 1
-                AcademicYear,
-                Semester,
-                GPA,
-                CGPA,
-                TotalCreditHours,
-                CalculatedAt
-            FROM GPARecords
-            WHERE StudentId = @StudentId
-              AND AcademicYear = @AcademicYear
-              AND Semester = @Semester
-            ORDER BY CalculatedAt DESC";
+                gr.AcademicYear,
+                gr.Semester,
+                gr.GPA,
+                gr.CGPA,
+                gr.TotalCreditHours,
+                gr.CalculatedAt
+            FROM GPARecords gr
+            WHERE gr.StudentId = @StudentId
+              AND gr.AcademicYear = @AcademicYear
+              AND gr.Semester = @Semester
+              AND EXISTS (
+                    SELECT 1
+                    FROM StudentMarks sm
+                    INNER JOIN Assessments a 
+                        ON sm.AssessmentId = a.AssessmentId
+                    WHERE sm.StudentId = gr.StudentId
+                      AND a.AcademicYear = gr.AcademicYear
+                      AND a.Semester = gr.Semester
+                      AND sm.IsPublished = 1
+                      AND a.IsPublished = 1
+              )
+            ORDER BY gr.CalculatedAt DESC";
 
                 SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@StudentId", studentId);

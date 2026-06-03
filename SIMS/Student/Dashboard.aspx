@@ -309,6 +309,10 @@
                     <i class="fa fa-pen-to-square"></i> Course Registration
                 </a>
 
+                <a href="StudentPayment.aspx">
+                    <i class="fa fa-money-bill"></i> Payments
+                </a>
+
                 <a href="AttendanceRecord.aspx">
                     <i class="fa fa-calendar-check"></i> Attendance Record
                 </a>

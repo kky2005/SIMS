@@ -115,16 +115,17 @@
     <Content Include="Student\EnrolledCourses.aspx" />
     <Content Include="Student\Notifications.aspx" />
     <Content Include="Student\Profile.aspx" />
+    <Content Include="Student\StudentPayment.aspx" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AuthenticationHelper.cs" />
-
     <Compile Include="BLL\StudentCourseBLL.cs" />
+    <Compile Include="BLL\StudentPaymentBLL.cs" />
     <Compile Include="BLL\Student_ResultBLL.cs" />
     <Compile Include="DAL\StudentCourseDAL.cs" />
+    <Compile Include="DAL\StudentPaymentDAL.cs" />
     <Compile Include="DAL\Student_ResultDAL.cs" />
-
     <Compile Include="HeadOfProgramme\HOPAssignUserRole.aspx.cs">
       <DependentUpon>HOPAssignUserRole.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -194,7 +195,6 @@
     <Compile Include="HeadOfProgramme\HOPRegisterStudent.aspx.designer.cs">
       <DependentUpon>HOPRegisterStudent.aspx</DependentUpon>
     </Compile>
-
     <Compile Include="Lecturer\LecturerAnnouncements.aspx.cs">
       <DependentUpon>LecturerAnnouncements.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -331,6 +331,13 @@
     </Compile>
     <Compile Include="Student\Profile.aspx.designer.cs">
       <DependentUpon>Profile.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Student\StudentPayment.aspx.cs">
+      <DependentUpon>StudentPayment.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Student\StudentPayment.aspx.designer.cs">
+      <DependentUpon>StudentPayment.aspx</DependentUpon>
     </Compile>
   </ItemGroup>
   <ItemGroup>
