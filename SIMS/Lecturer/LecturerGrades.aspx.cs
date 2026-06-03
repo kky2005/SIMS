@@ -262,14 +262,31 @@ namespace SIMS.Lecturer
             {
                 string sql = @"
                     SELECT
-                        s.StudentId, s.StudentNo, u.FullName, u.Email, a.MaxMark,
-                        ISNULL(sm.MarksObtained, 0) AS MarksObtained
+                        s.StudentId, 
+                        s.StudentNo, 
+                        u.FullName, 
+                        u.Email, 
+                        a.MaxMark,
+                        ISNULL(sm.MarksObtained, 0) AS MarksObtained,
+                        ISNULL(asub.SubmissionId, 0) AS SubmissionId,
+                        ISNULL(asub.FileName, '') AS FileName,
+                        ISNULL(asub.FileUrl, '') AS FileUrl,
+                        ISNULL(asub.SubmittedAt, '') AS SubmittedAt,
+                        ISNULL(asub.Status, 'Not Submitted') AS SubmissionStatus
                     FROM Enrolments e
                     INNER JOIN Students s ON s.StudentId = e.StudentId
                     INNER JOIN Users u ON u.UserId = s.UserId
                     INNER JOIN Assessments a ON a.AssessmentId = @AssessmentId
                     LEFT JOIN StudentMarks sm ON sm.AssessmentId = @AssessmentId AND sm.StudentId = s.StudentId
-                    WHERE e.CourseId = @CourseId AND e.AcademicYear = @Year AND e.Semester = @Semester AND e.Status = 'Active'
+                    LEFT JOIN (
+                        SELECT SubmissionId, StudentId, AssessmentId, FileName, FileUrl, SubmittedAt, Status
+                        FROM AssessmentSubmissions
+                        WHERE IsLatest = 1
+                    ) asub ON asub.AssessmentId = @AssessmentId AND asub.StudentId = s.StudentId
+                    WHERE e.CourseId = @CourseId 
+                      AND e.AcademicYear = @Year 
+                      AND e.Semester = @Semester 
+                      AND e.Status = 'Active'
                     ORDER BY s.StudentNo ASC";
 
                 using (SqlCommand cmd = new SqlCommand(sql, conn))

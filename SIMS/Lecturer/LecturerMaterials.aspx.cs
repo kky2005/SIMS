@@ -16,10 +16,6 @@ namespace SIMS.Lecturer
         {
             EnsureAuthenticated();
 
-            // required for FileUpload to work reliably
-            if (Page.Form != null && string.IsNullOrEmpty(Page.Form.Enctype))
-                Page.Form.Enctype = "multipart/form-data";
-
             if (!IsPostBack)
             {
                 // Expect CourseID from query string (like Attendance/Grades)

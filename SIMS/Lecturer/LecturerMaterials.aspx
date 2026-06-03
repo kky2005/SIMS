@@ -433,7 +433,7 @@
                         <tr>
                             <td><strong><%# Eval("Title") %></strong><div style="font-size:12px;color:#64748b;"><%# Eval("Description") %></div></td>
                             <td><%# Eval("FileType") %></td>
-                            <td><%# ((DateTime)Eval("UploadedAt")).ToString("dd MMM yyyy HH:mm") %></td>
+                            <td><%# Eval("UploadedAt") != DBNull.Value ? Convert.ToDateTime(Eval("UploadedAt")).ToString("dd MMM yyyy HH:mm") : "-" %></td>
                             <td>
                                 <asp:Label ID="lblVisible" runat="server" Text='<%# Convert.ToBoolean(Eval("IsVisible")) ? "Visible" : "Hidden" %>' />
                             </td>
