@@ -110,6 +110,7 @@
     <Content Include="Login.aspx" />
     <Content Include="Student\AcademicResults.aspx" />
     <Content Include="Student\AttendanceRecord.aspx" />
+    <Content Include="Student\CourseDetails.aspx" />
     <Content Include="Student\CourseRegistration.aspx" />
     <Content Include="Student\Dashboard.aspx" />
     <Content Include="Student\EnrolledCourses.aspx" />
@@ -121,9 +122,11 @@
   <ItemGroup>
     <Compile Include="AuthenticationHelper.cs" />
     <Compile Include="BLL\StudentCourseBLL.cs" />
+    <Compile Include="BLL\StudentEnrolledCoursesBLL.cs" />
     <Compile Include="BLL\StudentPaymentBLL.cs" />
     <Compile Include="BLL\Student_ResultBLL.cs" />
     <Compile Include="DAL\StudentCourseDAL.cs" />
+    <Compile Include="DAL\StudentEnrolledCoursesDAL.cs" />
     <Compile Include="DAL\StudentPaymentDAL.cs" />
     <Compile Include="DAL\Student_ResultDAL.cs" />
     <Compile Include="HeadOfProgramme\HOPAssignUserRole.aspx.cs">
@@ -297,6 +300,13 @@
     <Compile Include="Student\AttendanceRecord.aspx.designer.cs">
       <DependentUpon>AttendanceRecord.aspx</DependentUpon>
     </Compile>
+    <Compile Include="Student\CourseDetails.aspx.cs">
+      <DependentUpon>CourseDetails.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Student\CourseDetails.aspx.designer.cs">
+      <DependentUpon>CourseDetails.aspx</DependentUpon>
+    </Compile>
     <Compile Include="Student\CourseRegistration.aspx.cs">
       <DependentUpon>CourseRegistration.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -343,6 +353,8 @@
   <ItemGroup>
     <Content Include="Lecturer\LecturerMaster.Master" />
     <Content Include="HeadOfProgramme\HOPMaster.Master" />
+    <Content Include="materials\CS301_SE_Notes.pdf" />
+    <Content Include="materials\CS302_Cloud_Overview.pdf" />
     <None Include="packages.config" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>

@@ -363,5 +363,134 @@ namespace SIMS.DAL
                 return dt;
             }
         }
+
+        public void RecalculateGPARecords(int studentId)
+        {
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                string query = @"
+            DELETE FROM GPARecords
+            WHERE StudentId = @StudentId;
+
+            ;WITH CourseTotals AS
+            (
+                SELECT
+                    e.StudentId,
+                    e.AcademicYear,
+                    e.Semester,
+                    c.CourseId,
+                    c.CreditHours,
+
+                    COUNT(a.AssessmentId) AS TotalAssessments,
+                    COUNT(sm.MarkId) AS PublishedMarks,
+                    CAST(SUM(ISNULL(sm.WeightedMark, 0)) AS DECIMAL(10,2)) AS TotalMark
+                FROM Enrolments e
+                INNER JOIN Courses c
+                    ON e.CourseId = c.CourseId
+                LEFT JOIN Assessments a
+                    ON c.CourseId = a.CourseId
+                   AND e.AcademicYear = a.AcademicYear
+                   AND e.Semester = a.Semester
+                   AND a.IsPublished = 1
+                LEFT JOIN StudentMarks sm
+                    ON a.AssessmentId = sm.AssessmentId
+                   AND e.StudentId = sm.StudentId
+                   AND sm.IsPublished = 1
+                WHERE e.StudentId = @StudentId
+                  AND e.Status IN ('Active', 'Completed')
+                GROUP BY
+                    e.StudentId,
+                    e.AcademicYear,
+                    e.Semester,
+                    c.CourseId,
+                    c.CreditHours
+            ),
+            EligibleCourses AS
+            (
+                SELECT
+                    ct.StudentId,
+                    ct.AcademicYear,
+                    ct.Semester,
+                    ct.CourseId,
+                    ct.CreditHours,
+                    ct.TotalMark,
+                    gs.GradePoint
+                FROM CourseTotals ct
+                OUTER APPLY
+                (
+                    SELECT TOP 1
+                        GradePoint
+                    FROM GradeScale
+                    WHERE ct.TotalMark BETWEEN MinMark AND MaxMark
+                    ORDER BY MinMark DESC
+                ) gs
+                WHERE ct.TotalAssessments > 0
+                  AND ct.PublishedMarks = ct.TotalAssessments
+                  AND gs.GradePoint IS NOT NULL
+            ),
+            SemesterGPA AS
+            (
+                SELECT
+                    StudentId,
+                    AcademicYear,
+                    Semester,
+                    CAST(
+                        SUM(GradePoint * CreditHours) / NULLIF(SUM(CreditHours), 0)
+                        AS DECIMAL(4,2)
+                    ) AS GPA,
+                    CAST(SUM(GradePoint * CreditHours) AS DECIMAL(10,2)) AS QualityPoints,
+                    SUM(CreditHours) AS TotalCreditHours
+                FROM EligibleCourses
+                GROUP BY
+                    StudentId,
+                    AcademicYear,
+                    Semester
+            ),
+            CumulativeGPA AS
+            (
+                SELECT
+                    StudentId,
+                    AcademicYear,
+                    Semester,
+                    GPA,
+                    TotalCreditHours,
+                    CAST(
+                        SUM(QualityPoints) OVER (
+                            PARTITION BY StudentId
+                            ORDER BY AcademicYear, Semester
+                            ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+                        )
+                        /
+                        NULLIF(
+                            SUM(TotalCreditHours) OVER (
+                                PARTITION BY StudentId
+                                ORDER BY AcademicYear, Semester
+                                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+                            ), 0
+                        )
+                        AS DECIMAL(4,2)
+                    ) AS CGPA
+                FROM SemesterGPA
+            )
+            INSERT INTO GPARecords
+            (StudentId, AcademicYear, Semester, GPA, CGPA, TotalCreditHours, CalculatedAt)
+            SELECT
+                StudentId,
+                AcademicYear,
+                Semester,
+                GPA,
+                CGPA,
+                TotalCreditHours,
+                SYSUTCDATETIME()
+            FROM CumulativeGPA
+            ORDER BY AcademicYear, Semester;";
+
+                SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@StudentId", studentId);
+
+                conn.Open();
+                cmd.ExecuteNonQuery();
+            }
+        }
     }
 }

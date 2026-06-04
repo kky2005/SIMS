@@ -35,5 +35,9 @@ namespace SIMS.BLL
         {
             return resultDAL.GetGPASummaryBySemester(studentId, academicYear, semester);
         }
+        public void RecalculateGPARecords(int studentId)
+        {
+            resultDAL.RecalculateGPARecords(studentId);
+        }
     }
 }

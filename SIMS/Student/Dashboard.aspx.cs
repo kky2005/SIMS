@@ -1,16 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Web.UI;
-using System.Web.UI.WebControls;
 using System.Configuration;
 using System.Data.SqlClient;
+using SIMS.BLL;
 
 namespace SIMS.Student
 {
     public partial class Dashboard : System.Web.UI.Page
     {
+        private string connStr = ConfigurationManager.ConnectionStrings["SIMS_DB"].ConnectionString;
+        private StudentResultBLL resultBLL = new StudentResultBLL();
+
         protected void Page_Load(object sender, EventArgs e)
         {
             if (Session["UserId"] == null ||
@@ -25,9 +24,11 @@ namespace SIMS.Student
             {
                 lblWelcome.Text = "Welcome, " + Session["FullName"].ToString();
                 lblStudentNo.Text = "Student No: " + Session["StudentNo"].ToString();
-                LoadCurrentSemester();
+
+                LoadDashboardSummary();
             }
         }
+
         protected void btnLogout_Click(object sender, EventArgs e)
         {
             Session.Clear();
@@ -35,33 +36,95 @@ namespace SIMS.Student
 
             Response.Redirect("../Login.aspx");
         }
-        private void LoadCurrentSemester()
+
+        private void LoadDashboardSummary()
         {
             int studentId = Convert.ToInt32(Session["StudentId"]);
+            int userId = Convert.ToInt32(Session["UserId"]);
 
-            string connStr = ConfigurationManager.ConnectionStrings["SIMS_DB"].ConnectionString;
+            // Recalculate GPA/CGPA before showing dashboard value
+            resultBLL.RecalculateGPARecords(studentId);
 
             using (SqlConnection conn = new SqlConnection(connStr))
             {
-                string query = @"
-            SELECT CurrentSemester
-            FROM Students
-            WHERE StudentId = @StudentId";
-
-                SqlCommand cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@StudentId", studentId);
-
                 conn.Open();
-                object result = cmd.ExecuteScalar();
 
-                if (result != null)
+                // =========================
+                // Current Semester
+                // =========================
+                string semesterQuery = @"
+                    SELECT CurrentSemester
+                    FROM Students
+                    WHERE StudentId = @StudentId";
+
+                SqlCommand semesterCmd = new SqlCommand(semesterQuery, conn);
+                semesterCmd.Parameters.AddWithValue("@StudentId", studentId);
+
+                object semesterResult = semesterCmd.ExecuteScalar();
+
+                if (semesterResult != null && semesterResult != DBNull.Value)
                 {
-                    lblCurrentSemester.Text = result.ToString();
+                    lblCurrentSemester.Text = semesterResult.ToString();
                 }
                 else
                 {
                     lblCurrentSemester.Text = "-";
                 }
+
+                // =========================
+                // Current Enrolled Courses
+                // =========================
+                string enrolledQuery = @"
+                    SELECT COUNT(*)
+                    FROM Enrolments e
+                    INNER JOIN Students s 
+                        ON e.StudentId = s.StudentId
+                    WHERE e.StudentId = @StudentId
+                      AND e.Semester = s.CurrentSemester
+                      AND e.Status = 'Active'";
+
+                SqlCommand enrolledCmd = new SqlCommand(enrolledQuery, conn);
+                enrolledCmd.Parameters.AddWithValue("@StudentId", studentId);
+
+                object enrolledResult = enrolledCmd.ExecuteScalar();
+                lblEnrolledCourses.Text = enrolledResult != null ? enrolledResult.ToString() : "0";
+
+                // =========================
+                // Latest CGPA
+                // =========================
+                string cgpaQuery = @"
+                    SELECT TOP 1 CGPA
+                    FROM GPARecords
+                    WHERE StudentId = @StudentId
+                    ORDER BY AcademicYear DESC, Semester DESC, CalculatedAt DESC";
+
+                SqlCommand cgpaCmd = new SqlCommand(cgpaQuery, conn);
+                cgpaCmd.Parameters.AddWithValue("@StudentId", studentId);
+
+                object cgpaResult = cgpaCmd.ExecuteScalar();
+
+                if (cgpaResult != null && cgpaResult != DBNull.Value)
+                {
+                    lblCGPA.Text = Convert.ToDecimal(cgpaResult).ToString("0.00");
+                }
+                else
+                {
+                    lblCGPA.Text = "-";
+                }
+
+                // =========================
+                // Notifications Count
+                // =========================
+                string notificationQuery = @"
+                    SELECT COUNT(*)
+                    FROM Notifications
+                    WHERE UserId = @UserId";
+
+                SqlCommand notificationCmd = new SqlCommand(notificationQuery, conn);
+                notificationCmd.Parameters.AddWithValue("@UserId", userId);
+
+                object notificationResult = notificationCmd.ExecuteScalar();
+                lblNotifications.Text = notificationResult != null ? notificationResult.ToString() : "0";
             }
         }
     }

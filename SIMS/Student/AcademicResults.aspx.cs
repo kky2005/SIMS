@@ -34,6 +34,8 @@ namespace SIMS.Student
         {
             int studentId = Convert.ToInt32(Session["StudentId"]);
 
+            resultBLL.RecalculateGPARecords(studentId);
+
             LoadGPASummary(studentId);
             LoadSemesterCards(studentId);
         }
