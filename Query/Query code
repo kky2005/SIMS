@@ -142,7 +142,7 @@ CREATE TABLE Enrolments (
     CourseId INT NOT NULL,
     AcademicYear SMALLINT NOT NULL,
     Semester TINYINT NOT NULL,
-    Status NVARCHAR(20) DEFAULT 'Active',
+    Status NVARCHAR(20) DEFAULT 'Pending',
     EnrolledAt DATETIME2 DEFAULT SYSUTCDATETIME(),
     DroppedAt DATETIME2,
 
