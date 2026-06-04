@@ -123,10 +123,12 @@
     <Compile Include="AuthenticationHelper.cs" />
     <Compile Include="BLL\StudentCourseBLL.cs" />
     <Compile Include="BLL\StudentEnrolledCoursesBLL.cs" />
+    <Compile Include="BLL\StudentNotificationBLL.cs" />
     <Compile Include="BLL\StudentPaymentBLL.cs" />
     <Compile Include="BLL\Student_ResultBLL.cs" />
     <Compile Include="DAL\StudentCourseDAL.cs" />
     <Compile Include="DAL\StudentEnrolledCoursesDAL.cs" />
+    <Compile Include="DAL\StudentNotificationDAL.cs" />
     <Compile Include="DAL\StudentPaymentDAL.cs" />
     <Compile Include="DAL\Student_ResultDAL.cs" />
     <Compile Include="HeadOfProgramme\HOPAssignUserRole.aspx.cs">
