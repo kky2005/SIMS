@@ -83,6 +83,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="HeadOfProgramme\HOPAnnouncements.aspx" />
     <Content Include="HeadOfProgramme\HOPAssignUserRole.aspx" />
     <Content Include="HeadOfProgramme\HOPDashboard.aspx" />
     <Content Include="HeadOfProgramme\HOPManageAdmissions.aspx" />
@@ -105,6 +106,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AuthenticationHelper.cs" />
+    <Compile Include="HeadOfProgramme\HOPAnnouncements.aspx.cs">
+      <DependentUpon>HOPAnnouncements.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPAnnouncements.aspx.designer.cs">
+      <DependentUpon>HOPAnnouncements.aspx</DependentUpon>
+    </Compile>
     <Compile Include="HeadOfProgramme\HOPAssignUserRole.aspx.cs">
       <DependentUpon>HOPAssignUserRole.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>

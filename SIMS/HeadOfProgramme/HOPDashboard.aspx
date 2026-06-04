@@ -35,7 +35,7 @@
                 </div>
                 <div>
                     <p class="stat-label">Programmes</p>
-                    <div class="stat-value">3</div>
+                    <div class="stat-value"><asp:Literal ID="litProgrammesCount" runat="server" Text="0" /></div>
                 </div>
             </div>
         </div>
@@ -47,7 +47,7 @@
                 </div>
                 <div>
                     <p class="stat-label">Courses</p>
-                    <div class="stat-value">24</div>
+                    <div class="stat-value"><asp:Literal ID="litCoursesCount" runat="server" Text="0" /></div>
                 </div>
             </div>
         </div>
@@ -59,7 +59,7 @@
                 </div>
                 <div>
                     <p class="stat-label">Students</p>
-                    <div class="stat-value">150</div>
+                    <div class="stat-value"><asp:Literal ID="litStudentsCount" runat="server" Text="0" /></div>
                 </div>
             </div>
         </div>
@@ -71,7 +71,7 @@
                 </div>
                 <div>
                     <p class="stat-label">Lecturers</p>
-                    <div class="stat-value">12</div>
+                    <div class="stat-value"><asp:Literal ID="litLecturersCount" runat="server" Text="0" /></div>
                 </div>
             </div>
         </div>
