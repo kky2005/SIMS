@@ -99,6 +99,15 @@ namespace SIMS.Student
 
         protected void rptSemesters_ItemCommand(object source, RepeaterCommandEventArgs e)
         {
+            if (e.CommandName == "ViewMarksDetails")
+            {
+                string[] args = e.CommandArgument.ToString().Split('|');
+
+                int academicYear = Convert.ToInt32(args[0]);
+                int semester = Convert.ToInt32(args[1]);
+
+                Response.Redirect("MarksDetails.aspx?AcademicYear=" + academicYear + "&Semester=" + semester);
+            }
             if (e.CommandName == "GenerateReport")
             {
                 string[] values = e.CommandArgument.ToString().Split('|');
@@ -108,6 +117,7 @@ namespace SIMS.Student
 
                 GenerateSemesterReport(academicYear, semester);
             }
+
         }
 
         private void GenerateSemesterReport(int academicYear, int semester)

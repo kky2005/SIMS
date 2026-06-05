@@ -208,6 +208,13 @@
                                 Academic Year <%# Eval("AcademicYear") %> - Semester <%# Eval("Semester") %>
                             </h4>
 
+                           
+                           <asp:Button ID="btnViewMarksDetails" runat="server"
+                                Text="View Marks Details"
+                                CssClass="btn btn-success btn-sm me-2"
+                                Style="margin-left: 520px;"
+                                CommandName="ViewMarksDetails"
+                                CommandArgument='<%# Eval("AcademicYear").ToString() + "|" + Eval("Semester").ToString() %>' />
                             <asp:LinkButton ID="btnGenerateReport" runat="server"
                                 CssClass="btn-download"
                                 CommandName="GenerateReport"

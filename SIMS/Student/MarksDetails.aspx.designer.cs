@@ -11,7 +11,7 @@ namespace SIMS.Student
 {
 
 
-    public partial class AttendanceRecord
+    public partial class MarksDetails
     {
 
         /// <summary>
@@ -33,66 +33,48 @@ namespace SIMS.Student
         protected global::System.Web.UI.WebControls.Label lblMessage;
 
         /// <summary>
-        /// lblTotalCourses control.
+        /// lblStudentName control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblTotalCourses;
+        protected global::System.Web.UI.WebControls.Label lblStudentName;
 
         /// <summary>
-        /// lblTotalClasses control.
+        /// lblStudentNo control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblTotalClasses;
+        protected global::System.Web.UI.WebControls.Label lblStudentNo;
 
         /// <summary>
-        /// lblAttendedClasses control.
+        /// lblAcademicYear control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblAttendedClasses;
+        protected global::System.Web.UI.WebControls.Label lblAcademicYear;
 
         /// <summary>
-        /// lblOverallAttendance control.
+        /// lblSemester control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblOverallAttendance;
+        protected global::System.Web.UI.WebControls.Label lblSemester;
 
         /// <summary>
-        /// gvAttendanceSummary control.
+        /// rptCourses control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.GridView gvAttendanceSummary;
-
-        /// <summary>
-        /// ddlCourseFilter control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.DropDownList ddlCourseFilter;
-
-        /// <summary>
-        /// gvAttendanceDetails control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.GridView gvAttendanceDetails;
+        protected global::System.Web.UI.WebControls.Repeater rptCourses;
     }
 }

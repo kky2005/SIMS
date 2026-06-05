@@ -102,6 +102,7 @@
             padding: 10px;
             border-bottom: 1px solid #e2e8f0;
             font-size: 13px;
+            vertical-align: top;
         }
 
         .btn-download {
@@ -125,9 +126,28 @@
             font-weight: bold;
         }
 
+        .announcement-title {
+            font-weight: bold;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+
+        .announcement-body {
+            color: #475569;
+            line-height: 1.5;
+        }
+
         @media (max-width: 768px) {
+            body {
+                padding: 18px;
+            }
+
             .info-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .grid {
+                font-size: 12px;
             }
         }
     </style>
@@ -141,12 +161,13 @@
                 <i class="fa fa-arrow-left"></i> Back to Enrolled Courses
             </a>
 
+            <!-- Course Information -->
             <div class="card-sims">
                 <div class="card-header-sims">
                     <h2>
                         <asp:Label ID="lblCourseTitle" runat="server" Text="Course Details"></asp:Label>
                     </h2>
-                    <p>View course information and download lecturer-uploaded materials.</p>
+                    <p>View course information, lecturer-uploaded materials, and course announcements.</p>
                     <asp:Label ID="lblMessage" runat="server" CssClass="message"></asp:Label>
                 </div>
 
@@ -183,6 +204,7 @@
                 </div>
             </div>
 
+            <!-- Course Materials -->
             <div class="card-sims">
                 <div class="card-header-sims">
                     <h2 style="font-size:22px;">
@@ -211,6 +233,48 @@
                                     </a>
                                 </ItemTemplate>
                             </asp:TemplateField>
+                        </Columns>
+                    </asp:GridView>
+                </div>
+            </div>
+
+            <!-- Course Announcements -->
+            <div class="card-sims">
+                <div class="card-header-sims">
+                    <h2 style="font-size:22px;">
+                        <i class="fa fa-bullhorn me-2"></i>Course Announcements
+                    </h2>
+                    <p>Announcements posted by lecturers for this course.</p>
+                </div>
+
+                <div class="card-body-sims">
+                    <asp:GridView ID="gvAnnouncements" runat="server"
+                        AutoGenerateColumns="False"
+                        CssClass="grid"
+                        EmptyDataText="No course announcements available.">
+
+                        <Columns>
+                            <asp:TemplateField HeaderText="Announcement">
+                                <ItemTemplate>
+                                    <div class="announcement-title">
+                                        <%# Eval("Title") %>
+                                    </div>
+
+                                    <div class="announcement-body">
+                                        <%# Eval("Body") %>
+                                    </div>
+                                </ItemTemplate>
+                            </asp:TemplateField>
+
+                            <asp:BoundField DataField="PostedBy" HeaderText="Posted By" />
+
+                            <asp:BoundField DataField="PublishedAt"
+                                HeaderText="Published At"
+                                DataFormatString="{0:dd MMM yyyy hh:mm tt}" />
+
+                            <asp:BoundField DataField="ExpiresAt"
+                                HeaderText="Expires At"
+                                DataFormatString="{0:dd MMM yyyy}" />
                         </Columns>
                     </asp:GridView>
                 </div>

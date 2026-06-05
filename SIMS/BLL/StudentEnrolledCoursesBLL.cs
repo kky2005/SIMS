@@ -21,5 +21,10 @@ namespace SIMS.BLL
         {
             return courseDAL.GetCourseMaterials(studentId, courseId);
         }
+
+        public DataTable GetCourseAnnouncements(int studentId, int courseId)
+        {
+            return courseDAL.GetCourseAnnouncements(studentId, courseId);
+        }
     }
 }

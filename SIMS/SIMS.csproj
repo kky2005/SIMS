@@ -114,6 +114,7 @@
     <Content Include="Student\CourseRegistration.aspx" />
     <Content Include="Student\Dashboard.aspx" />
     <Content Include="Student\EnrolledCourses.aspx" />
+    <Content Include="Student\MarksDetails.aspx" />
     <Content Include="Student\Notifications.aspx" />
     <Content Include="Student\Profile.aspx" />
     <Content Include="Student\StudentPayment.aspx" />
@@ -121,13 +122,17 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AuthenticationHelper.cs" />
+    <Compile Include="BLL\StudentAttendanceBLL.cs" />
     <Compile Include="BLL\StudentCourseBLL.cs" />
     <Compile Include="BLL\StudentEnrolledCoursesBLL.cs" />
+    <Compile Include="BLL\StudentMarksDetailsBLL.cs" />
     <Compile Include="BLL\StudentNotificationBLL.cs" />
     <Compile Include="BLL\StudentPaymentBLL.cs" />
     <Compile Include="BLL\Student_ResultBLL.cs" />
+    <Compile Include="DAL\StudentAttendanceDAL.cs" />
     <Compile Include="DAL\StudentCourseDAL.cs" />
     <Compile Include="DAL\StudentEnrolledCoursesDAL.cs" />
+    <Compile Include="DAL\StudentMarksDetailDAL.cs" />
     <Compile Include="DAL\StudentNotificationDAL.cs" />
     <Compile Include="DAL\StudentPaymentDAL.cs" />
     <Compile Include="DAL\Student_ResultDAL.cs" />
@@ -329,6 +334,13 @@
     </Compile>
     <Compile Include="Student\EnrolledCourses.aspx.designer.cs">
       <DependentUpon>EnrolledCourses.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Student\MarksDetails.aspx.cs">
+      <DependentUpon>MarksDetails.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Student\MarksDetails.aspx.designer.cs">
+      <DependentUpon>MarksDetails.aspx</DependentUpon>
     </Compile>
     <Compile Include="Student\Notifications.aspx.cs">
       <DependentUpon>Notifications.aspx</DependentUpon>

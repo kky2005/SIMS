@@ -54,6 +54,7 @@ namespace SIMS.Student
             lblYearSemester.Text = row["AcademicYear"].ToString() + " / Sem " + row["Semester"].ToString();
 
             LoadCourseMaterials(studentId, courseId);
+            LoadCourseAnnouncements(studentId, courseId);
         }
 
         private void LoadCourseMaterials(int studentId, int courseId)
@@ -62,6 +63,14 @@ namespace SIMS.Student
 
             gvMaterials.DataSource = materials;
             gvMaterials.DataBind();
+        }
+
+        private void LoadCourseAnnouncements(int studentId, int courseId)
+        {
+            DataTable announcements = courseBLL.GetCourseAnnouncements(studentId, courseId);
+
+            gvAnnouncements.DataSource = announcements;
+            gvAnnouncements.DataBind();
         }
     }
 }
