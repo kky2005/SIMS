@@ -328,7 +328,7 @@
                                                     <input type="number" 
                                                         id="mark_<%# Eval("StudentId") %>"
                                                         class="mark-input" 
-                                                        name="txtMark_<%# Eval("StudentId") %>" 
+                                                        name="txtMark_<%# ((System.Data.DataRowView)((RepeaterItem)Container.Parent.Parent).DataItem)["AssessmentId"] %>_<%# Eval("StudentId") %>" 
                                                         value="<%# Eval("MarksObtained", "{0:F2}") %>"
                                                         min="0" 
                                                         max="<%# Eval("MaxMark") %>"
@@ -413,7 +413,6 @@
 
     <asp:HiddenField ID="hidCourseId" runat="server" />
 
-    <!-- Submission Viewer Modal -->
     <div id="submissionModal" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
         <div style="background: white; border-radius: 8px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
             <div style="padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
@@ -496,16 +495,16 @@
 
         var currentSubmissionUrl = '';
         var currentFileName = '';
-        
+
         function openSubmissionModal(studentName, fileName, submittedAt, status, fileUrl) {
             currentSubmissionUrl = fileUrl;
             currentFileName = fileName;
-            
+
             document.getElementById('submissionStudentName').innerText = studentName;
             document.getElementById('submissionFileName').innerText = fileName;
             document.getElementById('submissionDate').innerText = new Date(submittedAt).toLocaleString();
             document.getElementById('submissionStatus').innerText = status;
-            
+
             // Show preview for PDF and image files
             var ext = fileName.split('.').pop().toLowerCase();
             if (['pdf', 'jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
@@ -514,23 +513,23 @@
             } else {
                 document.getElementById('submissionPreview').style.display = 'none';
             }
-            
+
             document.getElementById('submissionModal').style.display = 'flex';
         }
-        
+
         function closeSubmissionModal() {
             document.getElementById('submissionModal').style.display = 'none';
             document.getElementById('submissionFrame').src = '';
         }
-        
+
         function downloadSubmission() {
             if (currentSubmissionUrl) {
                 window.open(currentSubmissionUrl, '_blank');
             }
         }
-        
+
         // Close modal when clicking outside
-        document.getElementById('submissionModal').addEventListener('click', function(e) {
+        document.getElementById('submissionModal').addEventListener('click', function (e) {
             if (e.target === this) {
                 closeSubmissionModal();
             }

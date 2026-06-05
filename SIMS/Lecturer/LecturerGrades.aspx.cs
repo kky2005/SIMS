@@ -319,7 +319,7 @@ namespace SIMS.Lecturer
                 int marksSaved = 0;
                 int marksUpdated = 0;
 
-                // Get list of all students in this course/semester
+                // Get list of all active students in this course partition block
                 DataTable studentList = new DataTable();
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
@@ -335,22 +335,25 @@ namespace SIMS.Lecturer
                     }
                 }
 
-                // Process each student's mark
+                // Process each student's mark cleanly
                 foreach (DataRow row in studentList.Rows)
                 {
                     int studentId = Convert.ToInt32(row["StudentId"]);
-                    string fieldName = $"txtMark_{studentId}";
+
+                    // FIXED: Look for the precise unique form entry identifier name matching this specific assessment row block
+                    string fieldName = $"txtMark_{assessmentId}_{studentId}";
                     string markValue = Request.Form[fieldName];
 
-                    System.Diagnostics.Debug.WriteLine($"Student {studentId}: fieldName={fieldName}, value={markValue}");
+                    System.Diagnostics.Debug.WriteLine($"Assessment {assessmentId}, Student {studentId}: fieldName={fieldName}, value={markValue}");
 
-                    if (!string.IsNullOrEmpty(markValue) && decimal.TryParse(markValue, out decimal marks) && marks > 0)
+                    // Note: Changed 'marks > 0' condition to 'marks >= 0' so teachers can save a grade of zero if needed
+                    if (!string.IsNullOrEmpty(markValue) && decimal.TryParse(markValue, out decimal marks) && marks >= 0)
                     {
                         using (SqlConnection conn = new SqlConnection(connStr))
                         {
                             conn.Open();
 
-                            // Check if mark exists
+                            // Check if mark already exists for this specific combination
                             int markId = 0;
                             using (SqlCommand checkCmd = new SqlCommand(
                                 "SELECT MarkId FROM StudentMarks WHERE AssessmentId = @AssessmentId AND StudentId = @StudentId", conn))
@@ -364,7 +367,7 @@ namespace SIMS.Lecturer
 
                             if (markId > 0)
                             {
-                                // Update existing
+                                // Update existing entry
                                 using (SqlCommand updateCmd = new SqlCommand(
                                     "UPDATE StudentMarks SET MarksObtained = @Marks, GradedBy = @GradedBy, GradedAt = GETDATE() WHERE MarkId = @MarkId", conn))
                                 {
@@ -377,7 +380,7 @@ namespace SIMS.Lecturer
                             }
                             else
                             {
-                                // Insert new
+                                // Insert brand new entry record
                                 using (SqlCommand insertCmd = new SqlCommand(
                                     "INSERT INTO StudentMarks (AssessmentId, StudentId, MarksObtained, GradedBy, GradedAt, IsPublished) VALUES (@AssessmentId, @StudentId, @Marks, @GradedBy, GETDATE(), 0)", conn))
                                 {
@@ -397,18 +400,18 @@ namespace SIMS.Lecturer
 
                 if (marksSaved > 0 || marksUpdated > 0)
                 {
-                    ShowSuccess($"Marks saved! {marksSaved} new, {marksUpdated} updated.");
+                    ShowSuccess($"Marks saved successfully! {marksSaved} new entries recorded, {marksUpdated} updated.");
                     LoadAssessmentsForGrading();
                 }
                 else
                 {
-                    ShowError("No marks entered to save.");
+                    ShowError("No valid marks were entered to process.");
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error saving marks: {ex.Message}\n{ex.StackTrace}");
-                ShowError($"Error: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error saving marks execution crash: {ex.Message}\n{ex.StackTrace}");
+                ShowError($"System error: {ex.Message}");
             }
         }
 
