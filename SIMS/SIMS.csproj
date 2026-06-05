@@ -110,6 +110,7 @@
     <Content Include="Login.aspx" />
     <Content Include="Student\AcademicResults.aspx" />
     <Content Include="Student\AttendanceRecord.aspx" />
+    <Content Include="Student\ChangePassword.aspx" />
     <Content Include="Student\CourseDetails.aspx" />
     <Content Include="Student\CourseRegistration.aspx" />
     <Content Include="Student\Dashboard.aspx" />
@@ -122,6 +123,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AuthenticationHelper.cs" />
+    <Compile Include="BLL\StudentAccountBLL.cs" />
     <Compile Include="BLL\StudentAttendanceBLL.cs" />
     <Compile Include="BLL\StudentCourseBLL.cs" />
     <Compile Include="BLL\StudentEnrolledCoursesBLL.cs" />
@@ -129,6 +131,7 @@
     <Compile Include="BLL\StudentNotificationBLL.cs" />
     <Compile Include="BLL\StudentPaymentBLL.cs" />
     <Compile Include="BLL\Student_ResultBLL.cs" />
+    <Compile Include="DAL\StudentAccountDAL.cs" />
     <Compile Include="DAL\StudentAttendanceDAL.cs" />
     <Compile Include="DAL\StudentCourseDAL.cs" />
     <Compile Include="DAL\StudentEnrolledCoursesDAL.cs" />
@@ -306,6 +309,13 @@
     </Compile>
     <Compile Include="Student\AttendanceRecord.aspx.designer.cs">
       <DependentUpon>AttendanceRecord.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Student\ChangePassword.aspx.cs">
+      <DependentUpon>ChangePassword.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Student\ChangePassword.aspx.designer.cs">
+      <DependentUpon>ChangePassword.aspx</DependentUpon>
     </Compile>
     <Compile Include="Student\CourseDetails.aspx.cs">
       <DependentUpon>CourseDetails.aspx</DependentUpon>

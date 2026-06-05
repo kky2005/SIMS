@@ -447,8 +447,15 @@
 
                                 <div class="info-row">
                                     <div class="info-label">Student Number</div>
+
                                     <div class="info-value">
                                         <asp:Label ID="lblPersonalStudentNo" runat="server"></asp:Label>
+                                    </div>
+
+                                    <div class="mt-2">
+                                        <a href="ChangePassword.aspx" class="btn btn-primary btn-sm">
+                                            <i class="fa fa-lock"></i> Change Password
+                                        </a>
                                     </div>
                                 </div>
 
