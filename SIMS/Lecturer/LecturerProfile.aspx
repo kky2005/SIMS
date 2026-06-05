@@ -198,15 +198,6 @@
             color: #991b1b;
         }
 
-        .form-actions {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #e2e8f0;
-        }
-
         .info-badge {
             display: inline-block;
             background: #dbeafe;
@@ -246,34 +237,29 @@
     </style>
 
     <script type="text/javascript">
-        // Toggle between view and edit modes
-        function toggleEditMode() {
+        // Switches visibility layout cleanly without causing unintended postback loops
+        function setInterfaceMode(isEditMode) {
             var profileView = document.getElementById('profileView');
             var profileForm = document.getElementById('profileForm');
             var btnEdit = document.getElementById('<%= btnEdit.ClientID %>');
             var btnSave = document.getElementById('<%= btnSave.ClientID %>');
             var btnCancel = document.getElementById('<%= btnCancel.ClientID %>');
 
-            var isEditMode = profileForm.classList.contains('show');
-
             if (isEditMode) {
-                // Switch to view mode
-                profileView.classList.remove('hide');
-                profileForm.classList.remove('show');
-                btnEdit.style.display = 'inline-block';
-                btnSave.style.display = 'none';
-                btnCancel.style.display = 'none';
-            } else {
-                // Switch to edit mode
                 profileView.classList.add('hide');
                 profileForm.classList.add('show');
                 btnEdit.style.display = 'none';
                 btnSave.style.display = 'inline-block';
                 btnCancel.style.display = 'inline-block';
+            } else {
+                profileView.classList.remove('hide');
+                profileForm.classList.remove('show');
+                btnEdit.style.display = 'inline-block';
+                btnSave.style.display = 'none';
+                btnCancel.style.display = 'none';
             }
         }
 
-        // Initialize event handlers when document is ready
         document.addEventListener('DOMContentLoaded', function () {
             var btnEdit = document.getElementById('<%= btnEdit.ClientID %>');
             var btnCancel = document.getElementById('<%= btnCancel.ClientID %>');
@@ -281,7 +267,7 @@
             if (btnEdit) {
                 btnEdit.addEventListener('click', function (e) {
                     e.preventDefault();
-                    toggleEditMode();
+                    setInterfaceMode(true);
                     return false;
                 });
             }
@@ -289,7 +275,7 @@
             if (btnCancel) {
                 btnCancel.addEventListener('click', function (e) {
                     e.preventDefault();
-                    toggleEditMode();
+                    setInterfaceMode(false);
                     return false;
                 });
             }
@@ -299,7 +285,6 @@
 
 <asp:Content ID="Main" ContentPlaceHolderID="MainContent" runat="server">
 
-    <!-- Header -->
     <div class="profile-header">
         <div class="profile-header-content">
             <h3>
@@ -308,13 +293,12 @@
             <p>Manage your personal information and account details</p>
         </div>
         <div class="profile-actions">
-            <asp:Button ID="btnEdit" runat="server" Text="Edit Profile" CssClass="btn-edit" OnClick="btnEdit_Click" />
+            <asp:Button ID="btnEdit" runat="server" Text="Edit Profile" CssClass="btn-edit" />
             <asp:Button ID="btnSave" runat="server" Text="Save Changes" CssClass="btn-save" style="display:none;" OnClick="btnSave_Click" />
-            <asp:Button ID="btnCancel" runat="server" Text="Cancel" CssClass="btn-cancel" style="display:none;" OnClick="btnCancel_Click" />
+            <asp:Button ID="btnCancel" runat="server" Text="Cancel" CssClass="btn-cancel" style="display:none;" />
         </div>
     </div>
 
-    <!-- Success/Error Messages -->
     <asp:Panel ID="pnlSuccess" runat="server" Visible="false" CssClass="alert-message alert-success">
         <i class="fa fa-check-circle"></i>
         <span><asp:Literal ID="litSuccessMsg" runat="server" /></span>
@@ -325,9 +309,7 @@
         <span><asp:Literal ID="litErrorMsg" runat="server" /></span>
     </asp:Panel>
 
-    <!-- VIEW MODE -->
     <div class="profile-view" id="profileView">
-        <!-- Personal Information -->
         <div class="profile-section">
             <h5>
                 <i class="fa fa-id-card"></i> Personal Information
@@ -364,7 +346,6 @@
             </div>
         </div>
 
-        <!-- Contact Information -->
         <div class="profile-section">
             <h5>
                 <i class="fa fa-phone"></i> Contact Information
@@ -383,7 +364,6 @@
             </div>
         </div>
 
-        <!-- Employment Information -->
         <div class="profile-section">
             <h5>
                 <i class="fa fa-briefcase"></i> Employment Information
@@ -409,7 +389,6 @@
         </div>
     </div>
 
-    <!-- EDIT MODE -->
     <div class="profile-form" id="profileForm">
         <div class="profile-section">
             <h5>
@@ -458,11 +437,30 @@
                     <asp:TextBox ID="txtEmploymentStatus" runat="server" CssClass="read-only" ReadOnly="true" />
                 </div>
             </div>
+        </div>
 
-            <div class="form-actions">
-                <!-- Buttons handled via JavaScript toggle -->
+        <div class="profile-section">
+            <h5><i class="fa fa-lock"></i> Security & Change Password</h5>
+            <p style="font-size: 13px; color: #64748b; margin-top: 0; margin-bottom: 15px;">
+                Leave these fields entirely blank if you do not want to alter your password.
+            </p>
+
+            <div class="form-row full">
+                <div class="form-group">
+                    <label for="txtCurrentPassword">Current Password</label>
+                    <asp:TextBox ID="txtCurrentPassword" runat="server" TextMode="Password" placeholder="Enter your current password" />
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="txtNewPassword">New Password</label>
+                    <asp:TextBox ID="txtNewPassword" runat="server" TextMode="Password" placeholder="Enter new password" />
+                </div>
+                <div class="form-group">
+                    <label for="txtConfirmPassword">Confirm New Password</label>
+                    <asp:TextBox ID="txtConfirmPassword" runat="server" TextMode="Password" placeholder="Repeat new password" />
+                </div>
             </div>
         </div>
     </div>
-
 </asp:Content>
