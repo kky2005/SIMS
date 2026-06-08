@@ -2,9 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
+using System.IO;
 using System.Data.SqlClient;
 using System.Text;
+using System.Web;
 using System.Web.UI;
+using iTextSharp.text;
+using iTextSharp.text.pdf;
 
 namespace SIMS.HeadOfProgramme
 {
@@ -59,6 +63,54 @@ namespace SIMS.HeadOfProgramme
                 conn.Open();
                 LoadAttendanceReport(conn);
             }
+        }
+
+        protected void btnExportReport_Click(object sender, EventArgs e)
+        {
+            DataTable reportData = ViewState["CurrentGeneratedReport"] as DataTable;
+            string reportTitle = Convert.ToString(ViewState["CurrentGeneratedReportTitle"]);
+            string reportType = Convert.ToString(ViewState["CurrentGeneratedReportType"]);
+            string exportFormat = ddlExportFormat.SelectedValue.ToUpper();
+
+            if (reportData == null || reportData.Rows.Count == 0)
+            {
+                lblExportMessage.Text = "Please generate a report with data before exporting.";
+                lblExportMessage.Visible = true;
+                return;
+            }
+
+            string folderPath = Server.MapPath("~/ReportExports/");
+            if (!Directory.Exists(folderPath))
+                Directory.CreateDirectory(folderPath);
+
+            string safeTitle = MakeSafeFileName(reportTitle);
+            string extension = exportFormat == "EXCEL" ? ".xls" : exportFormat == "PDF" ? ".pdf" : ".csv";
+            string fileName = safeTitle + "_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + extension;
+            string physicalPath = Path.Combine(folderPath, fileName);
+            string virtualPath = "~/ReportExports/" + fileName;
+
+            if (exportFormat == "CSV")
+                WriteCsvFile(reportData, physicalPath);
+            else if (exportFormat == "EXCEL")
+                WriteExcelFile(reportData, physicalPath, reportTitle);
+            else if (exportFormat == "PDF")
+                WritePdfFile(reportData, physicalPath, reportTitle);
+            else
+            {
+                lblExportMessage.Text = "Invalid export format selected.";
+                lblExportMessage.Visible = true;
+                return;
+            }
+
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                conn.Open();
+                int reportId = GetOrCreateReportId(conn, reportTitle, reportType);
+                int exportId = InsertReportExport(conn, reportId, exportFormat, virtualPath);
+                InsertAuditLog(conn, "EXPORT_REPORT", "Exported " + reportTitle + " as " + exportFormat + ". ExportId: " + exportId, reportId);
+            }
+
+            DownloadFile(physicalPath, fileName, exportFormat);
         }
 
         private int? SelectedAcademicYear
@@ -413,6 +465,7 @@ namespace SIMS.HeadOfProgramme
                 ORDER BY p.ProgrammeName, c.CourseCode");
             gvGeneratedReport.DataSource = dt;
             gvGeneratedReport.DataBind();
+            SetCurrentGeneratedReport(dt, litGeneratedReportTitle.Text, "Enrolment");
             ShowReportMessage(dt.Rows.Count == 0, "No enrolment records found for the selected filter.");
         }
 
@@ -437,6 +490,7 @@ namespace SIMS.HeadOfProgramme
                 ORDER BY g.CGPA DESC, u.FullName");
             gvGeneratedReport.DataSource = dt;
             gvGeneratedReport.DataBind();
+            SetCurrentGeneratedReport(dt, litGeneratedReportTitle.Text, "Performance");
             ShowReportMessage(dt.Rows.Count == 0, "No student performance records found for the selected filter.");
         }
 
@@ -461,6 +515,7 @@ namespace SIMS.HeadOfProgramme
                 ORDER BY a.AttendanceDate DESC, u.FullName");
             gvGeneratedReport.DataSource = dt;
             gvGeneratedReport.DataBind();
+            SetCurrentGeneratedReport(dt, litGeneratedReportTitle.Text, "Attendance");
             ShowReportMessage(dt.Rows.Count == 0, "No attendance records found for the selected filter.");
         }
 
@@ -472,6 +527,10 @@ namespace SIMS.HeadOfProgramme
             gvGeneratedReport.EmptyDataText = "Click a report button above to generate a report.";
             gvGeneratedReport.DataSource = null;
             gvGeneratedReport.DataBind();
+            ViewState["CurrentGeneratedReport"] = null;
+            ViewState["CurrentGeneratedReportTitle"] = null;
+            ViewState["CurrentGeneratedReportType"] = null;
+            lblExportMessage.Visible = false;
         }
 
         private void ShowReportMessage(bool showEmptyMessage, string emptyMessage)
@@ -486,6 +545,266 @@ namespace SIMS.HeadOfProgramme
                 litGeneratedReportMessage.Text = "Report generated successfully.";
                 litGeneratedReportMessage.Visible = true;
             }
+        }
+
+        private void SetCurrentGeneratedReport(DataTable dt, string title, string reportType)
+        {
+            ViewState["CurrentGeneratedReport"] = dt;
+            ViewState["CurrentGeneratedReportTitle"] = title;
+            ViewState["CurrentGeneratedReportType"] = reportType;
+            lblExportMessage.Visible = false;
+        }
+
+        private void WriteCsvFile(DataTable dt, string physicalPath)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            for (int i = 0; i < dt.Columns.Count; i++)
+            {
+                if (i > 0) sb.Append(",");
+                sb.Append(EscapeCsv(dt.Columns[i].ColumnName));
+            }
+            sb.AppendLine();
+
+            foreach (DataRow row in dt.Rows)
+            {
+                for (int i = 0; i < dt.Columns.Count; i++)
+                {
+                    if (i > 0) sb.Append(",");
+                    sb.Append(EscapeCsv(Convert.ToString(row[i])));
+                }
+                sb.AppendLine();
+            }
+
+            File.WriteAllText(physicalPath, sb.ToString(), Encoding.UTF8);
+        }
+
+        private void WriteExcelFile(DataTable dt, string physicalPath, string reportTitle)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append("<html><head><meta charset='utf-8'></head><body>");
+            sb.Append("<h2>").Append(HttpUtility.HtmlEncode(reportTitle)).Append("</h2>");
+            sb.Append("<table border='1'><tr>");
+
+            foreach (DataColumn col in dt.Columns)
+                sb.Append("<th>").Append(HttpUtility.HtmlEncode(col.ColumnName)).Append("</th>");
+
+            sb.Append("</tr>");
+
+            foreach (DataRow row in dt.Rows)
+            {
+                sb.Append("<tr>");
+                foreach (DataColumn col in dt.Columns)
+                    sb.Append("<td>").Append(HttpUtility.HtmlEncode(Convert.ToString(row[col]))).Append("</td>");
+                sb.Append("</tr>");
+            }
+
+            sb.Append("</table></body></html>");
+            File.WriteAllText(physicalPath, sb.ToString(), Encoding.UTF8);
+        }
+
+        private void WritePdfFile(DataTable dt, string physicalPath, string reportTitle)
+        {
+            Document document = new Document(PageSize.A4.Rotate(), 20f, 20f, 20f, 20f);
+            PdfWriter.GetInstance(document, new FileStream(physicalPath, FileMode.Create));
+            document.Open();
+
+            Font titleFont = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 16);
+            Font headerFont = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 9);
+            Font bodyFont = FontFactory.GetFont(FontFactory.HELVETICA, 8);
+
+            document.Add(new Paragraph(reportTitle, titleFont));
+            document.Add(new Paragraph("Exported at: " + DateTime.Now.ToString("dd MMM yyyy HH:mm")));
+            document.Add(new Paragraph(" "));
+
+            PdfPTable table = new PdfPTable(dt.Columns.Count);
+            table.WidthPercentage = 100;
+
+            foreach (DataColumn col in dt.Columns)
+                table.AddCell(new Phrase(col.ColumnName, headerFont));
+
+            foreach (DataRow row in dt.Rows)
+            {
+                foreach (DataColumn col in dt.Columns)
+                    table.AddCell(new Phrase(Convert.ToString(row[col]), bodyFont));
+            }
+
+            document.Add(table);
+            document.Close();
+        }
+
+        private string EscapeCsv(string value)
+        {
+            if (value == null) value = "";
+            value = value.Replace("\"", "\"\"");
+            return "\"" + value + "\"";
+        }
+
+        private string MakeSafeFileName(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) value = "Report";
+            foreach (char c in Path.GetInvalidFileNameChars())
+                value = value.Replace(c, '_');
+            return value.Replace(" ", "_");
+        }
+
+        private void DownloadFile(string physicalPath, string fileName, string exportFormat)
+        {
+            string contentType = "text/csv";
+            if (exportFormat == "EXCEL") contentType = "application/vnd.ms-excel";
+            if (exportFormat == "PDF") contentType = "application/pdf";
+
+            Response.Clear();
+            Response.ContentType = contentType;
+            Response.AddHeader("Content-Disposition", "attachment; filename=" + fileName);
+            Response.TransmitFile(physicalPath);
+            Response.Flush();
+            Response.End();
+        }
+
+        private int GetOrCreateReportId(SqlConnection conn, string reportTitle, string reportType)
+        {
+            if (!TableExists(conn, "Reports"))
+                throw new Exception("Reports table was not found. ReportExports needs a valid ReportId.");
+
+            string nameColumn = GetFirstExistingColumn(conn, "Reports", new string[] { "ReportName", "ReportTitle", "Title", "Name" });
+
+            if (!string.IsNullOrEmpty(nameColumn))
+            {
+                using (SqlCommand findCmd = new SqlCommand("SELECT TOP 1 ReportId FROM Reports WHERE " + nameColumn + " = @ReportTitle ORDER BY ReportId DESC", conn))
+                {
+                    findCmd.Parameters.AddWithValue("@ReportTitle", reportTitle);
+                    object existing = findCmd.ExecuteScalar();
+                    if (existing != null && existing != DBNull.Value)
+                        return Convert.ToInt32(existing);
+                }
+            }
+
+            List<string> columns = new List<string>();
+            List<string> values = new List<string>();
+
+            if (!string.IsNullOrEmpty(nameColumn))
+            {
+                columns.Add(nameColumn);
+                values.Add("@ReportTitle");
+            }
+
+            string typeColumn = GetFirstExistingColumn(conn, "Reports", new string[] { "ReportType", "Type", "Category" });
+            if (!string.IsNullOrEmpty(typeColumn))
+            {
+                columns.Add(typeColumn);
+                values.Add("@ReportType");
+            }
+
+            string userColumn = GetFirstExistingColumn(conn, "Reports", new string[] { "GeneratedBy", "CreatedBy", "UserId" });
+            if (!string.IsNullOrEmpty(userColumn))
+            {
+                columns.Add(userColumn);
+                values.Add("@UserId");
+            }
+
+            string dateColumn = GetFirstExistingColumn(conn, "Reports", new string[] { "GeneratedAt", "CreatedAt", "ReportDate" });
+            if (!string.IsNullOrEmpty(dateColumn))
+            {
+                columns.Add(dateColumn);
+                values.Add("SYSUTCDATETIME()");
+            }
+
+            if (columns.Count == 0)
+            {
+                using (SqlCommand fallback = new SqlCommand("SELECT TOP 1 ReportId FROM Reports ORDER BY ReportId DESC", conn))
+                {
+                    object result = fallback.ExecuteScalar();
+                    if (result != null && result != DBNull.Value)
+                        return Convert.ToInt32(result);
+                }
+
+                throw new Exception("Reports table has no supported report title columns. Add ReportName, ReportTitle, Title, or Name.");
+            }
+
+            string sql = "INSERT INTO Reports (" + string.Join(",", columns) + ") VALUES (" + string.Join(",", values) + "); SELECT CAST(SCOPE_IDENTITY() AS INT);";
+
+            using (SqlCommand cmd = new SqlCommand(sql, conn))
+            {
+                cmd.Parameters.AddWithValue("@ReportTitle", reportTitle);
+                cmd.Parameters.AddWithValue("@ReportType", reportType);
+                cmd.Parameters.AddWithValue("@UserId", GetCurrentUserId());
+                return Convert.ToInt32(cmd.ExecuteScalar());
+            }
+        }
+
+        private int InsertReportExport(SqlConnection conn, int reportId, string exportFormat, string filePath)
+        {
+            using (SqlCommand cmd = new SqlCommand(@"
+                INSERT INTO ReportExports (ReportId, ExportFormat, FilePath)
+                VALUES (@ReportId, @ExportFormat, @FilePath);
+                SELECT CAST(SCOPE_IDENTITY() AS INT);", conn))
+            {
+                cmd.Parameters.AddWithValue("@ReportId", reportId);
+                cmd.Parameters.AddWithValue("@ExportFormat", exportFormat);
+                cmd.Parameters.AddWithValue("@FilePath", filePath);
+                return Convert.ToInt32(cmd.ExecuteScalar());
+            }
+        }
+
+        private void InsertAuditLog(SqlConnection conn, string action, string description, int reportId)
+        {
+            string auditTable = TableExists(conn, "AuditLogs") ? "AuditLogs" : TableExists(conn, "AuditLog") ? "AuditLog" : null;
+            if (auditTable == null) return;
+
+            List<string> columns = new List<string>();
+            List<string> values = new List<string>();
+
+            AddAuditColumn(conn, auditTable, columns, values, "UserId", "@UserId");
+            AddAuditColumn(conn, auditTable, columns, values, "Action", "@Action");
+            AddAuditColumn(conn, auditTable, columns, values, "ActionType", "@Action");
+            AddAuditColumn(conn, auditTable, columns, values, "Description", "@Description");
+            AddAuditColumn(conn, auditTable, columns, values, "Details", "@Description");
+            AddAuditColumn(conn, auditTable, columns, values, "EntityName", "@EntityName");
+            AddAuditColumn(conn, auditTable, columns, values, "EntityId", "@EntityId");
+            AddAuditColumn(conn, auditTable, columns, values, "IpAddress", "@IpAddress");
+            AddAuditColumn(conn, auditTable, columns, values, "CreatedAt", "SYSUTCDATETIME()");
+            AddAuditColumn(conn, auditTable, columns, values, "AuditDate", "SYSUTCDATETIME()");
+
+            if (columns.Count == 0) return;
+
+            string sql = "INSERT INTO " + auditTable + " (" + string.Join(",", columns) + ") VALUES (" + string.Join(",", values) + ")";
+
+            using (SqlCommand cmd = new SqlCommand(sql, conn))
+            {
+                cmd.Parameters.AddWithValue("@UserId", GetCurrentUserId());
+                cmd.Parameters.AddWithValue("@Action", action);
+                cmd.Parameters.AddWithValue("@Description", description);
+                cmd.Parameters.AddWithValue("@EntityName", "Reports");
+                cmd.Parameters.AddWithValue("@EntityId", reportId);
+                cmd.Parameters.AddWithValue("@IpAddress", Request.UserHostAddress ?? "");
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        private void AddAuditColumn(SqlConnection conn, string tableName, List<string> columns, List<string> values, string columnName, string valueExpression)
+        {
+            if (ColumnExists(conn, tableName, columnName))
+            {
+                columns.Add(columnName);
+                values.Add(valueExpression);
+            }
+        }
+
+        private string GetFirstExistingColumn(SqlConnection conn, string tableName, string[] columnNames)
+        {
+            foreach (string columnName in columnNames)
+            {
+                if (ColumnExists(conn, tableName, columnName))
+                    return columnName;
+            }
+            return null;
+        }
+
+        private int GetCurrentUserId()
+        {
+            int userId;
+            return Session["UserId"] != null && int.TryParse(Session["UserId"].ToString(), out userId) ? userId : 0;
         }
 
         private int SafeCount(SqlConnection conn, string tableName)

@@ -47,6 +47,9 @@ namespace SIMS.HeadOfProgramme
         protected global::System.Web.UI.WebControls.GridView gvProgrammeReport;
         protected global::System.Web.UI.WebControls.Literal litGeneratedReportTitle;
         protected global::System.Web.UI.WebControls.Label litGeneratedReportMessage;
+        protected global::System.Web.UI.WebControls.DropDownList ddlExportFormat;
+        protected global::System.Web.UI.WebControls.LinkButton btnExportReport;
+        protected global::System.Web.UI.WebControls.Label lblExportMessage;
         protected global::System.Web.UI.WebControls.GridView gvGeneratedReport;
     }
 }

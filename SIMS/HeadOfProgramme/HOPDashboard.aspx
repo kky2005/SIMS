@@ -275,6 +275,35 @@
             color: #64748b;
             font-size: 13px;
         }
+
+        .export-panel {
+            margin: 12px 0 14px;
+            padding: 12px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-sims-secondary {
+            border: 0;
+            border-radius: 10px;
+            padding: 10px 16px;
+            background: #0f172a;
+            color: #fff !important;
+            font-weight: 800;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-sims-secondary:hover {
+            background: #1e293b;
+            color: #fff !important;
+        }
+
     </style>
 </asp:Content>
 
@@ -582,6 +611,18 @@
                         <asp:Literal ID="litGeneratedReportTitle" runat="server" Text="Generated Report" />
                     </h6>
                     <asp:Label ID="litGeneratedReportMessage" runat="server" CssClass="report-message" Text="Choose a report above to view institutional data for the selected filter." />
+                    <div class="export-panel">
+                        <strong><i class="fa fa-download me-2"></i>Export Current Report</strong>
+                        <asp:DropDownList ID="ddlExportFormat" runat="server" CssClass="filter-input" Style="max-width:180px;">
+                            <asp:ListItem Value="CSV">CSV</asp:ListItem>
+                            <asp:ListItem Value="EXCEL">Excel</asp:ListItem>
+                            <asp:ListItem Value="PDF">PDF</asp:ListItem>
+                        </asp:DropDownList>
+                        <asp:LinkButton ID="btnExportReport" runat="server" CssClass="btn-sims-secondary" OnClick="btnExportReport_Click">
+                            Export Report
+                        </asp:LinkButton>
+                        <asp:Label ID="lblExportMessage" runat="server" CssClass="report-message" Visible="false" />
+                    </div>
                     <asp:GridView ID="gvGeneratedReport" runat="server" AutoGenerateColumns="True"
                         CssClass="table-sims mt-2" GridLines="None" EmptyDataText="Click a report button above to generate a report.">
                         <EmptyDataRowStyle CssClass="empty-note" />

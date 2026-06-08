@@ -312,6 +312,11 @@
                 Manage Enrolments
             </a>
 
+            <a href="HOPAuditLogs.aspx" class='<%= GetActiveClass("HOPAuditLogs") %>'>
+                <i class="fa fa-clock-rotate-left"></i>
+                Audit Logs
+            </a>
+
         </div>
 
         <div class="sidebar-footer">
