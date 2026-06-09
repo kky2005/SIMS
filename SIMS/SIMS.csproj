@@ -46,6 +46,12 @@
     <Reference Include="BCrypt.Net-Next, Version=4.1.0.0, Culture=neutral, PublicKeyToken=1e11be04b6288443, processorArchitecture=MSIL">
       <HintPath>..\packages\BCrypt.Net-Next.4.1.0\lib\net472\BCrypt.Net-Next.dll</HintPath>
     </Reference>
+    <Reference Include="BouncyCastle.Cryptography, Version=2.0.0.0, Culture=neutral, PublicKeyToken=072edcf4a5328938, processorArchitecture=MSIL">
+      <HintPath>..\packages\BouncyCastle.Cryptography.2.6.2\lib\net461\BouncyCastle.Cryptography.dll</HintPath>
+    </Reference>
+    <Reference Include="itextsharp, Version=5.5.13.5, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
+      <HintPath>..\packages\iTextSharp.5.5.13.5\lib\net461\itextsharp.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Buffers, Version=4.0.5.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Buffers.4.6.1\lib\net462\System.Buffers.dll</HintPath>
@@ -83,8 +89,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="HeadOfProgramme\HOPAnnouncements.aspx" />
+    <Content Include="HeadOfProgramme\HOPArchivedAdmissions.aspx" />
+    <Content Include="HeadOfProgramme\HOPArchivedEnrolments.aspx" />
     <Content Include="HeadOfProgramme\HOPAssignUserRole.aspx" />
+    <Content Include="HeadOfProgramme\HOPAuditLogs.aspx" />
     <Content Include="HeadOfProgramme\HOPDashboard.aspx" />
+    <Content Include="HeadOfProgramme\HOPManageAcademicCalendar.aspx" />
     <Content Include="HeadOfProgramme\HOPManageAdmissions.aspx" />
     <Content Include="HeadOfProgramme\HOPManageCourses.aspx" />
     <Content Include="HeadOfProgramme\HOPManageEnrolments.aspx" />
@@ -106,12 +117,40 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AuthenticationHelper.cs" />
+    <Compile Include="HeadOfProgramme\HOPAnnouncements.aspx.cs">
+      <DependentUpon>HOPAnnouncements.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPAnnouncements.aspx.designer.cs">
+      <DependentUpon>HOPAnnouncements.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPArchivedAdmissions.aspx.cs">
+      <DependentUpon>HOPArchivedAdmissions.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPArchivedAdmissions.aspx.designer.cs">
+      <DependentUpon>HOPArchivedAdmissions.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPArchivedEnrolments.aspx.cs">
+      <DependentUpon>HOPArchivedEnrolments.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPArchivedEnrolments.aspx.designer.cs">
+      <DependentUpon>HOPArchivedEnrolments.aspx</DependentUpon>
+    </Compile>
     <Compile Include="HeadOfProgramme\HOPAssignUserRole.aspx.cs">
       <DependentUpon>HOPAssignUserRole.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="HeadOfProgramme\HOPAssignUserRole.aspx.designer.cs">
       <DependentUpon>HOPAssignUserRole.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPAuditLogs.aspx.cs">
+      <DependentUpon>HOPAuditLogs.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPAuditLogs.aspx.designer.cs">
+      <DependentUpon>HOPAuditLogs.aspx</DependentUpon>
     </Compile>
     <Compile Include="HeadOfProgramme\HOPBase.cs">
       <SubType>ASPXCodeBehind</SubType>
@@ -125,6 +164,13 @@
     </Compile>
     <Compile Include="HeadOfProgramme\HOPDashboard.aspx.designer.cs">
       <DependentUpon>HOPDashboard.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPManageAcademicCalendar.aspx.cs">
+      <DependentUpon>HOPManageAcademicCalendar.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPManageAcademicCalendar.aspx.designer.cs">
+      <DependentUpon>HOPManageAcademicCalendar.aspx</DependentUpon>
     </Compile>
     <Compile Include="HeadOfProgramme\HOPManageAdmissions.aspx.cs">
       <DependentUpon>HOPManageAdmissions.aspx</DependentUpon>

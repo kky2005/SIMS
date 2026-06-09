@@ -1,4 +1,4 @@
-﻿<%@ Master Language="C#" AutoEventWireup="true"
+<%@ Master Language="C#" AutoEventWireup="true"
     CodeBehind="HOPMaster.master.cs"
     Inherits="SIMS.HeadOfProgramme.HOPMaster" %>
 
@@ -6,7 +6,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head runat="server">
     <meta charset="utf-8" />
-    <title>SIMS – Head Of Programme</title>
+    <title>SIMS - Head Of Programme</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
@@ -250,7 +250,7 @@
     <div class="sidebar">
 
         <div class="sidebar-brand">
-            <p class="brand-title">🎓 SIMS</p>
+            <p class="brand-title">SIMS</p>
             <span class="brand-sub">Student Information System</span>
         </div>
 
@@ -297,14 +297,24 @@
                 Assign User Roles
             </a>
 
+            <a href="HOPManageAcademicCalendar.aspx" class='<%= GetActiveClass("HOPManageAcademicCalendar") %>'>
+                <i class="fa fa-calendar-days"></i>
+                Academic Calendar
+            </a>
             <a href="HOPManageAdmissions.aspx" class='<%= GetActiveClass("HOPManageAdmissions") %>'>
                 <i class="fa fa-clipboard-check"></i>
                 Manage Admissions
             </a>
 
+
             <a href="HOPManageEnrolments.aspx" class='<%= GetActiveClass("HOPManageEnrolments") %>'>
                 <i class="fa fa-user-plus"></i>
                 Manage Enrolments
+            </a>
+
+            <a href="HOPAuditLogs.aspx" class='<%= GetActiveClass("HOPAuditLogs") %>'>
+                <i class="fa fa-clock-rotate-left"></i>
+                Audit Logs
             </a>
 
         </div>
