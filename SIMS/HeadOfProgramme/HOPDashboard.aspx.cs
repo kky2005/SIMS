@@ -174,6 +174,8 @@ namespace SIMS.HeadOfProgramme
                     conn.Open();
 
                     LoadMainCounts(conn);
+                    LoadPendingTasks(conn);
+                    LoadRecentActivity(conn);
                     LoadProgrammeChart(conn);
                     LoadCourseEnrolmentChart(conn);
                     LoadAttendanceSummary(conn);
@@ -230,6 +232,41 @@ namespace SIMS.HeadOfProgramme
             litActiveStudentsCount.Text = GetFilteredActiveStudents(conn).ToString();
 
             litStudentsAtRisk.Text = GetStudentsAtRisk(conn).ToString();
+        }
+
+        private void LoadPendingTasks(SqlConnection conn)
+        {
+            litPendingAdmissions.Text = TableExists(conn, "Admissions")
+                ? GetScalarInt(conn, "SELECT COUNT(*) FROM Admissions WHERE Status = 'Pending'").ToString()
+                : "0";
+
+            litPendingEnrolments.Text = TableExists(conn, "Enrolments")
+                ? GetScalarInt(conn, "SELECT COUNT(*) FROM Enrolments WHERE Status = 'Pending'").ToString()
+                : "0";
+
+            litArchivedEnrolments.Text = TableExists(conn, "Enrolments")
+                ? GetScalarInt(conn, "SELECT COUNT(*) FROM Enrolments WHERE Status = 'Archived'").ToString()
+                : "0";
+        }
+
+        private void LoadRecentActivity(SqlConnection conn)
+        {
+            if (!TableExists(conn, "AuditLogs"))
+            {
+                gvRecentActivity.DataSource = null;
+                gvRecentActivity.DataBind();
+                return;
+            }
+
+            gvRecentActivity.DataSource = GetData(conn, @"
+                SELECT TOP 8
+                    ISNULL(a.Action, '-') AS Action,
+                    ISNULL(u.FullName, 'Unknown User') AS FullName,
+                    a.ActionDate
+                FROM AuditLogs a
+                LEFT JOIN Users u ON u.UserId = a.UserId
+                ORDER BY a.ActionDate DESC, a.LogId DESC");
+            gvRecentActivity.DataBind();
         }
 
         private int GetFilteredActiveStudents(SqlConnection conn)
@@ -463,9 +500,8 @@ namespace SIMS.HeadOfProgramme
                 INNER JOIN Programmes p ON c.ProgrammeId = p.ProgrammeId" + EnrolmentFilterSql("e") + @"
                 GROUP BY p.ProgrammeName, c.CourseCode, c.CourseName
                 ORDER BY p.ProgrammeName, c.CourseCode");
-            gvGeneratedReport.DataSource = dt;
-            gvGeneratedReport.DataBind();
             SetCurrentGeneratedReport(dt, litGeneratedReportTitle.Text, "Enrolment");
+            BindGeneratedReport(dt);
             ShowReportMessage(dt.Rows.Count == 0, "No enrolment records found for the selected filter.");
         }
 
@@ -488,9 +524,8 @@ namespace SIMS.HeadOfProgramme
                 INNER JOIN Users u ON s.UserId = u.UserId
                 INNER JOIN Programmes p ON s.ProgrammeId = p.ProgrammeId" + GpaFilterSql("g") + @"
                 ORDER BY g.CGPA DESC, u.FullName");
-            gvGeneratedReport.DataSource = dt;
-            gvGeneratedReport.DataBind();
             SetCurrentGeneratedReport(dt, litGeneratedReportTitle.Text, "Performance");
+            BindGeneratedReport(dt);
             ShowReportMessage(dt.Rows.Count == 0, "No student performance records found for the selected filter.");
         }
 
@@ -513,9 +548,8 @@ namespace SIMS.HeadOfProgramme
                 INNER JOIN Users u ON s.UserId = u.UserId
                 INNER JOIN Courses c ON e.CourseId = c.CourseId" + EnrolmentFilterSql("e") + @"
                 ORDER BY a.AttendanceDate DESC, u.FullName");
-            gvGeneratedReport.DataSource = dt;
-            gvGeneratedReport.DataBind();
             SetCurrentGeneratedReport(dt, litGeneratedReportTitle.Text, "Attendance");
+            BindGeneratedReport(dt);
             ShowReportMessage(dt.Rows.Count == 0, "No attendance records found for the selected filter.");
         }
 
@@ -530,6 +564,8 @@ namespace SIMS.HeadOfProgramme
             ViewState["CurrentGeneratedReport"] = null;
             ViewState["CurrentGeneratedReportTitle"] = null;
             ViewState["CurrentGeneratedReportType"] = null;
+            ViewState["GeneratedReportSortExpression"] = null;
+            ViewState["GeneratedReportSortDirection"] = null;
             lblExportMessage.Visible = false;
         }
 
@@ -552,7 +588,128 @@ namespace SIMS.HeadOfProgramme
             ViewState["CurrentGeneratedReport"] = dt;
             ViewState["CurrentGeneratedReportTitle"] = title;
             ViewState["CurrentGeneratedReportType"] = reportType;
+            ViewState["GeneratedReportSortExpression"] = null;
+            ViewState["GeneratedReportSortDirection"] = null;
             lblExportMessage.Visible = false;
+        }
+
+        private void BindGeneratedReport(DataTable dt)
+        {
+            gvGeneratedReport.DataSource = dt;
+            gvGeneratedReport.DataBind();
+        }
+
+        protected void gvGeneratedReport_Sorting(object sender, System.Web.UI.WebControls.GridViewSortEventArgs e)
+        {
+            DataTable reportData = ViewState["CurrentGeneratedReport"] as DataTable;
+
+            if (reportData == null || reportData.Rows.Count == 0)
+                return;
+
+            string sortExpression = e.SortExpression;
+            string sortDirection = GetReportSortDirection(sortExpression);
+
+            DataView view = reportData.DefaultView;
+            view.Sort = "[" + sortExpression.Replace("]", "]]" ) + "] " + sortDirection;
+
+            DataTable sortedData = view.ToTable();
+            ViewState["CurrentGeneratedReport"] = sortedData;
+            BindGeneratedReport(sortedData);
+
+            litGeneratedReportMessage.Text = "Sorted by " + GetFriendlyReportHeader(sortExpression) + (sortDirection == "ASC" ? " ▲" : " ▼");
+            litGeneratedReportMessage.Visible = true;
+        }
+
+        private string GetReportSortDirection(string sortExpression)
+        {
+            string lastExpression = Convert.ToString(ViewState["GeneratedReportSortExpression"]);
+            string lastDirection = Convert.ToString(ViewState["GeneratedReportSortDirection"]);
+
+            string newDirection = "ASC";
+
+            if (lastExpression == sortExpression && lastDirection == "ASC")
+                newDirection = "DESC";
+
+            ViewState["GeneratedReportSortExpression"] = sortExpression;
+            ViewState["GeneratedReportSortDirection"] = newDirection;
+
+            return newDirection;
+        }
+
+
+        protected void gvGeneratedReport_RowCreated(object sender, System.Web.UI.WebControls.GridViewRowEventArgs e)
+        {
+            if (e.Row.RowType != System.Web.UI.WebControls.DataControlRowType.Header)
+                return;
+
+            string currentSort = Convert.ToString(ViewState["GeneratedReportSortExpression"]);
+            string currentDirection = Convert.ToString(ViewState["GeneratedReportSortDirection"]);
+
+            foreach (System.Web.UI.WebControls.TableCell cell in e.Row.Cells)
+            {
+                if (cell.Controls.Count == 0)
+                    continue;
+
+                System.Web.UI.WebControls.LinkButton headerLink = cell.Controls[0] as System.Web.UI.WebControls.LinkButton;
+                if (headerLink == null)
+                    continue;
+
+                string sortExpression = headerLink.CommandArgument;
+                string friendlyHeader = GetFriendlyReportHeader(sortExpression);
+
+                string arrow = "↕";
+                if (currentSort == sortExpression)
+                {
+                    arrow = currentDirection == "ASC" ? "▲" : "▼";
+                    cell.CssClass = (cell.CssClass + " sorted-column").Trim();
+                }
+
+                headerLink.Text = friendlyHeader + " <span class='sort-arrow'>" + arrow + "</span>";
+            }
+        }
+
+        private string GetFriendlyReportHeader(string columnName)
+        {
+            if (string.IsNullOrEmpty(columnName))
+                return "";
+
+            switch (columnName)
+            {
+                case "StudentNo": return "Student No";
+                case "FullName": return "Full Name";
+                case "ProgrammeName": return "Programme";
+                case "AcademicYear": return "Academic Year";
+                case "CourseCode": return "Course Code";
+                case "CourseName": return "Course Name";
+                case "TotalEnrolments": return "Total Enrolments";
+                case "UniqueStudents": return "Unique Students";
+                case "PerformanceStatus": return "Performance Status";
+                case "AttendanceDate": return "Attendance Date";
+                default:
+                    return SplitPascalCase(columnName);
+            }
+        }
+
+        private string SplitPascalCase(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return "";
+
+            StringBuilder result = new StringBuilder();
+            result.Append(value[0]);
+
+            for (int i = 1; i < value.Length; i++)
+            {
+                char current = value[i];
+                char previous = value[i - 1];
+
+                if (char.IsUpper(current) && !char.IsUpper(previous))
+                    result.Append(' ');
+
+                result.Append(current);
+            }
+
+            return result.ToString();
         }
 
         private void WriteCsvFile(DataTable dt, string physicalPath)
@@ -939,6 +1096,14 @@ namespace SIMS.HeadOfProgramme
             litEnrolmentsCount.Text = "0";
             litActiveStudentsCount.Text = "0";
             litStudentsAtRisk.Text = "0";
+            litPendingAdmissions.Text = "0";
+            litPendingEnrolments.Text = "0";
+            litArchivedEnrolments.Text = "0";
+            if (gvRecentActivity != null)
+            {
+                gvRecentActivity.DataSource = null;
+                gvRecentActivity.DataBind();
+            }
             litAttendanceRate.Text = "N/A";
             litAveragePerformance.Text = "N/A";
 

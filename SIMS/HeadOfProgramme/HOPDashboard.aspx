@@ -175,6 +175,44 @@
             font-size: 14px;
         }
 
+        .sortable-report th {
+            background: #f8fafc;
+            color: #334155;
+            font-size: 13px;
+            text-transform: none;
+            letter-spacing: 0;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .sortable-report th a {
+            color: #334155 !important;
+            text-decoration: none !important;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .sortable-report th a:hover {
+            color: #0f172a !important;
+            text-decoration: none !important;
+        }
+
+        .sortable-report th .sort-arrow {
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 900;
+        }
+
+        .sortable-report th.sorted-column {
+            background: #eff6ff;
+            color: #1d4ed8;
+        }
+
+        .sortable-report th.sorted-column a {
+            color: #1d4ed8 !important;
+        }
+
         .quick-action {
             display: block;
             text-decoration: none;
@@ -194,6 +232,58 @@
             transform: translateX(3px);
         }
 
+        .task-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 13px;
+            padding: 13px 14px;
+            margin-bottom: 10px;
+        }
+
+        .task-item h6 {
+            margin: 0;
+            color: #1e293b;
+            font-weight: 800;
+        }
+
+        .task-item p {
+            margin: 3px 0 0;
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        .task-count {
+            min-width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 900;
+            flex-shrink: 0;
+        }
+
+        .activity-list {
+            margin-top: 16px;
+        }
+
+        .activity-list .table-sims td {
+            font-size: 13px;
+            vertical-align: top;
+        }
+
+        .activity-time {
+            color: #64748b;
+            white-space: nowrap;
+            font-size: 12px;
+        }
 
         .filter-panel {
             background: #fff;
@@ -623,8 +713,9 @@
                         </asp:LinkButton>
                         <asp:Label ID="lblExportMessage" runat="server" CssClass="report-message" Visible="false" />
                     </div>
-                    <asp:GridView ID="gvGeneratedReport" runat="server" AutoGenerateColumns="True"
-                        CssClass="table-sims mt-2" GridLines="None" EmptyDataText="Click a report button above to generate a report.">
+<asp:GridView ID="gvGeneratedReport" runat="server" AutoGenerateColumns="True"
+                        AllowSorting="true" OnSorting="gvGeneratedReport_Sorting" OnRowCreated="gvGeneratedReport_RowCreated"
+                        CssClass="table-sims mt-2 sortable-report" GridLines="None" EmptyDataText="Click a report button above to generate a report.">
                         <EmptyDataRowStyle CssClass="empty-note" />
                     </asp:GridView>
                 </div>
@@ -632,35 +723,68 @@
         </div>
 
         <div class="col-lg-4">
-            <div class="card-sims h-100">
+            <div class="card-sims mb-4">
                 <div class="card-header-sims">
-                    <h5><i class="fa fa-bolt me-2 text-warning"></i> Quick Actions</h5>
+                    <h5><i class="fa fa-list-check me-2 text-warning"></i> Pending Tasks</h5>
                 </div>
 
                 <div class="card-body-sims">
-                    <a href="HOPManageProgrammes.aspx" class="quick-action">
-                        <i class="fa fa-layer-group me-2"></i> Manage Programmes
-                    </a>
+                    <div class="task-item">
+                        <div>
+                            <h6>Admissions Awaiting Review</h6>
+                            <p>Pending admission requests from students.</p>
+                        </div>
+                        <a href="HOPManageAdmissions.aspx" class="task-count text-decoration-none">
+                            <asp:Literal ID="litPendingAdmissions" runat="server" Text="0" />
+                        </a>
+                    </div>
 
-                    <a href="HOPManageCourses.aspx" class="quick-action">
-                        <i class="fa fa-book me-2"></i> Manage Courses
-                    </a>
+                    <div class="task-item">
+                        <div>
+                            <h6>Enrolments Awaiting Review</h6>
+                            <p>Pending course enrolment requests.</p>
+                        </div>
+                        <a href="HOPManageEnrolments.aspx" class="task-count text-decoration-none">
+                            <asp:Literal ID="litPendingEnrolments" runat="server" Text="0" />
+                        </a>
+                    </div>
 
-                    <a href="HOPRegisterStudent.aspx" class="quick-action">
-                        <i class="fa fa-user-plus me-2"></i> Register Student
-                    </a>
 
-                    <a href="HOPManageEnrolments.aspx" class="quick-action">
-                        <i class="fa fa-clipboard-list me-2"></i> Manage Enrolments
-                    </a>
+                    <div class="task-item">
+                        <div>
+                            <h6>Archived Enrolments</h6>
+                            <p>Approved enrolments moved to archive.</p>
+                        </div>
+                        <a href="HOPArchivedEnrolments.aspx" class="task-count text-decoration-none">
+                            <asp:Literal ID="litArchivedEnrolments" runat="server" Text="0" />
+                        </a>
+                    </div>
+                </div>
+            </div>
 
-                    <a href="HOPManageAdmissions.aspx" class="quick-action">
-                        <i class="fa fa-user-check me-2"></i> Manage Admissions
-                    </a>
+            <div class="card-sims">
+                <div class="card-header-sims">
+                    <h5><i class="fa fa-clock-rotate-left me-2 text-primary"></i> Recent Activity</h5>
+                    <a href="HOPAuditLogs.aspx" class="badge-soft text-decoration-none">View Logs</a>
+                </div>
 
-                    <a href="HOPManageAcademicCalendar.aspx" class="quick-action">
-                        <i class="fa fa-calendar-days me-2"></i> Academic Calendar
-                    </a>
+                <div class="card-body-sims activity-list">
+                    <asp:GridView ID="gvRecentActivity" runat="server" AutoGenerateColumns="False"
+                        CssClass="table-sims" GridLines="None" EmptyDataText="No recent activity found.">
+                        <Columns>
+                            <asp:TemplateField HeaderText="Activity">
+                                <ItemTemplate>
+                                    <strong><%# Eval("Action") %></strong><br />
+                                    <span class="text-muted"><%# Eval("FullName") %></span>
+                                </ItemTemplate>
+                            </asp:TemplateField>
+                            <asp:TemplateField HeaderText="Time">
+                                <ItemTemplate>
+                                    <span class="activity-time"><%# Eval("ActionDate", "{0:dd MMM HH:mm}") %></span>
+                                </ItemTemplate>
+                            </asp:TemplateField>
+                        </Columns>
+                    </asp:GridView>
                 </div>
             </div>
         </div>

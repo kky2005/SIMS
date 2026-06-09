@@ -297,15 +297,15 @@
                 Assign User Roles
             </a>
 
+            <a href="HOPManageAcademicCalendar.aspx" class='<%= GetActiveClass("HOPManageAcademicCalendar") %>'>
+                <i class="fa fa-calendar-days"></i>
+                Academic Calendar
+            </a>
             <a href="HOPManageAdmissions.aspx" class='<%= GetActiveClass("HOPManageAdmissions") %>'>
                 <i class="fa fa-clipboard-check"></i>
                 Manage Admissions
             </a>
 
-            <a href="HOPManageAcademicCalendar.aspx" class='<%= GetActiveClass("HOPManageAcademicCalendar") %>'>
-                <i class="fa fa-calendar-days"></i>
-                Academic Calendar
-            </a>
 
             <a href="HOPManageEnrolments.aspx" class='<%= GetActiveClass("HOPManageEnrolments") %>'>
                 <i class="fa fa-user-plus"></i>

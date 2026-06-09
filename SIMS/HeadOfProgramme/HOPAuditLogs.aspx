@@ -66,6 +66,25 @@
             color: #64748b;
         }
     </style>
+
+    <script type="text/javascript">
+        function toggleAuditLogs(source) {
+            var table = document.getElementById('<%= gvAuditLogs.ClientID %>');
+
+            if (!table) {
+                return;
+            }
+
+            var checkboxes = table.querySelectorAll("input[type='checkbox'][id*='chkSelect']");
+
+            for (var i = 0; i < checkboxes.length; i++) {
+                if (checkboxes[i] !== source) {
+                    checkboxes[i].checked = source.checked;
+                }
+            }
+        }
+    </script>
+
 </asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" runat="server">
@@ -115,7 +134,13 @@
                     EmptyDataText="No audit logs found.">
 
                     <Columns>
-                        <asp:TemplateField HeaderText="">
+                        <asp:TemplateField HeaderText="Select All">
+                            <HeaderTemplate>
+                                <div class="d-flex align-items-center gap-1">
+                                    <asp:CheckBox ID="chkSelectAll" runat="server" onclick="toggleAuditLogs(this);" ToolTip="Select all audit logs on this page" />
+                                    <span>Select All</span>
+                                </div>
+                            </HeaderTemplate>
                             <ItemTemplate>
                                 <asp:CheckBox ID="chkSelect" runat="server" />
                             </ItemTemplate>
@@ -164,5 +189,24 @@
             </div>
         </div>
     </div>
+
+
+    <script type="text/javascript">
+        function toggleAuditLogs(source) {
+            var table = document.getElementById('<%= gvAuditLogs.ClientID %>');
+
+            if (!table) {
+                return;
+            }
+
+            var checkboxes = table.querySelectorAll("input[type='checkbox'][id*='chkSelect']");
+
+            for (var i = 0; i < checkboxes.length; i++) {
+                if (checkboxes[i] !== source) {
+                    checkboxes[i].checked = source.checked;
+                }
+            }
+        }
+    </script>
 
 </asp:Content>

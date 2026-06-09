@@ -90,6 +90,8 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="HeadOfProgramme\HOPAnnouncements.aspx" />
+    <Content Include="HeadOfProgramme\HOPArchivedAdmissions.aspx" />
+    <Content Include="HeadOfProgramme\HOPArchivedEnrolments.aspx" />
     <Content Include="HeadOfProgramme\HOPAssignUserRole.aspx" />
     <Content Include="HeadOfProgramme\HOPAuditLogs.aspx" />
     <Content Include="HeadOfProgramme\HOPDashboard.aspx" />
@@ -120,6 +122,20 @@
     </Compile>
     <Compile Include="HeadOfProgramme\HOPAnnouncements.aspx.designer.cs">
       <DependentUpon>HOPAnnouncements.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPArchivedAdmissions.aspx.cs">
+      <DependentUpon>HOPArchivedAdmissions.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPArchivedAdmissions.aspx.designer.cs">
+      <DependentUpon>HOPArchivedAdmissions.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPArchivedEnrolments.aspx.cs">
+      <DependentUpon>HOPArchivedEnrolments.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPArchivedEnrolments.aspx.designer.cs">
+      <DependentUpon>HOPArchivedEnrolments.aspx</DependentUpon>
     </Compile>
     <Compile Include="HeadOfProgramme\HOPAssignUserRole.aspx.cs">
       <DependentUpon>HOPAssignUserRole.aspx</DependentUpon>

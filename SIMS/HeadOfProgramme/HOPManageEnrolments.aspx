@@ -16,8 +16,11 @@
         .status-pending { background: #fef3c7; color: #92400e; }
         .status-approved { background: #dcfce7; color: #166534; }
         .status-rejected { background: #fee2e2; color: #991b1b; }
+        .status-archived { background: #e0e7ff; color: #3730a3; }
         .empty-box { padding: 24px; text-align: center; color: #64748b; border: 1px dashed #cbd5e1; border-radius: 10px; }
         .section-count { font-size: 13px; color: #64748b; margin-left: 8px; }
+        .bulk-actions { margin-bottom: 10px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .select-col { width: 45px; text-align: center; }
     </style>
 </asp:Content>
 
@@ -99,8 +102,12 @@
     <div class="card-sims mb-4">
         <div class="card-header-sims">
             <h5>Approved Enrolments <asp:Label ID="lblApprovedCount" runat="server" CssClass="section-count"></asp:Label></h5>
+            <asp:HyperLink ID="lnkArchivedEnrolments" runat="server" NavigateUrl="~/HeadOfProgramme/HOPArchivedEnrolments.aspx" CssClass="btn btn-sm btn-outline-secondary">View Archived Enrolments</asp:HyperLink>
         </div>
         <div class="card-body-sims">
+            <div class="bulk-actions">
+                <asp:Button ID="btnArchiveSelected" runat="server" Text="Archive Selected" CssClass="btn btn-warning btn-sm" OnClick="btnArchiveSelected_Click" OnClientClick="return confirm('Archive all selected approved enrolments?');" />
+            </div>
             <asp:GridView ID="gvApproved" runat="server"
                 CssClass="table table-bordered table-hover"
                 AutoGenerateColumns="False"
@@ -108,6 +115,14 @@
                 OnRowCommand="gvProcessed_RowCommand"
                 OnRowDataBound="gvStatus_RowDataBound">
                 <Columns>
+                    <asp:TemplateField HeaderStyle-CssClass="select-col" ItemStyle-CssClass="select-col">
+                        <HeaderTemplate>
+                            <asp:CheckBox ID="chkSelectAllApproved" runat="server" onclick="toggleApproved(this);" ToolTip="Select all approved enrolments" />
+                        </HeaderTemplate>
+                        <ItemTemplate>
+                            <asp:CheckBox ID="chkSelectApproved" runat="server" />
+                        </ItemTemplate>
+                    </asp:TemplateField>
                     <asp:BoundField DataField="EnrolmentId" HeaderText="ID" />
                     <asp:BoundField DataField="StudentNo" HeaderText="Student No" />
                     <asp:BoundField DataField="StudentName" HeaderText="Student" />
@@ -123,7 +138,7 @@
                     <asp:BoundField DataField="LastActionBy" HeaderText="Approved By" />
                     <asp:TemplateField HeaderText="Actions">
                         <ItemTemplate>
-                            <asp:LinkButton ID="btnDeleteApproved" runat="server" CommandName="DeleteEnrolment" CommandArgument='<%# Eval("EnrolmentId") %>' CssClass="btn btn-sm btn-danger" OnClientClick="return confirm('Delete this approved enrolment record?');">Delete</asp:LinkButton>
+                            <asp:LinkButton ID="btnDeleteApproved" runat="server" CommandName="ArchiveEnrolment" CommandArgument='<%# Eval("EnrolmentId") %>' CssClass="btn btn-sm btn-warning" OnClientClick="return confirm('Archive this approved enrolment record? It will be moved to the archived enrolments page.');">Archive</asp:LinkButton>
                         </ItemTemplate>
                     </asp:TemplateField>
                 </Columns>
@@ -137,6 +152,9 @@
             <h5>Rejected Enrolments <asp:Label ID="lblRejectedCount" runat="server" CssClass="section-count"></asp:Label></h5>
         </div>
         <div class="card-body-sims">
+            <div class="bulk-actions">
+                <asp:Button ID="btnDeleteSelected" runat="server" Text="Delete Selected" CssClass="btn btn-danger btn-sm" OnClick="btnDeleteSelected_Click" OnClientClick="return confirm('Delete all selected rejected/dropped enrolments? Records with attendance cannot be deleted.');" />
+            </div>
             <asp:GridView ID="gvRejected" runat="server"
                 CssClass="table table-bordered table-hover"
                 AutoGenerateColumns="False"
@@ -144,6 +162,14 @@
                 OnRowCommand="gvProcessed_RowCommand"
                 OnRowDataBound="gvStatus_RowDataBound">
                 <Columns>
+                    <asp:TemplateField HeaderStyle-CssClass="select-col" ItemStyle-CssClass="select-col">
+                        <HeaderTemplate>
+                            <asp:CheckBox ID="chkSelectAllRejected" runat="server" onclick="toggleRejected(this);" ToolTip="Select all rejected/dropped enrolments" />
+                        </HeaderTemplate>
+                        <ItemTemplate>
+                            <asp:CheckBox ID="chkSelectRejected" runat="server" />
+                        </ItemTemplate>
+                    </asp:TemplateField>
                     <asp:BoundField DataField="EnrolmentId" HeaderText="ID" />
                     <asp:BoundField DataField="StudentNo" HeaderText="Student No" />
                     <asp:BoundField DataField="StudentName" HeaderText="Student" />
@@ -167,4 +193,24 @@
             </asp:GridView>
         </div>
     </div>
+
+    <script type="text/javascript">
+        function toggleApproved(source) {
+            var table = document.getElementById('<%= gvApproved.ClientID %>');
+            if (!table) return;
+            var checkboxes = table.querySelectorAll("input[id*='chkSelectApproved']");
+            for (var i = 0; i < checkboxes.length; i++) {
+                checkboxes[i].checked = source.checked;
+            }
+        }
+
+        function toggleRejected(source) {
+            var table = document.getElementById('<%= gvRejected.ClientID %>');
+            if (!table) return;
+            var checkboxes = table.querySelectorAll("input[id*='chkSelectRejected']");
+            for (var i = 0; i < checkboxes.length; i++) {
+                checkboxes[i].checked = source.checked;
+            }
+        }
+    </script>
 </asp:Content>

@@ -36,6 +36,10 @@ namespace SIMS.HeadOfProgramme
         protected global::System.Web.UI.WebControls.Literal litStudentsAtRisk;
         protected global::System.Web.UI.WebControls.Literal litAttendanceRate;
         protected global::System.Web.UI.WebControls.Literal litAveragePerformance;
+        protected global::System.Web.UI.WebControls.Literal litPendingAdmissions;
+        protected global::System.Web.UI.WebControls.Literal litPendingEnrolments;
+        protected global::System.Web.UI.WebControls.Literal litArchivedEnrolments;
+        protected global::System.Web.UI.WebControls.GridView gvRecentActivity;
 
         protected global::System.Web.UI.WebControls.Panel pnlAttendanceNote;
         protected global::System.Web.UI.WebControls.Panel pnlPerformanceNote;

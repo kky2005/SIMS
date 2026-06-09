@@ -9,22 +9,18 @@
 
 namespace SIMS.HeadOfProgramme
 {
-    public partial class HOPManageAdmissions
+    public partial class HOPArchivedEnrolments
     {
         protected global::System.Web.UI.WebControls.Label lblMessage;
         protected global::System.Web.UI.WebControls.TextBox txtSearchStudent;
-        protected global::System.Web.UI.WebControls.DropDownList ddlFilterProgramme;
+        protected global::System.Web.UI.WebControls.DropDownList ddlFilterCourse;
         protected global::System.Web.UI.WebControls.TextBox txtFromDate;
         protected global::System.Web.UI.WebControls.TextBox txtToDate;
         protected global::System.Web.UI.WebControls.Button btnFilter;
         protected global::System.Web.UI.WebControls.Button btnReset;
-        protected global::System.Web.UI.WebControls.Label lblPendingCount;
-        protected global::System.Web.UI.WebControls.GridView gvPending;
-        protected global::System.Web.UI.WebControls.Label lblApprovedCount;
-        protected global::System.Web.UI.WebControls.Button btnArchiveSelectedApproved;
-        protected global::System.Web.UI.WebControls.Button btnDeleteSelectedRejected;
-        protected global::System.Web.UI.WebControls.GridView gvApproved;
-        protected global::System.Web.UI.WebControls.Label lblRejectedCount;
-        protected global::System.Web.UI.WebControls.GridView gvRejected;
+        protected global::System.Web.UI.WebControls.HyperLink lnkBack;
+        protected global::System.Web.UI.WebControls.Label lblArchivedCount;
+        protected global::System.Web.UI.WebControls.Button btnRestoreSelected;
+        protected global::System.Web.UI.WebControls.GridView gvArchived;
     }
 }

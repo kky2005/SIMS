@@ -21,8 +21,11 @@ namespace SIMS.HeadOfProgramme
         protected global::System.Web.UI.WebControls.Label lblPendingCount;
         protected global::System.Web.UI.WebControls.GridView gvPending;
         protected global::System.Web.UI.WebControls.Label lblApprovedCount;
+        protected global::System.Web.UI.WebControls.HyperLink lnkArchivedEnrolments;
+        protected global::System.Web.UI.WebControls.Button btnArchiveSelected;
         protected global::System.Web.UI.WebControls.GridView gvApproved;
         protected global::System.Web.UI.WebControls.Label lblRejectedCount;
+        protected global::System.Web.UI.WebControls.Button btnDeleteSelected;
         protected global::System.Web.UI.WebControls.GridView gvRejected;
     }
 }

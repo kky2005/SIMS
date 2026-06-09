@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
@@ -191,6 +192,84 @@ namespace SIMS.HeadOfProgramme
             LoadAllTables();
         }
 
+        private List<int> GetSelectedIds(GridView grid, string checkboxId)
+        {
+            List<int> selectedIds = new List<int>();
+
+            foreach (GridViewRow row in grid.Rows)
+            {
+                CheckBox chk = row.FindControl(checkboxId) as CheckBox;
+
+                if (chk != null && chk.Checked)
+                {
+                    int enrolmentId = Convert.ToInt32(grid.DataKeys[row.RowIndex].Value);
+                    selectedIds.Add(enrolmentId);
+                }
+            }
+
+            return selectedIds;
+        }
+
+        protected void btnArchiveSelected_Click(object sender, EventArgs e)
+        {
+            List<int> selectedIds = GetSelectedIds(gvApproved, "chkSelectApproved");
+
+            if (selectedIds.Count == 0)
+            {
+                ShowMessage("Please select at least one approved enrolment to archive.", false);
+                return;
+            }
+
+            int successCount = 0;
+            List<string> errors = new List<string>();
+
+            foreach (int id in selectedIds)
+            {
+                string error;
+                if (TryArchiveEnrolment(id, out error))
+                    successCount++;
+                else
+                    errors.Add("ID " + id + ": " + error);
+            }
+
+            LoadAllTables();
+
+            if (errors.Count == 0)
+                ShowMessage(successCount + " selected enrolment(s) archived successfully.", true);
+            else
+                ShowMessage(successCount + " archived. Some records failed: " + string.Join(" | ", errors), false);
+        }
+
+        protected void btnDeleteSelected_Click(object sender, EventArgs e)
+        {
+            List<int> selectedIds = GetSelectedIds(gvRejected, "chkSelectRejected");
+
+            if (selectedIds.Count == 0)
+            {
+                ShowMessage("Please select at least one rejected/dropped enrolment to delete.", false);
+                return;
+            }
+
+            int successCount = 0;
+            List<string> errors = new List<string>();
+
+            foreach (int id in selectedIds)
+            {
+                string error;
+                if (TryDeleteEnrolment(id, out error))
+                    successCount++;
+                else
+                    errors.Add("ID " + id + ": " + error);
+            }
+
+            LoadAllTables();
+
+            if (errors.Count == 0)
+                ShowMessage(successCount + " selected enrolment(s) deleted successfully.", true);
+            else
+                ShowMessage(successCount + " deleted. Some records failed: " + string.Join(" | ", errors), false);
+        }
+
         protected void gvPending_RowCommand(object sender, GridViewCommandEventArgs e)
         {
             int enrolmentId;
@@ -209,14 +288,17 @@ namespace SIMS.HeadOfProgramme
 
         protected void gvProcessed_RowCommand(object sender, GridViewCommandEventArgs e)
         {
-            if (e.CommandName != "DeleteEnrolment")
-                return;
-
             int enrolmentId;
             if (!int.TryParse(Convert.ToString(e.CommandArgument), out enrolmentId))
                 return;
 
-            DeleteEnrolment(enrolmentId);
+            if (e.CommandName == "ArchiveEnrolment")
+                ArchiveEnrolment(enrolmentId);
+            else if (e.CommandName == "DeleteEnrolment")
+                DeleteEnrolment(enrolmentId);
+            else
+                return;
+
             LoadAllTables();
         }
 
@@ -333,8 +415,84 @@ namespace SIMS.HeadOfProgramme
             }
         }
 
+        private void ArchiveEnrolment(int enrolmentId)
+        {
+            string error;
+            if (TryArchiveEnrolment(enrolmentId, out error))
+                ShowMessage("Enrolment archived successfully. You can view it from the archived enrolments page.", true);
+            else
+                ShowMessage("Error archiving enrolment: " + error, false);
+        }
+
+        private bool TryArchiveEnrolment(int enrolmentId, out string error)
+        {
+            error = "";
+
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                conn.Open();
+                SqlTransaction tran = conn.BeginTransaction();
+
+                try
+                {
+                    EnrolmentInfo info = GetEnrolmentInfo(conn, tran, enrolmentId);
+
+                    if (info == null)
+                        throw new Exception("Enrolment record not found.");
+
+                    if (info.Status != "Approved")
+                        throw new Exception("Only approved enrolments can be archived.");
+
+                    string updateSql = @"
+                        UPDATE Enrolments
+                        SET Status = 'Archived'
+                        WHERE EnrolmentId = @EnrolmentId
+                          AND Status = 'Approved'";
+
+                    using (SqlCommand updateCmd = new SqlCommand(updateSql, conn, tran))
+                    {
+                        updateCmd.Parameters.AddWithValue("@EnrolmentId", enrolmentId);
+                        int affected = updateCmd.ExecuteNonQuery();
+
+                        if (affected == 0)
+                            throw new Exception("Unable to archive. The enrolment may already have been updated.");
+                    }
+
+                    InsertAuditLog(
+                        conn,
+                        tran,
+                        CurrentUserId,
+                        "Archived enrolment record",
+                        enrolmentId,
+                        "Status=Approved; Student=" + info.StudentName + "; Course=" + info.CourseCode,
+                        "Status=Archived; Record moved to archived enrolments"
+                    );
+
+                    tran.Commit();
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    tran.Rollback();
+                    error = ex.Message;
+                    return false;
+                }
+            }
+        }
+
         private void DeleteEnrolment(int enrolmentId)
         {
+            string error;
+            if (TryDeleteEnrolment(enrolmentId, out error))
+                ShowMessage("Enrolment record deleted successfully.", true);
+            else
+                ShowMessage("Error deleting enrolment: " + error, false);
+        }
+
+        private bool TryDeleteEnrolment(int enrolmentId, out string error)
+        {
+            error = "";
+
             using (SqlConnection conn = new SqlConnection(connStr))
             {
                 conn.Open();
@@ -349,6 +507,19 @@ namespace SIMS.HeadOfProgramme
 
                     if (info.Status == "Pending")
                         throw new Exception("Pending requests cannot be deleted here. Approve or reject them first.");
+
+                    if (info.Status != "Rejected" && info.Status != "Dropped")
+                        throw new Exception("Only rejected or dropped enrolments can be deleted from this section.");
+
+                    string checkSql = "SELECT COUNT(*) FROM Attendance WHERE EnrolmentId = @EnrolmentId";
+                    using (SqlCommand checkCmd = new SqlCommand(checkSql, conn, tran))
+                    {
+                        checkCmd.Parameters.AddWithValue("@EnrolmentId", enrolmentId);
+                        int attendanceCount = Convert.ToInt32(checkCmd.ExecuteScalar());
+
+                        if (attendanceCount > 0)
+                            throw new Exception("This enrolment cannot be deleted because it has attendance records. Archive or keep the record instead.");
+                    }
 
                     InsertAuditLog(
                         conn,
@@ -368,12 +539,13 @@ namespace SIMS.HeadOfProgramme
                     }
 
                     tran.Commit();
-                    ShowMessage("Enrolment record deleted successfully.", true);
+                    return true;
                 }
                 catch (Exception ex)
                 {
                     tran.Rollback();
-                    ShowMessage("Error deleting enrolment: " + ex.Message, false);
+                    error = ex.Message;
+                    return false;
                 }
             }
         }
@@ -500,6 +672,8 @@ namespace SIMS.HeadOfProgramme
                 lblStatus.CssClass += " status-approved";
             else if (status == "Rejected" || status == "Dropped")
                 lblStatus.CssClass += " status-rejected";
+            else if (status == "Archived")
+                lblStatus.CssClass += " status-archived";
         }
 
         private void ShowMessage(string message, bool success)
