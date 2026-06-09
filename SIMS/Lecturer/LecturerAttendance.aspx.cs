@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using SIMS.Services;
 
 namespace SIMS.Lecturer
 {
@@ -17,7 +19,6 @@ namespace SIMS.Lecturer
 
             if (!IsPostBack)
             {
-                // Verify CourseID parameter
                 if (string.IsNullOrEmpty(Request.QueryString["CourseID"]) ||
                     !int.TryParse(Request.QueryString["CourseID"], out int courseId))
                 {
@@ -25,7 +26,6 @@ namespace SIMS.Lecturer
                     return;
                 }
 
-                // Get most recent assignment for this course
                 var assignment = GetMostRecentAssignment(courseId);
                 if (assignment.year <= 0 || assignment.semester <= 0)
                 {
@@ -69,7 +69,6 @@ namespace SIMS.Lecturer
                                 return (Convert.ToInt32(reader["AcademicYear"]), Convert.ToInt32(reader["Semester"]));
                             }
                         }
-                        conn.Close();
                     }
                 }
             }
@@ -100,7 +99,6 @@ namespace SIMS.Lecturer
                                 litCourseName.Text = $"{code} - {name}";
                             }
                         }
-                        conn.Close();
                     }
                 }
             }
@@ -255,13 +253,10 @@ namespace SIMS.Lecturer
                 if (string.IsNullOrEmpty(attendanceDate))
                     attendanceDate = DateTime.Now.ToString("yyyy-MM-dd");
 
-                // Get all checked enrolment IDs from form submission
-                string checkedIds = Request.Form["chkAttendance"];
-                int savedCount = 0;
+                var studentsRecorded = new List<int>();
 
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
-                    // First, delete existing attendance for this date and course
                     string deleteSql = @"
                         DELETE FROM Attendance
                         WHERE EnrolmentId IN (
@@ -284,14 +279,13 @@ namespace SIMS.Lecturer
                         conn.Close();
                     }
 
-                    // Insert new attendance records for checked students
-                    if (!string.IsNullOrEmpty(checkedIds))
+                    if (Request.Form["chkAttendance"] != null)
                     {
-                        string[] ids = checkedIds.Split(',');
+                        string[] selectedIds = Request.Form["chkAttendance"].Split(',');
 
-                        foreach (string id in ids)
+                        foreach (string enrolmentIdStr in selectedIds)
                         {
-                            if (int.TryParse(id.Trim(), out int enrolmentId) && enrolmentId > 0)
+                            if (int.TryParse(enrolmentIdStr.Trim(), out int enrolmentId) && enrolmentId > 0)
                             {
                                 string insertSql = @"
                                     INSERT INTO Attendance (EnrolmentId, AttendanceDate, Status, RecordedBy, RecordedAt)
@@ -307,15 +301,50 @@ namespace SIMS.Lecturer
                                     insertCmd.ExecuteNonQuery();
                                     conn.Close();
 
-                                    savedCount++;
+                                    using (SqlCommand getStudentCmd = new SqlCommand(
+                                        "SELECT StudentId FROM Enrolments WHERE EnrolmentId = @EnrolmentId", conn))
+                                    {
+                                        getStudentCmd.Parameters.AddWithValue("@EnrolmentId", enrolmentId);
+                                        conn.Open();
+                                        object studentIdObj = getStudentCmd.ExecuteScalar();
+                                        if (studentIdObj != null)
+                                        {
+                                            studentsRecorded.Add(Convert.ToInt32(studentIdObj));
+                                        }
+                                        conn.Close();
+                                    }
                                 }
                             }
                         }
                     }
                 }
 
-                ShowSuccess($"Attendance saved! {savedCount} students marked present for {attendanceDate}.");
-                LoadStudents(courseId, year, semester, attendanceDate, "");
+                if (studentsRecorded.Count > 0)
+                {
+                    try
+                    {
+                        var progressService = new AcademicProgressService(connStr);
+                        var warningsTriggered = progressService.OnAttendanceRecorded(
+                            courseId,
+                            year,
+                            semester,
+                            CurrentLecturerId,
+                            studentsRecorded.ToArray()
+                        );
+
+                        if (warningsTriggered.Count > 0)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Academic Progress Service: {warningsTriggered.Count} warnings triggered after attendance recorded");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error triggering academic progress analysis: {ex.Message}");
+                    }
+                }
+
+                ShowSuccess("Attendance saved successfully!");
+                LoadStudents(courseId, year, semester, attendanceDate, ddlStatusFilter.SelectedValue);
             }
             catch (Exception ex)
             {

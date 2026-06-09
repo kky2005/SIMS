@@ -110,60 +110,67 @@
     </div>
 
     <div class="row g-3 mb-4">
-        <div class="col-md-8">
-            <div class="card-sims">
-                <div class="card-header-sims">
-                    <h5><i class="fa fa-book me-2" style="color:#0d6efd;"></i>My Courses This Semester</h5>
-                    <a href="LecturerCourses.aspx" class="btn btn-sm btn-outline-primary">View All</a>
-                </div>
-                <div class="card-body-sims" style="padding:0;">
-                    <asp:GridView ID="gvDashboardCourses"
-                        runat="server"
-                        AutoGenerateColumns="False"
-                        CssClass="table table-sims table-hover mb-0"
-                        Width="100%"
-                        EmptyDataText="No courses assigned for this semester.">
-                        <Columns>
-                            <asp:BoundField DataField="CourseCode"  HeaderText="Code" />
-                            <asp:BoundField DataField="CourseName"  HeaderText="Course Name" />
-                            <asp:BoundField DataField="CreditHours" HeaderText="Credits" />
-                            <asp:BoundField DataField="TotalStudents" HeaderText="Students" />
-                            <asp:TemplateField HeaderText="">
-                                <ItemTemplate>
-                                    <a href='<%# "LecturerAttendance.aspx?CourseID=" + Eval("CourseId") %>' class="btn btn-sm btn-outline-secondary me-1">Attendance</a>
-                                    <a href='<%# "LecturerGrades.aspx?CourseID=" + Eval("CourseId") %>' class="btn btn-sm btn-outline-success">Grades</a>
-                                </ItemTemplate>
-                            </asp:TemplateField>
-                        </Columns>
-                    </asp:GridView>
-                </div>
+    <div class="col-12">
+        <div class="card-sims">
+            <div class="card-header-sims">
+                <h5><i class="fa fa-book me-2" style="color:#0d6efd;"></i>My Courses This Semester</h5>
+                <a href="LecturerCourses.aspx" class="btn btn-sm btn-outline-primary">View All</a>
             </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="card-sims h-100">
-                <div class="card-header-sims">
-                    <h5><i class="fa fa-bolt me-2" style="color:#f59e0b;"></i>Quick Actions</h5>
-                </div>
-                <div class="card-body-sims">
-                    <div class="d-grid gap-2">
-                        <a href="LecturerAttendance.aspx" class="btn btn-outline-primary text-start"><i class="fa fa-calendar-check me-2"></i> Record Attendance</a>
-                        <a href="LecturerGrades.aspx" class="btn btn-outline-success text-start"><i class="fa fa-star me-2"></i> Enter / Publish Grades</a>
-                        <a href="LecturerMaterials.aspx" class="btn btn-outline-secondary text-start"><i class="fa fa-upload me-2"></i> Upload Materials</a>
-                        <a href="LecturerAnnouncements.aspx" class="btn btn-outline-warning text-start"><i class="fa fa-bullhorn me-2"></i> Post Announcement</a>
-                        <a href="LecturerStudentProgress.aspx" class="btn btn-outline-danger text-start"><i class="fa fa-chart-line me-2"></i> View Student Progress</a>
-                    </div>
-                </div>
+            <div class="card-body-sims" style="padding:0;">
+                <asp:GridView ID="gvDashboardCourses"
+                    runat="server"
+                    AutoGenerateColumns="False"
+                    CssClass="table table-sims table-hover mb-0"
+                    Width="100%"
+                    EmptyDataText="No courses assigned for this semester.">
+                    <Columns>
+                        <asp:BoundField DataField="CourseCode" HeaderText="Code" ItemStyle-Width="10%" />
+                        <asp:BoundField DataField="CourseName" HeaderText="Course Name" ItemStyle-Width="30%" />
+                        <asp:BoundField DataField="CreditHours" HeaderText="Credits" ItemStyle-Width="8%" HeaderStyle-CssClass="text-center" ItemStyle-CssClass="text-center" />
+                        <asp:BoundField DataField="TotalStudents" HeaderText="Students" ItemStyle-Width="10%" HeaderStyle-CssClass="text-center" ItemStyle-CssClass="text-center" />
+                        <asp:TemplateField HeaderText="Actions" ItemStyle-Width="42%" HeaderStyle-CssClass="text-end" ItemStyle-CssClass="text-end">
+                            <ItemTemplate>
+                                <div style="display: inline-flex; gap: 4px; justify-content: flex-end; width: 100%;">
+                                    <a href='<%# "LecturerAttendance.aspx?CourseID=" + Eval("CourseId") %>' 
+                                       class="btn btn-outline-primary" 
+                                       style="padding: 5px 10px; font-size: 11px; font-weight: 500; border-radius: 4px;">
+                                        <i class="fa fa-calendar-check me-1"></i>Attendance
+                                    </a>
+                                    <a href='<%# "LecturerGrades.aspx?CourseID=" + Eval("CourseId") %>' 
+                                       class="btn btn-outline-success" 
+                                       style="padding: 5px 10px; font-size: 11px; font-weight: 500; border-radius: 4px;">
+                                        <i class="fa fa-star me-1"></i>Grades
+                                    </a>
+                                    <a href='<%# "LecturerAssessment.aspx?CourseID=" + Eval("CourseId") %>' 
+                                       class="btn btn-outline-secondary" 
+                                       style="padding: 5px 10px; font-size: 11px; font-weight: 500; border-radius: 4px;">
+                                        <i class="fa fa-clipboard me-1"></i>Assessments
+                                    </a>
+                                    <a href='<%# "LecturerMaterials.aspx?CourseID=" + Eval("CourseId") %>' 
+                                       class="btn btn-outline-dark" 
+                                       style="padding: 5px 10px; font-size: 11px; font-weight: 500; border-radius: 4px;">
+                                        <i class="fa fa-upload me-1"></i>Materials
+                                    </a>
+                                    <a href='<%# "LecturerAnnouncements.aspx?CourseID=" + Eval("CourseId") %>' 
+                                       class="btn btn-outline-warning" 
+                                       style="padding: 5px 10px; font-size: 11px; font-weight: 500; border-radius: 4px;">
+                                        <i class="fa fa-bullhorn me-1"></i>Announce
+                                    </a>
+                                </div>
+                            </ItemTemplate>
+                        </asp:TemplateField>
+                    </Columns>
+                </asp:GridView>
             </div>
         </div>
     </div>
+</div>
 
     <div class="row g-3">
         <div class="col-12">
             <div class="card-sims">
                 <div class="card-header-sims">
-                    <h5><i class="fa fa-triangle-exclamation me-2" style="color:#dc2626;"></i>
-                        At-Risk Students Details
+                    <h5><i class="fa fa-triangle-exclamation me-2" style="color:#dc2626;"></i> At-Risk Students Details 
                         <span class="badge bg-danger ms-2" style="font-size:12px;">
                             <asp:Literal ID="litAtRiskBadge" runat="server" Text="0" />
                         </span>
@@ -171,19 +178,15 @@
                     <a href="LecturerStudentProgress.aspx" class="btn btn-sm btn-outline-danger">View All</a>
                 </div>
                 <div class="card-body-sims" style="padding:0;">
-                    <asp:GridView ID="gvAtRisk"
-                        runat="server"
-                        AutoGenerateColumns="False"
-                        CssClass="table table-sims table-hover mb-0"
-                        Width="100%"
-                        EmptyDataText="No at-risk students found.">
+                    <asp:GridView ID="gvAtRisk" runat="server" AutoGenerateColumns="False" CssClass="table table-sims table-hover mb-0"
+                        Width="100%" EmptyDataText="No at-risk students found.">
                         <Columns>
-                            <asp:BoundField DataField="StudentNo"   HeaderText="Student No" />
-                            <asp:BoundField DataField="FullName"    HeaderText="Student Name" />
-                            <asp:BoundField DataField="CourseName"  HeaderText="Course" />
+                            <asp:BoundField DataField="StudentNo" HeaderText="Student No" />
+                            <asp:BoundField DataField="FullName" HeaderText="Name" />
+                            <asp:BoundField DataField="CourseName" HeaderText="Course" />
                             <asp:BoundField DataField="AttendancePct" HeaderText="Attendance %" />
-                            <asp:BoundField DataField="AcademicAvg" HeaderText="Assessment Avg %" />
-                            <asp:TemplateField HeaderText="Risk Reason">
+                            <asp:BoundField DataField="AcademicAvg" HeaderText="Academic Avg %" />
+                            <asp:TemplateField HeaderText="Risk Evaluation">
                                 <ItemTemplate>
                                     <span class='<%# GetRiskBadgeClass(Eval("RiskReason").ToString()) %>'>
                                         <%# Eval("RiskReason") %>
@@ -198,11 +201,11 @@
     </div>
 
     <script type="text/javascript">
-        document.addEventListener("DOMContentLoaded", function () {
-            // 1. Performance Chart (Course Averages)
+        document.addEventListener('DOMContentLoaded', function () {
+            // 1. Course Average Performance Trend Bar Chart
             var perfData = <%= PerformanceJsonData %>;
-            var perfLabels = perfData.map(a => a.CourseCode);
-            var perfAverages = perfData.map(a => a.AvgMarkPct);
+            var perfLabels = perfData.map(function (item) { return item.CourseCode; });
+            var perfAverages = perfData.map(function (item) { return item.AvgMarkPct; });
 
             var ctxPerf = document.getElementById('chartPerformance').getContext('2d');
             new Chart(ctxPerf, {

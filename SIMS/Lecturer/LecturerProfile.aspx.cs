@@ -220,7 +220,6 @@ namespace SIMS.Lecturer
                             currentDbPasswordHash = result != null ? result.ToString().Trim() : "";
                         }
 
-                        // FIXED: Convert user's plain text input to a hash string before testing equality
                         string inputCurrentPasswordHash = ComputeSha256Hash(txtCurrentPassword.Text);
 
                         if (!string.Equals(currentDbPasswordHash, inputCurrentPasswordHash, StringComparison.OrdinalIgnoreCase))
@@ -230,7 +229,6 @@ namespace SIMS.Lecturer
                             return;
                         }
 
-                        // FIXED: Encrypt the new password before running the update script
                         string encryptedNewPassword = ComputeSha256Hash(txtNewPassword.Text);
 
                         string updatePassSql = "UPDATE Users SET PasswordHash = @NewPassword WHERE UserId = @UserId";
@@ -239,6 +237,24 @@ namespace SIMS.Lecturer
                             updatePassCmd.Parameters.AddWithValue("@NewPassword", encryptedNewPassword);
                             updatePassCmd.Parameters.AddWithValue("@UserId", userId);
                             updatePassCmd.ExecuteNonQuery();
+                        }
+
+                        // AUDIT LOG IMPLEMENTATION: Records credential manipulation history safely
+                        string auditSql = @"
+                            INSERT INTO [dbo].[AuditLogs] 
+                                ([UserId], [Action], [TableAffected], [RecordId], [OldValue], [NewValue], [ActionDate])
+                            VALUES 
+                                (@UserId, @Action, @TableAffected, @RecordId, @OldValue, @NewValue, SYSUTCDATETIME())";
+
+                        using (SqlCommand auditCmd = new SqlCommand(auditSql, conn))
+                        {
+                            auditCmd.Parameters.AddWithValue("@UserId", userId);
+                            auditCmd.Parameters.AddWithValue("@Action", "Password Changed");
+                            auditCmd.Parameters.AddWithValue("@TableAffected", "Users");
+                            auditCmd.Parameters.AddWithValue("@RecordId", userId);
+                            auditCmd.Parameters.AddWithValue("@OldValue", "******");
+                            auditCmd.Parameters.AddWithValue("@NewValue", "******");
+                            auditCmd.ExecuteNonQuery();
                         }
                     }
 

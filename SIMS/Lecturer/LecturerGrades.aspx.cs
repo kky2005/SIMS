@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
+using System.Text;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using SIMS.Services;
 
 namespace SIMS.Lecturer
 {
@@ -136,7 +139,7 @@ namespace SIMS.Lecturer
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
                     using (SqlCommand cmd = new SqlCommand(
-                        "SELECT DISTINCT Semester FROM CourseAssignments WHERE LecturerId = @LecturerId ORDER BY Semester ASC", conn))
+                        "SELECT DISTINCT Semester FROM CourseAssignments WHERE LecturerId = @LecturerId AND Semester IS NOT NULL ORDER BY Semester ASC", conn))
                     {
                         cmd.Parameters.AddWithValue("@LecturerId", CurrentLecturerId);
                         SqlDataAdapter da = new SqlDataAdapter(cmd);
@@ -146,11 +149,22 @@ namespace SIMS.Lecturer
                         ddlSemester.Items.Clear();
                         foreach (DataRow row in dt.Rows)
                         {
-                            int sem = Convert.ToInt32(row["Semester"]);
-                            ddlSemester.Items.Add(new ListItem($"Semester {sem}", sem.ToString()));
+                            // Add null check and safer conversion
+                            if (row["Semester"] != DBNull.Value)
+                            {
+                                try
+                                {
+                                    int sem = Convert.ToInt32(row["Semester"]);
+                                    ddlSemester.Items.Add(new ListItem($"Semester {sem}", sem.ToString()));
+                                }
+                                catch (InvalidCastException ex)
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"Error converting semester value: {row["Semester"]} - {ex.Message}");
+                                }
+                            }
                         }
 
-                        if (ddlSemester.Items.FindByValue(selectedSemester.ToString()) != null)
+                        if (selectedSemester > 0 && ddlSemester.Items.FindByValue(selectedSemester.ToString()) != null)
                             ddlSemester.SelectedValue = selectedSemester.ToString();
                     }
                 }
@@ -319,7 +333,6 @@ namespace SIMS.Lecturer
                 int marksSaved = 0;
                 int marksUpdated = 0;
 
-                // Get list of all active students in this course partition block
                 DataTable studentList = new DataTable();
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
@@ -335,25 +348,22 @@ namespace SIMS.Lecturer
                     }
                 }
 
-                // Process each student's mark cleanly
+                var studentsUpdated = new List<int>();
+
                 foreach (DataRow row in studentList.Rows)
                 {
                     int studentId = Convert.ToInt32(row["StudentId"]);
-
-                    // FIXED: Look for the precise unique form entry identifier name matching this specific assessment row block
                     string fieldName = $"txtMark_{assessmentId}_{studentId}";
                     string markValue = Request.Form[fieldName];
 
                     System.Diagnostics.Debug.WriteLine($"Assessment {assessmentId}, Student {studentId}: fieldName={fieldName}, value={markValue}");
 
-                    // Note: Changed 'marks > 0' condition to 'marks >= 0' so teachers can save a grade of zero if needed
                     if (!string.IsNullOrEmpty(markValue) && decimal.TryParse(markValue, out decimal marks) && marks >= 0)
                     {
                         using (SqlConnection conn = new SqlConnection(connStr))
                         {
                             conn.Open();
 
-                            // Check if mark already exists for this specific combination
                             int markId = 0;
                             using (SqlCommand checkCmd = new SqlCommand(
                                 "SELECT MarkId FROM StudentMarks WHERE AssessmentId = @AssessmentId AND StudentId = @StudentId", conn))
@@ -367,7 +377,6 @@ namespace SIMS.Lecturer
 
                             if (markId > 0)
                             {
-                                // Update existing entry
                                 using (SqlCommand updateCmd = new SqlCommand(
                                     "UPDATE StudentMarks SET MarksObtained = @Marks, GradedBy = @GradedBy, GradedAt = GETDATE() WHERE MarkId = @MarkId", conn))
                                 {
@@ -376,11 +385,11 @@ namespace SIMS.Lecturer
                                     updateCmd.Parameters.AddWithValue("@MarkId", markId);
                                     updateCmd.ExecuteNonQuery();
                                     marksUpdated++;
+                                    studentsUpdated.Add(studentId);
                                 }
                             }
                             else
                             {
-                                // Insert brand new entry record
                                 using (SqlCommand insertCmd = new SqlCommand(
                                     "INSERT INTO StudentMarks (AssessmentId, StudentId, MarksObtained, GradedBy, GradedAt, IsPublished) VALUES (@AssessmentId, @StudentId, @Marks, @GradedBy, GETDATE(), 0)", conn))
                                 {
@@ -390,28 +399,46 @@ namespace SIMS.Lecturer
                                     insertCmd.Parameters.AddWithValue("@GradedBy", CurrentUserId);
                                     insertCmd.ExecuteNonQuery();
                                     marksSaved++;
+                                    studentsUpdated.Add(studentId);
                                 }
                             }
-
-                            conn.Close();
                         }
                     }
                 }
 
-                if (marksSaved > 0 || marksUpdated > 0)
+                if (studentsUpdated.Count > 0)
                 {
-                    ShowSuccess($"Marks saved successfully! {marksSaved} new entries recorded, {marksUpdated} updated.");
-                    LoadAssessmentsForGrading();
+                    try
+                    {
+                        var progressService = new AcademicProgressService(connStr);
+                        var warningsTriggered = progressService.OnGradesSaved(
+                            courseId,
+                            year,
+                            semester,
+                            CurrentLecturerId,
+                            studentsUpdated.ToArray()
+                        );
+
+                        if (warningsTriggered.Count > 0)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Academic Progress Service: {warningsTriggered.Count} warnings triggered after grades saved");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error triggering academic progress analysis: {ex.Message}");
+                    }
                 }
-                else
-                {
-                    ShowError("No valid marks were entered to process.");
-                }
+
+                string message = $"Marks saved: {marksSaved}, Updated: {marksUpdated}";
+                System.Diagnostics.Debug.WriteLine(message);
+                ShowSuccess(message);
+                LoadAssessmentsForGrading();
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error saving marks execution crash: {ex.Message}\n{ex.StackTrace}");
-                ShowError($"System error: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}");
+                ShowError("Error saving marks: " + ex.Message);
             }
         }
 
@@ -430,7 +457,6 @@ namespace SIMS.Lecturer
                         cmd.Parameters.AddWithValue("@AssessmentId", assessmentId);
                         conn.Open();
                         cmd.ExecuteNonQuery();
-                        conn.Close();
                     }
                 }
 
@@ -461,7 +487,6 @@ namespace SIMS.Lecturer
                         cmd.Parameters.AddWithValue("@Marks", marks);
                         conn.Open();
                         object result = cmd.ExecuteScalar();
-                        conn.Close();
                         return result != null ? result.ToString() : "N/A";
                     }
                 }

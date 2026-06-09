@@ -296,7 +296,7 @@
                                         <th>Student No</th>
                                         <th>Student Name</th>
                                         <th>Email</th>
-                                        <th style="width: 120px;">Submission</th>
+                                        <th style="width: 120px;"></th>
                                         <th style="width: 100px;">Mark</th>
                                         <th style="width: 80px;">Grade</th>
                                     </tr>
@@ -335,7 +335,7 @@
                                                         step="0.01" />
                                                 </td>
                                                 <td>
-                                                    <span class='grade-badge grade-<%# GetGradeLetter(Eval("MarksObtained").ToString()).ToLower() %>'>
+                                                    <span class='grade-badge grade-<%# GetGradeLetter(Eval("MarksObtained").ToString()).Substring(0, 1).ToLower() %>'>
                                                         <%# GetGradeLetter(Eval("MarksObtained").ToString()) %>
                                                     </span>
                                                 </td>
