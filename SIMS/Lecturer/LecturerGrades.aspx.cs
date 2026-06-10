@@ -64,7 +64,6 @@ namespace SIMS.Lecturer
                             if (reader.Read())
                                 return (Convert.ToInt32(reader["AcademicYear"]), Convert.ToInt32(reader["Semester"]));
                         }
-                        conn.Close();
                     }
                 }
             }
@@ -90,7 +89,6 @@ namespace SIMS.Lecturer
                             if (reader.Read())
                                 litCourseName.Text = $"{reader["CourseCode"]} - {reader["CourseName"]}";
                         }
-                        conn.Close();
                     }
                 }
             }
@@ -149,18 +147,10 @@ namespace SIMS.Lecturer
                         ddlSemester.Items.Clear();
                         foreach (DataRow row in dt.Rows)
                         {
-                            // Add null check and safer conversion
                             if (row["Semester"] != DBNull.Value)
                             {
-                                try
-                                {
-                                    int sem = Convert.ToInt32(row["Semester"]);
-                                    ddlSemester.Items.Add(new ListItem($"Semester {sem}", sem.ToString()));
-                                }
-                                catch (InvalidCastException ex)
-                                {
-                                    System.Diagnostics.Debug.WriteLine($"Error converting semester value: {row["Semester"]} - {ex.Message}");
-                                }
+                                int sem = Convert.ToInt32(row["Semester"]);
+                                ddlSemester.Items.Add(new ListItem($"Semester {sem}", sem.ToString()));
                             }
                         }
 
@@ -281,7 +271,7 @@ namespace SIMS.Lecturer
                         u.FullName, 
                         u.Email, 
                         a.MaxMark,
-                        ISNULL(sm.MarksObtained, 0) AS MarksObtained,
+                        sm.MarksObtained,
                         ISNULL(asub.SubmissionId, 0) AS SubmissionId,
                         ISNULL(asub.FileName, '') AS FileName,
                         ISNULL(asub.FileUrl, '') AS FileUrl,
@@ -333,6 +323,31 @@ namespace SIMS.Lecturer
                 int marksSaved = 0;
                 int marksUpdated = 0;
 
+                decimal maxMark = 100;
+                decimal weightage = 0;
+                bool isAssessmentPublished = false;
+
+                // 1. Fetch parameters from parent Assessment record
+                using (SqlConnection conn = new SqlConnection(connStr))
+                {
+                    string assessmentSql = "SELECT MaxMark, Weightage, IsPublished FROM Assessments WHERE AssessmentId = @AssessmentId";
+                    using (SqlCommand cmd = new SqlCommand(assessmentSql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@AssessmentId", assessmentId);
+                        conn.Open();
+                        using (SqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                maxMark = reader["MaxMark"] != DBNull.Value ? Convert.ToDecimal(reader["MaxMark"]) : 100;
+                                weightage = reader["Weightage"] != DBNull.Value ? Convert.ToDecimal(reader["Weightage"]) : 0;
+                                isAssessmentPublished = reader["IsPublished"] != DBNull.Value && Convert.ToBoolean(reader["IsPublished"]);
+                            }
+                        }
+                    }
+                }
+
+                // Get Active Enrolled Students
                 DataTable studentList = new DataTable();
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
@@ -356,10 +371,27 @@ namespace SIMS.Lecturer
                     string fieldName = $"txtMark_{assessmentId}_{studentId}";
                     string markValue = Request.Form[fieldName];
 
-                    System.Diagnostics.Debug.WriteLine($"Assessment {assessmentId}, Student {studentId}: fieldName={fieldName}, value={markValue}");
-
                     if (!string.IsNullOrEmpty(markValue) && decimal.TryParse(markValue, out decimal marks) && marks >= 0)
                     {
+                        // 2. Proportional Calculations for WeightedMark and Grade Mapping
+                        decimal weightedMark = maxMark > 0 ? (marks / maxMark) * weightage : 0;
+                        decimal percentageScore = maxMark > 0 ? (marks / maxMark) * 100 : 0;
+
+                        object gradeScaleIdObj = DBNull.Value;
+
+                        // 3. Match GradeScale database rules
+                        using (SqlConnection conn = new SqlConnection(connStr))
+                        {
+                            string scaleSql = "SELECT TOP 1 GradeScaleId FROM GradeScale WHERE @Percentage >= MinMark AND @Percentage <= MaxMark ORDER BY MinMark DESC";
+                            using (SqlCommand scaleCmd = new SqlCommand(scaleSql, conn))
+                            {
+                                scaleCmd.Parameters.AddWithValue("@Percentage", percentageScore);
+                                conn.Open();
+                                object res = scaleCmd.ExecuteScalar();
+                                if (res != null) gradeScaleIdObj = res;
+                            }
+                        }
+
                         using (SqlConnection conn = new SqlConnection(connStr))
                         {
                             conn.Open();
@@ -371,16 +403,27 @@ namespace SIMS.Lecturer
                                 checkCmd.Parameters.AddWithValue("@AssessmentId", assessmentId);
                                 checkCmd.Parameters.AddWithValue("@StudentId", studentId);
                                 object result = checkCmd.ExecuteScalar();
-                                if (result != null)
-                                    markId = Convert.ToInt32(result);
+                                if (result != null) markId = Convert.ToInt32(result);
                             }
 
                             if (markId > 0)
                             {
-                                using (SqlCommand updateCmd = new SqlCommand(
-                                    "UPDATE StudentMarks SET MarksObtained = @Marks, GradedBy = @GradedBy, GradedAt = GETDATE() WHERE MarkId = @MarkId", conn))
+                                string updateSql = @"
+                                    UPDATE StudentMarks 
+                                    SET MarksObtained = @Marks, 
+                                        WeightedMark = @WeightedMark,
+                                        GradeScaleId = @GradeScaleId,
+                                        IsPublished = @IsPublished,
+                                        GradedBy = @GradedBy, 
+                                        GradedAt = GETDATE() 
+                                    WHERE MarkId = @MarkId";
+
+                                using (SqlCommand updateCmd = new SqlCommand(updateSql, conn))
                                 {
                                     updateCmd.Parameters.AddWithValue("@Marks", marks);
+                                    updateCmd.Parameters.AddWithValue("@WeightedMark", weightedMark);
+                                    updateCmd.Parameters.AddWithValue("@GradeScaleId", gradeScaleIdObj);
+                                    updateCmd.Parameters.AddWithValue("@IsPublished", isAssessmentPublished ? 1 : 0);
                                     updateCmd.Parameters.AddWithValue("@GradedBy", CurrentUserId);
                                     updateCmd.Parameters.AddWithValue("@MarkId", markId);
                                     updateCmd.ExecuteNonQuery();
@@ -390,13 +433,21 @@ namespace SIMS.Lecturer
                             }
                             else
                             {
-                                using (SqlCommand insertCmd = new SqlCommand(
-                                    "INSERT INTO StudentMarks (AssessmentId, StudentId, MarksObtained, GradedBy, GradedAt, IsPublished) VALUES (@AssessmentId, @StudentId, @Marks, @GradedBy, GETDATE(), 0)", conn))
+                                string insertSql = @"
+                                    INSERT INTO StudentMarks 
+                                        (AssessmentId, StudentId, GradeScaleId, MarksObtained, WeightedMark, GradedBy, GradedAt, IsPublished) 
+                                    VALUES 
+                                        (@AssessmentId, @StudentId, @GradeScaleId, @Marks, @WeightedMark, @GradedBy, GETDATE(), @IsPublished)";
+
+                                using (SqlCommand insertCmd = new SqlCommand(insertSql, conn))
                                 {
                                     insertCmd.Parameters.AddWithValue("@AssessmentId", assessmentId);
                                     insertCmd.Parameters.AddWithValue("@StudentId", studentId);
+                                    insertCmd.Parameters.AddWithValue("@GradeScaleId", gradeScaleIdObj);
                                     insertCmd.Parameters.AddWithValue("@Marks", marks);
+                                    insertCmd.Parameters.AddWithValue("@WeightedMark", weightedMark);
                                     insertCmd.Parameters.AddWithValue("@GradedBy", CurrentUserId);
+                                    insertCmd.Parameters.AddWithValue("@IsPublished", isAssessmentPublished ? 1 : 0);
                                     insertCmd.ExecuteNonQuery();
                                     marksSaved++;
                                     studentsUpdated.Add(studentId);
@@ -411,33 +462,19 @@ namespace SIMS.Lecturer
                     try
                     {
                         var progressService = new AcademicProgressService(connStr);
-                        var warningsTriggered = progressService.OnGradesSaved(
-                            courseId,
-                            year,
-                            semester,
-                            CurrentLecturerId,
-                            studentsUpdated.ToArray()
-                        );
-
-                        if (warningsTriggered.Count > 0)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"Academic Progress Service: {warningsTriggered.Count} warnings triggered after grades saved");
-                        }
+                        progressService.OnGradesSaved(courseId, year, semester, CurrentLecturerId, studentsUpdated.ToArray());
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine($"Error triggering academic progress analysis: {ex.Message}");
+                        System.Diagnostics.Debug.WriteLine($"AcademicProgressService trigger failed: {ex.Message}");
                     }
                 }
 
-                string message = $"Marks saved: {marksSaved}, Updated: {marksUpdated}";
-                System.Diagnostics.Debug.WriteLine(message);
-                ShowSuccess(message);
+                ShowSuccess($"Marks saved successfully! New: {marksSaved}, Updated: {marksUpdated}");
                 LoadAssessmentsForGrading();
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}");
                 ShowError("Error saving marks: " + ex.Message);
             }
         }
@@ -451,30 +488,39 @@ namespace SIMS.Lecturer
 
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
-                    using (SqlCommand cmd = new SqlCommand(
-                        "UPDATE Assessments SET IsPublished = CASE WHEN IsPublished = 1 THEN 0 ELSE 1 END WHERE AssessmentId = @AssessmentId", conn))
+                    conn.Open();
+                    string toggleAssessmentSql = "UPDATE Assessments SET IsPublished = CASE WHEN IsPublished = 1 THEN 0 ELSE 1 END WHERE AssessmentId = @AssessmentId";
+                    using (SqlCommand cmd = new SqlCommand(toggleAssessmentSql, conn))
                     {
                         cmd.Parameters.AddWithValue("@AssessmentId", assessmentId);
-                        conn.Open();
                         cmd.ExecuteNonQuery();
+                    }
+
+                    string syncMarksSql = @"
+                        UPDATE StudentMarks 
+                        SET IsPublished = (SELECT IsPublished FROM Assessments WHERE AssessmentId = @AssessmentId)
+                        WHERE AssessmentId = @AssessmentId";
+                    using (SqlCommand syncCmd = new SqlCommand(syncMarksSql, conn))
+                    {
+                        syncCmd.Parameters.AddWithValue("@AssessmentId", assessmentId);
+                        syncCmd.ExecuteNonQuery();
                     }
                 }
 
-                ShowSuccess("Publish status updated.");
+                ShowSuccess("Publish configuration changed.");
                 LoadAssessmentsForPublishing();
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}");
-                ShowError("Error updating status.");
+                ShowError("Error changing update view: " + ex.Message);
             }
         }
 
         protected void SwitchTab(object sender, EventArgs e) { }
 
-        public string GetGradeLetter(string marksString)
+        public string GetGradeLetter(object marksObj)
         {
-            if (string.IsNullOrEmpty(marksString) || !decimal.TryParse(marksString, out decimal marks))
+            if (marksObj == null || marksObj == DBNull.Value || !decimal.TryParse(marksObj.ToString(), out decimal marks))
                 return "N/A";
 
             try

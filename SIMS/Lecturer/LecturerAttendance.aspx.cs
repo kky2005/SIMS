@@ -1,11 +1,12 @@
-﻿using System;
+﻿using SIMS.Services;
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
+using System.Text;
 using System.Web.UI;
 using System.Web.UI.WebControls;
-using SIMS.Services;
 
 namespace SIMS.Lecturer
 {
@@ -350,6 +351,124 @@ namespace SIMS.Lecturer
             {
                 System.Diagnostics.Debug.WriteLine($"Error saving attendance: {ex.Message}");
                 ShowError("Error saving attendance: " + ex.Message);
+            }
+        }
+
+        protected void btnExportCSV_Click(object sender, EventArgs e)
+        {
+            int courseId = int.Parse(hidCourseId.Value);
+            int year = int.Parse(hidAcademicYear.Value);
+            int semester = int.Parse(hidSemester.Value);
+            string statusFilter = ddlStatusFilter.SelectedValue;
+
+            DateTime attendanceDate;
+            if (!DateTime.TryParse(txtAttendanceDate.Text, out attendanceDate))
+            {
+                attendanceDate = DateTime.Now;
+            }
+
+            DataTable dt = new DataTable();
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(connStr))
+                {
+                    // FIXED: Table name changed to Enrolments, joined with Users to access FullName and Email
+                    string sql = @"
+                SELECT 
+                    s.StudentNo AS [Student ID],
+                    u.FullName AS [Student Name],
+                    u.Email AS [Email],
+                    ISNULL(a.Status, 'Absent') AS [Attendance Status],
+                    @AttendanceDate AS [Record Date]
+                FROM Enrolments e
+                INNER JOIN Students s ON e.StudentId = s.StudentId
+                INNER JOIN Users u ON s.UserId = u.UserId
+                LEFT JOIN Attendance a ON e.EnrolmentId = a.EnrolmentId 
+                    AND CAST(a.AttendanceDate AS DATE) = CAST(@AttendanceDate AS DATE)
+                WHERE e.CourseId = @CourseId 
+                  AND e.AcademicYear = @AcademicYear 
+                  AND e.Semester = @Semester
+                  AND e.Status = 'Active'";
+
+                    if (!string.IsNullOrEmpty(statusFilter) && statusFilter != "All")
+                    {
+                        if (statusFilter == "Absent")
+                        {
+                            sql += " AND (a.Status IS NULL OR a.Status = 'Absent')";
+                        }
+                        else
+                        {
+                            sql += " AND a.Status = @StatusFilter";
+                        }
+                    }
+
+                    sql += " ORDER BY s.StudentNo ASC";
+
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@CourseId", courseId);
+                        cmd.Parameters.AddWithValue("@AcademicYear", year);
+                        cmd.Parameters.AddWithValue("@Semester", semester);
+                        cmd.Parameters.AddWithValue("@AttendanceDate", attendanceDate.Date);
+
+                        if (!string.IsNullOrEmpty(statusFilter) && statusFilter != "All" && statusFilter != "Absent")
+                        {
+                            cmd.Parameters.AddWithValue("@StatusFilter", statusFilter);
+                        }
+
+                        using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                        {
+                            da.Fill(dt);
+                        }
+                    }
+                }
+
+                if (dt.Rows.Count > 0)
+                {
+                    Response.Clear();
+                    Response.Buffer = true;
+                    Response.AddHeader("content-disposition", "attachment;filename=AttendanceReport.csv");
+                    Response.Charset = "";
+                    Response.ContentType = "application/text";
+
+                    StringBuilder sb = new StringBuilder();
+
+                    // Add headers
+                    for (int i = 0; i < dt.Columns.Count; i++)
+                    {
+                        sb.Append(dt.Columns[i].ColumnName + (i == dt.Columns.Count - 1 ? "" : ","));
+                    }
+                    sb.Append("\r\n");
+
+                    // Add rows
+                    foreach (DataRow row in dt.Rows)
+                    {
+                        for (int i = 0; i < dt.Columns.Count; i++)
+                        {
+                            string cellValue = row[i].ToString().Replace(",", ";").Replace("\r", "").Replace("\n", " ");
+                            sb.Append(cellValue + (i == dt.Columns.Count - 1 ? "" : ","));
+                        }
+                        sb.Append("\r\n");
+                    }
+
+                    Response.Output.Write(sb.ToString());
+                    Response.Flush();
+                    Response.End();
+                }
+                else
+                {
+                    ShowError("No records available to export for the selected filters.");
+                }
+            }
+            catch (System.Threading.ThreadAbortException)
+            {
+                // Caught safely to prevent unexpected app standard stack dumps during Response.End()
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error exporting attendance CSV: {ex.Message}");
+                ShowError("Error generating report dataset: " + ex.Message);
             }
         }
 

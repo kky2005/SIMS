@@ -278,6 +278,11 @@
             <asp:Button ID="btnSaveAttendance" runat="server" Text="Save Attendance" 
                 CssClass="btn btn-primary" OnClick="btnSaveAttendance_Click" />
         </div>
+        <div class="control-group">
+            <label>&nbsp;</label>
+            <asp:Button ID="btnExportCSV" runat="server" Text="Export Attendance (CSV)" 
+                        OnClick="btnExportCSV_Click" CssClass="btn-primary-action" />
+        </div>
     </div>
 
     <div class="attendance-table-wrapper">
