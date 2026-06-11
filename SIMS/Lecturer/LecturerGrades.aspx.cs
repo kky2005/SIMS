@@ -170,7 +170,6 @@ namespace SIMS.Lecturer
             try
             {
                 LoadAssessmentsForGrading();
-                LoadAssessmentsForPublishing();
             }
             catch (Exception ex)
             {
@@ -207,39 +206,6 @@ namespace SIMS.Lecturer
                     else
                     {
                         pnlNoAssessments.Visible = true;
-                    }
-                }
-            }
-        }
-
-        private void LoadAssessmentsForPublishing()
-        {
-            int courseId = int.Parse(hidCourseId.Value);
-            int year = int.Parse(ddlAcademicYear.SelectedValue);
-            int semester = int.Parse(ddlSemester.SelectedValue);
-
-            using (SqlConnection conn = new SqlConnection(connStr))
-            {
-                using (SqlCommand cmd = new SqlCommand(
-                    "SELECT AssessmentId, AssessmentName, MaxMark, Weightage, IsPublished FROM Assessments WHERE CourseId = @CourseId AND AcademicYear = @Year AND Semester = @Semester ORDER BY AssessmentName ASC", conn))
-                {
-                    cmd.Parameters.AddWithValue("@CourseId", courseId);
-                    cmd.Parameters.AddWithValue("@Year", year);
-                    cmd.Parameters.AddWithValue("@Semester", semester);
-
-                    SqlDataAdapter da = new SqlDataAdapter(cmd);
-                    DataTable dt = new DataTable();
-                    da.Fill(dt);
-
-                    if (dt.Rows.Count > 0)
-                    {
-                        rptPublishAssessments.DataSource = dt;
-                        rptPublishAssessments.DataBind();
-                        pnlNoPublishAssessments.Visible = false;
-                    }
-                    else
-                    {
-                        pnlNoPublishAssessments.Visible = true;
                     }
                 }
             }
@@ -303,6 +269,16 @@ namespace SIMS.Lecturer
                     SqlDataAdapter da = new SqlDataAdapter(cmd);
                     DataTable dt = new DataTable();
                     da.Fill(dt);
+
+                    // Add MaxMark column to DataTable for the input max attribute
+                    if (!dt.Columns.Contains("MaxMark"))
+                    {
+                        dt.Columns.Add("MaxMark", typeof(decimal));
+                        foreach (DataRow row in dt.Rows)
+                        {
+                            row["MaxMark"] = 100; // Default value
+                        }
+                    }
 
                     rpt.DataSource = dt;
                     rpt.DataBind();
@@ -373,6 +349,13 @@ namespace SIMS.Lecturer
 
                     if (!string.IsNullOrEmpty(markValue) && decimal.TryParse(markValue, out decimal marks) && marks >= 0)
                     {
+                        // Validate mark doesn't exceed max mark
+                        if (marks > maxMark)
+                        {
+                            ShowError($"Mark {marks} exceeds maximum mark {maxMark} for a student. Please correct and try again.");
+                            return;
+                        }
+
                         // 2. Proportional Calculations for WeightedMark and Grade Mapping
                         decimal weightedMark = maxMark > 0 ? (marks / maxMark) * weightage : 0;
                         decimal percentageScore = maxMark > 0 ? (marks / maxMark) * 100 : 0;
@@ -471,7 +454,7 @@ namespace SIMS.Lecturer
                 }
 
                 ShowSuccess($"Marks saved successfully! New: {marksSaved}, Updated: {marksUpdated}");
-                LoadAssessmentsForGrading();
+                LoadAssessmentsForGrading(); // Refresh the view
             }
             catch (Exception ex)
             {
@@ -485,17 +468,32 @@ namespace SIMS.Lecturer
             {
                 Button btn = (Button)sender;
                 int assessmentId = int.Parse(btn.CommandArgument);
+                bool newPublishStatus = false;
 
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
                     conn.Open();
-                    string toggleAssessmentSql = "UPDATE Assessments SET IsPublished = CASE WHEN IsPublished = 1 THEN 0 ELSE 1 END WHERE AssessmentId = @AssessmentId";
+
+                    // Get current publish status
+                    string getStatusSql = "SELECT IsPublished FROM Assessments WHERE AssessmentId = @AssessmentId";
+                    using (SqlCommand getCmd = new SqlCommand(getStatusSql, conn))
+                    {
+                        getCmd.Parameters.AddWithValue("@AssessmentId", assessmentId);
+                        object result = getCmd.ExecuteScalar();
+                        bool currentStatus = result != null && Convert.ToBoolean(result);
+                        newPublishStatus = !currentStatus;
+                    }
+
+                    // Toggle the assessment publish status
+                    string toggleAssessmentSql = "UPDATE Assessments SET IsPublished = @IsPublished WHERE AssessmentId = @AssessmentId";
                     using (SqlCommand cmd = new SqlCommand(toggleAssessmentSql, conn))
                     {
                         cmd.Parameters.AddWithValue("@AssessmentId", assessmentId);
+                        cmd.Parameters.AddWithValue("@IsPublished", newPublishStatus);
                         cmd.ExecuteNonQuery();
                     }
 
+                    // Sync marks publish status
                     string syncMarksSql = @"
                         UPDATE StudentMarks 
                         SET IsPublished = (SELECT IsPublished FROM Assessments WHERE AssessmentId = @AssessmentId)
@@ -507,20 +505,22 @@ namespace SIMS.Lecturer
                     }
                 }
 
-                ShowSuccess("Publish configuration changed.");
-                LoadAssessmentsForPublishing();
+                string statusText = newPublishStatus ? "published" : "unpublished";
+                ShowSuccess($"Assessment has been {statusText} successfully.");
+                LoadAssessmentsForGrading(); // Refresh the view
             }
             catch (Exception ex)
             {
-                ShowError("Error changing update view: " + ex.Message);
+                ShowError("Error updating publish status: " + ex.Message);
             }
         }
 
-        protected void SwitchTab(object sender, EventArgs e) { }
-
         public string GetGradeLetter(object marksObj)
         {
-            if (marksObj == null || marksObj == DBNull.Value || !decimal.TryParse(marksObj.ToString(), out decimal marks))
+            if (marksObj == null || marksObj == DBNull.Value || string.IsNullOrEmpty(marksObj.ToString()))
+                return "N/A";
+
+            if (!decimal.TryParse(marksObj.ToString(), out decimal marks))
                 return "N/A";
 
             try

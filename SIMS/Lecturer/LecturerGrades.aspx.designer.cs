@@ -87,24 +87,6 @@ namespace SIMS.Lecturer
         protected global::System.Web.UI.WebControls.Button btnLoadAssessments;
 
         /// <summary>
-        /// btnTabEnterGrades control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.LinkButton btnTabEnterGrades;
-
-        /// <summary>
-        /// btnTabPublish control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.LinkButton btnTabPublish;
-
-        /// <summary>
         /// pnlEnterGrades control.
         /// </summary>
         /// <remarks>
@@ -130,33 +112,6 @@ namespace SIMS.Lecturer
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Panel pnlNoAssessments;
-
-        /// <summary>
-        /// pnlPublishGrades control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Panel pnlPublishGrades;
-
-        /// <summary>
-        /// rptPublishAssessments control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Repeater rptPublishAssessments;
-
-        /// <summary>
-        /// pnlNoPublishAssessments control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Panel pnlNoPublishAssessments;
 
         /// <summary>
         /// hidCourseId control.

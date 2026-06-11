@@ -64,38 +64,48 @@
             font-size: 14px;
         }
 
-        .tabs {
-            display: flex;
-            gap: 0;
+        .assessment-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
             margin-bottom: 20px;
-            border-bottom: 2px solid #e2e8f0;
         }
 
-        .tab-btn {
-            padding: 12px 20px;
-            background: none;
-            border: none;
-            border-bottom: 3px solid transparent;
-            cursor: pointer;
-            font-weight: 500;
+        .assessment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .assessment-title { 
+            font-weight: bold; 
+            color: #1e293b; 
+            font-size: 16px; 
+        }
+
+        .assessment-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .assessment-meta {
+            display: flex;
+            gap: 20px;
+            font-size: 13px;
             color: #64748b;
-            transition: all 0.3s ease;
+            margin-bottom: 15px;
         }
-
-        .tab-btn.active {
-            color: #059669;
-            border-bottom-color: #059669;
-        }
-
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
 
         .grades-table-wrapper {
             background: white;
             border-radius: 8px;
             border: 1px solid #e2e8f0;
             overflow: hidden;
-            margin-bottom: 30px;
+            margin-bottom: 15px;
         }
 
         .table-sims {
@@ -157,8 +167,65 @@
         .grade-f { background: #dc2626; color: white; }
         .grade-n-a { background: #f1f5f9; color: #64748b; }
 
-        .status-published { background: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
-        .status-unpublished { background: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .status-published { 
+            background: #dcfce7; 
+            color: #166534; 
+            padding: 4px 12px; 
+            border-radius: 20px; 
+            font-size: 12px; 
+            font-weight: bold; 
+            display: inline-block;
+        }
+        .status-unpublished { 
+            background: #fef3c7; 
+            color: #92400e; 
+            padding: 4px 12px; 
+            border-radius: 20px; 
+            font-size: 12px; 
+            font-weight: bold; 
+            display: inline-block;
+        }
+
+        .btn-publish {
+            background: #059669;
+            color: white;
+            padding: 6px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-publish:hover {
+            background: #047857;
+        }
+
+        .btn-unpublish {
+            background: #d97706;
+            color: white;
+            padding: 6px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-unpublish:hover {
+            background: #b45309;
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e2e8f0;
+        }
 
         .no-data {
             text-align: center;
@@ -170,31 +237,6 @@
             font-size: 48px;
             color: #cbd5e1;
             display: block;
-            margin-bottom: 15px;
-        }
-
-        .assessment-card {
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        .assessment-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .assessment-title { font-weight: bold; color: #1e293b; font-size: 16px; }
-
-        .assessment-meta {
-            display: flex;
-            gap: 20px;
-            font-size: 13px;
-            color: #64748b;
             margin-bottom: 15px;
         }
 
@@ -225,6 +267,8 @@
         @media (max-width: 768px) {
             .control-row { grid-template-columns: 1fr; }
             .action-buttons { flex-direction: column; }
+            .assessment-header { flex-direction: column; align-items: flex-start; }
+            .card-footer { flex-direction: column; gap: 10px; }
         }
     </style>
 </asp:Content>
@@ -263,27 +307,23 @@
         </div>
     </div>
 
-    <div class="tabs">
-        <asp:LinkButton ID="btnTabEnterGrades" runat="server" CssClass="tab-btn active" 
-            OnClick="SwitchTab" CommandArgument="enterGrades">
-            <i class="fa fa-pencil"></i> Enter Grades
-        </asp:LinkButton>
-        <asp:LinkButton ID="btnTabPublish" runat="server" CssClass="tab-btn" 
-            OnClick="SwitchTab" CommandArgument="publishGrades">
-            <i class="fa fa-check"></i> Publish Grades
-        </asp:LinkButton>
-    </div>
-
-    <div id="tabEnterGrades" class="tab-content active">
+    <div id="assessmentsContainer">
         <asp:Panel ID="pnlEnterGrades" runat="server">
             <asp:Repeater ID="rptAssessments" runat="server" OnItemDataBound="rptAssessments_ItemDataBound">
                 <ItemTemplate>
                     <div class="assessment-card">
                         <div class="assessment-header">
                             <div class="assessment-title"><%# Eval("AssessmentName") %></div>
-                            <span class='<%# Convert.ToBoolean(Eval("IsPublished")) ? "status-published" : "status-unpublished" %>'>
-                                <%# Convert.ToBoolean(Eval("IsPublished")) ? "Published" : "Unpublished" %>
-                            </span>
+                            <div class="assessment-actions">
+                                <span class='<%# Convert.ToBoolean(Eval("IsPublished")) ? "status-published" : "status-unpublished" %>'>
+                                    <%# Convert.ToBoolean(Eval("IsPublished")) ? "Published" : "Unpublished" %>
+                                </span>
+                                <asp:Button ID="btnTogglePublish" runat="server" 
+                                    Text='<%# Convert.ToBoolean(Eval("IsPublished")) ? "Unpublish" : "Publish" %>'
+                                    CssClass='<%# Convert.ToBoolean(Eval("IsPublished")) ? "btn-unpublish" : "btn-publish" %>'
+                                    OnClick="btnTogglePublish_Click"
+                                    CommandArgument='<%# Eval("AssessmentId") %>' />
+                            </div>
                         </div>
                         <div class="assessment-meta">
                             <span><strong>Max Mark:</strong> <%# Eval("MaxMark") %></span>
@@ -296,7 +336,7 @@
                                         <th>Student No</th>
                                         <th>Student Name</th>
                                         <th>Email</th>
-                                        <th style="width: 120px;"></th>
+                                        <th style="width: 120px;">Submission</th>
                                         <th style="width: 100px;">Mark</th>
                                         <th style="width: 80px;">Grade</th>
                                     </tr>
@@ -323,7 +363,7 @@
                                                             </span>
                                                         </asp:Panel>
                                                     </asp:Panel>
-                                                </td>
+                                                 </td>
                                                 <td>
                                                     <input type="number" 
                                                         id="mark_<%# Eval("StudentId") %>"
@@ -333,19 +373,20 @@
                                                         min="0" 
                                                         max="<%# Eval("MaxMark") %>"
                                                         step="0.01" />
-                                                </td>
+                                                 </td>
                                                 <td>
                                                     <span class='grade-badge grade-<%# GetGradeLetter(Eval("MarksObtained").ToString()).Substring(0, 1).ToLower() %>'>
                                                         <%# GetGradeLetter(Eval("MarksObtained").ToString()) %>
                                                     </span>
-                                                </td>
+                                                 </td>
                                             </tr>
                                         </ItemTemplate>
                                     </asp:Repeater>
                                 </tbody>
                             </table>
                         </div>
-                        <div style="text-align: right; margin-top: 15px;">
+                        <div class="card-footer">
+                            <div></div>
                             <asp:Button ID="btnSaveAllMarks" runat="server" 
                                 Text="Save All Marks for this Assessment"
                                 CssClass="btn btn-success"
@@ -360,53 +401,6 @@
                 <i class="fa fa-inbox"></i>
                 <h5 style="color: #1e293b; margin: 0 0 10px 0;">No Assessments Found</h5>
                 <p style="margin: 0;">There are no assessments created for this course in the selected period.</p>
-            </asp:Panel>
-        </asp:Panel>
-    </div>
-
-    <div id="tabPublishGrades" class="tab-content">
-        <asp:Panel ID="pnlPublishGrades" runat="server">
-            <div class="grades-table-wrapper">
-                <table class="table-sims">
-                    <thead>
-                        <tr>
-                            <th>Assessment Name</th>
-                            <th>Max Mark</th>
-                            <th>Weightage</th>
-                            <th style="width: 120px;">Status</th>
-                            <th style="width: 150px;">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <asp:Repeater ID="rptPublishAssessments" runat="server">
-                            <ItemTemplate>
-                                <tr>
-                                    <td><strong><%# Eval("AssessmentName") %></strong></td>
-                                    <td><%# Eval("MaxMark") %></td>
-                                    <td><%# Eval("Weightage") %>%</td>
-                                    <td>
-                                        <span class='<%# Convert.ToBoolean(Eval("IsPublished")) ? "status-published" : "status-unpublished" %>'>
-                                            <%# Convert.ToBoolean(Eval("IsPublished")) ? "Published" : "Unpublished" %>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <asp:Button ID="btnTogglePublish" runat="server" 
-                                            Text='<%# Convert.ToBoolean(Eval("IsPublished")) ? "Unpublish" : "Publish" %>'
-                                            CssClass='<%# Convert.ToBoolean(Eval("IsPublished")) ? "btn btn-sm btn-warning" : "btn btn-sm btn-success" %>'
-                                            OnClick="btnTogglePublish_Click"
-                                            CommandArgument='<%# Eval("AssessmentId") %>' />
-                                    </td>
-                                </tr>
-                            </ItemTemplate>
-                        </asp:Repeater>
-                    </tbody>
-                </table>
-            </div>
-
-            <asp:Panel ID="pnlNoPublishAssessments" runat="server" Visible="false" CssClass="no-data">
-                <i class="fa fa-inbox"></i>
-                <h5 style="color: #1e293b; margin: 0 0 10px 0;">No Assessments Found</h5>
-                <p style="margin: 0;">There are no assessments to publish for this course.</p>
             </asp:Panel>
         </asp:Panel>
     </div>
@@ -457,41 +451,15 @@
     </div>
 
     <script type="text/javascript">
-        document.addEventListener('DOMContentLoaded', function () {
-            var btnEnter = document.getElementById('<%= btnTabEnterGrades.ClientID %>');
-            var btnPublish = document.getElementById('<%= btnTabPublish.ClientID %>');
-            var tabEnter = document.getElementById('tabEnterGrades');
-            var tabPublish = document.getElementById('tabPublishGrades');
-
-            if (btnEnter) {
-                btnEnter.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    tabEnter.classList.add('active');
-                    tabPublish.classList.remove('active');
-                    btnEnter.classList.add('active');
-                    btnPublish.classList.remove('active');
-                });
-            }
-
-            if (btnPublish) {
-                btnPublish.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    tabPublish.classList.add('active');
-                    tabEnter.classList.remove('active');
-                    btnPublish.classList.add('active');
-                    btnEnter.classList.remove('active');
-                });
-            }
-
-            // Hide messages after 5 seconds
-            var successPanel = document.querySelector('.success-message');
-            var errorPanel = document.querySelector('.error-message');
-            [successPanel, errorPanel].forEach(function (panel) {
-                if (panel && panel.offsetParent !== null) {
-                    setTimeout(function () { panel.style.display = 'none'; }, 5000);
-                }
-            });
-        });
+        // Hide messages after 5 seconds
+        var successPanel = document.querySelector('.success-message');
+        var errorPanel = document.querySelector('.error-message');
+        if (successPanel && successPanel.offsetParent !== null) {
+            setTimeout(function () { successPanel.style.display = 'none'; }, 5000);
+        }
+        if (errorPanel && errorPanel.offsetParent !== null) {
+            setTimeout(function () { errorPanel.style.display = 'none'; }, 5000);
+        }
 
         var currentSubmissionUrl = '';
         var currentFileName = '';

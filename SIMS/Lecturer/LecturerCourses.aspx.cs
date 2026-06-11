@@ -15,9 +15,11 @@ namespace SIMS.Lecturer
         {
             EnsureAuthenticated();
 
+            // CRITICAL FIX: Dynamic controls MUST be re-created on every postback
+            LoadAvailableSemesters();
+
             if (!IsPostBack)
             {
-                LoadAvailableSemesters();
                 LoadCourses(0);
                 btnFilterAll.CssClass = "filter-badge active";
             }
@@ -46,10 +48,13 @@ namespace SIMS.Lecturer
                         DataTable dt = new DataTable();
                         da.Fill(dt);
 
+                        // Clear placeholder before re-adding controls to prevent duplicate sets
+                        phSemesterFilters.Controls.Clear();
+
                         foreach (DataRow row in dt.Rows)
                         {
-                            int semester = (int)row["Semester"];
-                            
+                            int semester = Convert.ToInt32(row["Semester"]);
+
                             LinkButton btnSemester = new LinkButton
                             {
                                 ID = $"btnFilterSem{semester}",
@@ -86,7 +91,8 @@ namespace SIMS.Lecturer
                             c.CreditHours,
                             c.Semester,
                             ca.AcademicYear,
-                            COUNT(DISTINCT e.EnrolmentId) AS TotalStudents
+                            COUNT(DISTINCT e.EnrolmentId) AS TotalStudents,
+ca.Semester AS AssignmentSemester
                         FROM CourseAssignments ca
                         INNER JOIN Courses c ON c.CourseId = ca.CourseId
                         LEFT JOIN Enrolments e
@@ -101,8 +107,14 @@ namespace SIMS.Lecturer
                         sql += " AND c.Semester = @Semester";
                     }
 
-                    sql += @" GROUP BY c.CourseId, c.CourseCode, c.CourseName, 
-                             c.CreditHours, c.Semester, ca.AcademicYear
+                    sql += @" GROUP BY
+                                c.CourseId,
+                                c.CourseCode,
+                                c.CourseName,
+                                c.CreditHours,
+                                c.Semester,
+                                ca.Semester,
+                                ca.AcademicYear
                              ORDER BY ca.AcademicYear DESC, c.Semester ASC, c.CourseCode ASC";
 
                     using (SqlCommand cmd = new SqlCommand(sql, conn))
@@ -124,6 +136,9 @@ namespace SIMS.Lecturer
                         }
                         else
                         {
+                            // CRITICAL FIX: Explicitly clear the layout control if no items match
+                            rptCourses.DataSource = null;
+                            rptCourses.DataBind();
                             pnlNoCourses.Visible = true;
                         }
                     }
@@ -132,7 +147,66 @@ namespace SIMS.Lecturer
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error loading courses: {ex.Message}");
+                rptCourses.DataSource = null;
+                rptCourses.DataBind();
                 pnlNoCourses.Visible = true;
+            }
+        }
+
+        private void LoadStudents(
+    int courseId,
+    int academicYear,
+    int semester)
+        {
+            using (SqlConnection conn =
+                   new SqlConnection(connStr))
+            {
+                string sql = @"
+
+SELECT
+    s.StudentNo,
+    u.FullName,
+    u.Email,
+    p.ProgrammeName
+
+FROM Enrolments e
+
+INNER JOIN Students s
+ON e.StudentId = s.StudentId
+
+INNER JOIN Users u
+ON s.UserId = u.UserId
+
+INNER JOIN Programmes p
+ON s.ProgrammeId = p.ProgrammeId
+
+WHERE
+e.CourseId = @CourseId
+AND e.AcademicYear = @AcademicYear
+AND e.Semester = @Semester
+AND e.Status = 'Active'
+
+ORDER BY u.FullName";
+
+                SqlCommand cmd =
+                    new SqlCommand(sql, conn);
+
+                cmd.Parameters.AddWithValue("@CourseId", courseId);
+                cmd.Parameters.AddWithValue("@AcademicYear", academicYear);
+                cmd.Parameters.AddWithValue("@Semester", semester);
+
+                SqlDataAdapter da =
+                    new SqlDataAdapter(cmd);
+
+                DataTable dt =
+                    new DataTable();
+
+                da.Fill(dt);
+
+                CurrentStudentData = dt;
+
+                gvStudents.DataSource = dt;
+                gvStudents.DataBind();
             }
         }
 
@@ -140,12 +214,20 @@ namespace SIMS.Lecturer
         {
             try
             {
-                btnFilterAll.CssClass = "filter-badge";
-                foreach (Control ctrl in phSemesterFilters.Controls)
-                    if (ctrl is LinkButton btn) btn.CssClass = "filter-badge";
-
                 LinkButton clickedBtn = (LinkButton)sender;
                 int semester = int.Parse(clickedBtn.CommandArgument);
+
+                // Reset all filter visual classes
+                btnFilterAll.CssClass = "filter-badge";
+                foreach (Control ctrl in phSemesterFilters.Controls)
+                {
+                    if (ctrl is LinkButton btn)
+                    {
+                        btn.CssClass = "filter-badge";
+                    }
+                }
+
+                // Apply active class to current selection
                 clickedBtn.CssClass = "filter-badge active";
 
                 LoadCourses(semester);
@@ -162,7 +244,12 @@ namespace SIMS.Lecturer
             {
                 btnFilterAll.CssClass = "filter-badge active";
                 foreach (Control ctrl in phSemesterFilters.Controls)
-                    if (ctrl is LinkButton btn) btn.CssClass = "filter-badge";
+                {
+                    if (ctrl is LinkButton btn)
+                    {
+                        btn.CssClass = "filter-badge";
+                    }
+                }
 
                 LoadCourses(0);
             }
@@ -174,6 +261,85 @@ namespace SIMS.Lecturer
 
         protected void rptCourses_ItemDataBound(object sender, RepeaterItemEventArgs e)
         {
+        }
+
+        private DataTable CurrentStudentData
+        {
+            get
+            {
+                return ViewState["CurrentStudentData"] as DataTable;
+            }
+            set
+            {
+                ViewState["CurrentStudentData"] = value;
+            }
+        }
+        protected void btnViewStudents_Click(
+    object sender,
+    EventArgs e)
+        {
+            LinkButton btn =
+                (LinkButton)sender;
+
+            string[] data =
+                btn.CommandArgument.Split('|');
+
+            int courseId =
+                Convert.ToInt32(data[0]);
+
+            int academicYear =
+                Convert.ToInt32(data[1]);
+
+            int semester =
+                Convert.ToInt32(data[2]);
+
+            LoadStudents(
+                courseId,
+                academicYear,
+                semester);
+
+            pnlStudentModal.Visible = true;
+            pnlStudentModal.CssClass = "modal-overlay show";
+        }
+
+        protected void btnCloseModal_Click(
+    object sender,
+    EventArgs e)
+        {
+            pnlStudentModal.Visible = false;
+        }
+
+        protected void btnExportCsv_Click(
+    object sender,
+    EventArgs e)
+        {
+            DataTable dt =
+                CurrentStudentData;
+
+            if (dt == null || dt.Rows.Count == 0)
+                return;
+
+            Response.Clear();
+
+            Response.ContentType = "text/csv";
+
+            Response.AddHeader(
+                "content-disposition",
+                "attachment;filename=StudentList.csv");
+
+            Response.Write(
+                "Student No,Student Name,Email,Programme\r\n");
+
+            foreach (DataRow row in dt.Rows)
+            {
+                Response.Write(
+                    "\"" + row["StudentNo"] + "\","
+                    + "\"" + row["FullName"] + "\","
+                    + "\"" + row["Email"] + "\","
+                    + "\"" + row["ProgrammeName"] + "\"\r\n");
+            }
+
+            Response.End();
         }
     }
 }
