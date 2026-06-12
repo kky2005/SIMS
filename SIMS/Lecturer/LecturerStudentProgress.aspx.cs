@@ -169,17 +169,18 @@ namespace SIMS.Lecturer
                 SELECT 
                     StudentId, StudentNo, FullName, Email, CourseCode, CourseId, AcademicYear, Semester, CurrentGPA, AttendancePercent, CompletedSubmissions,
                     CASE 
-                        WHEN AttendancePercent < 80.0 OR CurrentGPA < 2.00 THEN 'High'
-                        WHEN AttendancePercent < 90.0 OR CurrentGPA < 2.75 THEN 'Medium'
+                        -- Only penalize GPA if they have actually completed submissions/assessments
+                        WHEN AttendancePercent < 80.0 OR (CompletedSubmissions > 0 AND CurrentGPA < 2.00) THEN 'High'
+                        WHEN AttendancePercent < 90.0 OR (CompletedSubmissions > 0 AND CurrentGPA < 2.75) THEN 'Medium'
                         ELSE 'Low'
                     END AS RiskLevel,
                     CASE 
-                        WHEN AttendancePercent < 80.0 AND CurrentGPA < 2.00 THEN 'High Risk: Attendance is below 80% and Course GPA is below 2.00'
+                        WHEN AttendancePercent < 80.0 AND CompletedSubmissions > 0 AND CurrentGPA < 2.00 THEN 'High Risk: Attendance is below 80% and Course GPA is below 2.00'
                         WHEN AttendancePercent < 80.0 THEN 'High Risk: Poor Attendance record (< 80%)'
-                        WHEN CurrentGPA < 2.00 THEN 'High Risk: Low Academic Grade Failings (GPA < 2.00)'
-                        WHEN AttendancePercent < 90.0 AND CurrentGPA < 2.75 THEN 'Medium Risk: Borderline Attendance (< 90%) and GPA (< 2.75)'
+                        WHEN CompletedSubmissions > 0 AND CurrentGPA < 2.00 THEN 'High Risk: Low Academic Grade Failings (GPA < 2.00)'
+                        WHEN AttendancePercent < 90.0 AND CompletedSubmissions > 0 AND CurrentGPA < 2.75 THEN 'Medium Risk: Borderline Attendance (< 90%) and GPA (< 2.75)'
                         WHEN AttendancePercent < 90.0 THEN 'Medium Risk: Suboptimal Class Attendance (< 90%)'
-                        WHEN CurrentGPA < 2.75 THEN 'Medium Risk: Modest Academic Assessment Average (GPA < 2.75)'
+                        WHEN CompletedSubmissions > 0 AND CurrentGPA < 2.75 THEN 'Medium Risk: Modest Academic Assessment Average (GPA < 2.75)'
                         ELSE 'Low Risk: Satisfactory performance metrics maintained.'
                     END AS RiskReason
                 FROM MetricsWithGPA

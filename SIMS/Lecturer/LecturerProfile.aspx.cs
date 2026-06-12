@@ -4,6 +4,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Web.UI;
 
 namespace SIMS.Lecturer
@@ -127,6 +128,26 @@ namespace SIMS.Lecturer
 
         protected void btnSave_Click(object sender, EventArgs e)
         {
+            string fullName = txtFullName.Text.Trim();
+            string phone = txtPhone.Text.Trim();
+
+            // 1. Name Validation: Alphabet letters and spaces only
+            if (!Regex.IsMatch(fullName, @"^[a-zA-Z\s]+$"))
+            {
+                ShowError("Full Name must only contain letters and spaces.");
+                MaintainEditMode();
+                return;
+            }
+
+            // 2. Phone Number Validation: Standard numeric (allowing optional + or dashes/spaces)
+            // This allows common formats like: +1234567890, 012-345-6789, or 0123456789
+            if (!string.IsNullOrEmpty(phone) && !Regex.IsMatch(phone, @"^[0-9\+\-\s]{7,15}$"))
+            {
+                ShowError("Please enter a valid phone number (digits only, 7-15 characters).");
+                MaintainEditMode();
+                return;
+            }
+
             if (string.IsNullOrWhiteSpace(txtFullName.Text))
             {
                 ShowError("Full name is required.");

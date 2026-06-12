@@ -103,7 +103,7 @@ namespace SIMS.Lecturer
                           AND acad.Semester = e.Semester
                     WHERE ca.LecturerId = @LecturerId
                       AND e.Status = 'Active'
-                      AND (att.Pct < 80 OR att.Pct IS NULL OR acad.AvgPct < 50)";
+                      AND (att.Pct IS NOT NULL AND att.Pct < 80 OR (acad.AvgPct IS NOT NULL AND acad.AvgPct < 50))";
 
                 using (SqlCommand cmd = new SqlCommand(sql, conn))
                 {
@@ -198,8 +198,8 @@ namespace SIMS.Lecturer
                         ISNULL(FORMAT(att.Pct, 'N1'), 'No data') AS AttendancePct,
                         ISNULL(FORMAT(acad.AvgPct, 'N1'), 'No marks') AS AcademicAvg,
                         CASE 
-                            WHEN (att.Pct < 80 OR att.Pct IS NULL) AND acad.AvgPct < 50 THEN 'Critical (Attendance & Marks)'
-                            WHEN (att.Pct < 80 OR att.Pct IS NULL) THEN 'Low Attendance (<80%)'
+                            WHEN (att.Pct IS NOT NULL AND att.Pct < 80) AND acad.AvgPct < 50 THEN 'Critical (Attendance & Marks)'
+                            WHEN (att.Pct IS NOT NULL AND att.Pct < 80) THEN 'Low Attendance (<80%)'
                             WHEN acad.AvgPct < 50 THEN 'Low Assessment Marks (<50%)'
                             ELSE 'Normal'
                         END AS RiskReason
@@ -226,7 +226,7 @@ namespace SIMS.Lecturer
                           AND acad.Semester = e.Semester
                     WHERE ca.LecturerId   = @LecturerId
                       AND e.Status         = 'Active'
-                      AND (att.Pct < 80 OR att.Pct IS NULL OR acad.AvgPct < 50)
+                      AND (att.Pct IS NOT NULL AND att.Pct < 80 OR acad.AvgPct < 50)
                     ORDER BY CASE WHEN att.Pct IS NULL THEN 1 ELSE 0 END DESC, att.Pct ASC, acad.AvgPct ASC";
 
                 using (SqlCommand cmd = new SqlCommand(sql, conn))
@@ -284,9 +284,9 @@ namespace SIMS.Lecturer
                 // Query 2: Segment students across different risk combinations globally across assigned courses
                 string riskSql = @"
                     SELECT 
-                        SUM(CASE WHEN (att.Pct < 80 OR att.Pct IS NULL) AND (acad.AvgPct >= 50 OR acad.AvgPct IS NULL) THEN 1 ELSE 0 END) AS AttendanceRisk,
+                        SUM(CASE WHEN (att.Pct IS NOT NULL AND att.Pct < 80) AND (acad.AvgPct >= 50 OR acad.AvgPct IS NULL) THEN 1 ELSE 0 END) AS AttendanceRisk,
                         SUM(CASE WHEN (att.Pct >= 80) AND (acad.AvgPct < 50) THEN 1 ELSE 0 END) AS AcademicRisk,
-                        SUM(CASE WHEN (att.Pct < 80 OR att.Pct IS NULL) AND (acad.AvgPct < 50) THEN 1 ELSE 0 END) AS CriticalRisk
+                        SUM(CASE WHEN (att.Pct IS NOT NULL AND att.Pct < 80) AND (acad.AvgPct < 50) THEN 1 ELSE 0 END) AS CriticalRisk
                     FROM Enrolments e
                     INNER JOIN CourseAssignments ca ON ca.CourseId = e.CourseId AND ca.AcademicYear = e.AcademicYear AND ca.Semester = e.Semester
                     LEFT JOIN (

@@ -234,7 +234,8 @@ namespace SIMS.Services
 
                         -- Evaluate Risk Level using dashboard matched variables (att.AttendancePercent < 80)
                         CASE 
-                            WHEN ISNULL(att.AttendancePercent, 100.0) < 80.0 OR ISNULL((
+                            WHEN ISNULL(att.AttendancePercent, 100.0) < 80.0 
+                                 OR (ISNULL(agg.TotalAssessments, 0) > 0 AND [YourGPAInlineSubquery] < 2.00) THEN 'High'
                                 SELECT TOP 1 gs.GradePoint FROM GradeScale gs WHERE ISNULL((
                                     SELECT 100.0 * SUM(sm2.MarksObtained) / NULLIF(SUM(a2.MaxMark), 0)
                                     FROM StudentMarks sm2 INNER JOIN Assessments a2 ON sm2.AssessmentId = a2.AssessmentId
