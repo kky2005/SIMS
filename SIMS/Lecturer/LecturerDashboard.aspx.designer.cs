@@ -60,6 +60,15 @@ namespace SIMS.Lecturer
         protected global::System.Web.UI.WebControls.Literal litTotalCourses;
 
         /// <summary>
+        /// rptCoursesDetail control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Repeater rptCoursesDetail;
+
+        /// <summary>
         /// litTotalStudents control.
         /// </summary>
         /// <remarks>
@@ -67,6 +76,15 @@ namespace SIMS.Lecturer
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Literal litTotalStudents;
+
+        /// <summary>
+        /// rptStudentsDetail control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Repeater rptStudentsDetail;
 
         /// <summary>
         /// litAtRisk control.
@@ -78,6 +96,15 @@ namespace SIMS.Lecturer
         protected global::System.Web.UI.WebControls.Literal litAtRisk;
 
         /// <summary>
+        /// rptAtRiskDetail control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Repeater rptAtRiskDetail;
+
+        /// <summary>
         /// litPendingMarks control.
         /// </summary>
         /// <remarks>
@@ -85,6 +112,15 @@ namespace SIMS.Lecturer
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Literal litPendingMarks;
+
+        /// <summary>
+        /// rptPendingDetail control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Repeater rptPendingDetail;
 
         /// <summary>
         /// gvDashboardCourses control.

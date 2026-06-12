@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
+using System.Linq;
 using System.Text;
 using System.Web.UI;
 using System.Web.UI.WebControls;
@@ -170,11 +171,12 @@ namespace SIMS.Lecturer
             try
             {
                 LoadAssessmentsForGrading();
+                LoadCourseSummaryMatrix(); // Dynamically generates tab 2 grid output
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}");
-                ShowError("Error loading assessments.");
+                ShowError("Error loading course database metrics.");
             }
         }
 
@@ -270,13 +272,12 @@ namespace SIMS.Lecturer
                     DataTable dt = new DataTable();
                     da.Fill(dt);
 
-                    // Add MaxMark column to DataTable for the input max attribute
                     if (!dt.Columns.Contains("MaxMark"))
                     {
                         dt.Columns.Add("MaxMark", typeof(decimal));
                         foreach (DataRow row in dt.Rows)
                         {
-                            row["MaxMark"] = 100; // Default value
+                            row["MaxMark"] = 100;
                         }
                     }
 
@@ -284,6 +285,154 @@ namespace SIMS.Lecturer
                     rpt.DataBind();
                 }
             }
+        }
+
+        private void LoadCourseSummaryMatrix()
+        {
+            int courseId = int.Parse(hidCourseId.Value);
+            int year = int.Parse(ddlAcademicYear.SelectedValue);
+            int semester = int.Parse(ddlSemester.SelectedValue);
+
+            StringBuilder sb = new StringBuilder();
+
+            // 1. Load active evaluation checkpoints for the chosen syllabus criteria
+            DataTable dtAssessments = new DataTable();
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                string sqlAssessments = @"
+                    SELECT AssessmentId, AssessmentName, MaxMark, Weightage 
+                    FROM Assessments 
+                    WHERE CourseId = @CourseId AND AcademicYear = @Year AND Semester = @Semester 
+                    ORDER BY AssessmentName ASC";
+                using (SqlCommand cmd = new SqlCommand(sqlAssessments, conn))
+                {
+                    cmd.Parameters.AddWithValue("@CourseId", courseId);
+                    cmd.Parameters.AddWithValue("@Year", year);
+                    cmd.Parameters.AddWithValue("@Semester", semester);
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    da.Fill(dtAssessments);
+                }
+            }
+
+            // 2. Load all matching student records and marks for processing
+            DataTable dtMarksData = new DataTable();
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                string sqlMarks = @"
+                    SELECT 
+                        s.StudentId,
+                        s.StudentNo,
+                        u.FullName,
+                        sm.AssessmentId,
+                        sm.MarksObtained
+                    FROM Enrolments e
+                    INNER JOIN Students s ON e.StudentId = s.StudentId
+                    INNER JOIN Users u ON s.UserId = u.UserId
+                    LEFT JOIN StudentMarks sm ON sm.StudentId = s.StudentId 
+                        AND sm.AssessmentId IN (
+                            SELECT AssessmentId FROM Assessments 
+                            WHERE CourseId = @CourseId AND AcademicYear = @Year AND Semester = @Semester
+                        )
+                    WHERE e.CourseId = @CourseId 
+                      AND e.AcademicYear = @Year 
+                      AND e.Semester = @Semester 
+                      AND e.Status = 'Active'
+                    ORDER BY s.StudentNo ASC";
+                using (SqlCommand cmd = new SqlCommand(sqlMarks, conn))
+                {
+                    cmd.Parameters.AddWithValue("@CourseId", courseId);
+                    cmd.Parameters.AddWithValue("@Year", year);
+                    cmd.Parameters.AddWithValue("@Semester", semester);
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    da.Fill(dtMarksData);
+                }
+            }
+
+            if (dtMarksData.Rows.Count == 0)
+            {
+                litSummaryContainer.Text = "<div class='no-data'><i class='fa fa-users'></i><p>No active enrolled students found for the current course configuration filters.</p></div>";
+                return;
+            }
+
+            // 3. Assemble dynamic HTML spreadsheet view model mapping output elements
+            sb.Append("<div class='grades-table-wrapper'>");
+            sb.Append("<table class='table-sims'>");
+            sb.Append("<thead><tr>");
+            sb.Append("<th>Student No</th>");
+            sb.Append("<th>Student Full Name</th>");
+
+            foreach (DataRow assRow in dtAssessments.Rows)
+            {
+                sb.AppendFormat("<th>{0}<br/><small style='color:#64748b;'>Max: {1} ({2}%)</small></th>",
+                    Server.HtmlEncode(assRow["AssessmentName"].ToString()),
+                    Convert.ToDecimal(assRow["MaxMark"]).ToString("G29"),
+                    Convert.ToDecimal(assRow["Weightage"]).ToString("G29"));
+            }
+
+            // Explicitly embed the mathematical formula algorithm representation beside the Total Mark header
+            sb.Append("<th>Total Marks <span class='formula-box' title='Total Marks Calculation Rules Engine'>Algorithm: &Sigma; ((Marks Obtained / Max Mark) &times; Weightage)</span></th>");
+            sb.Append("<th>Final Grade</th>");
+            sb.Append("</tr></thead>");
+            sb.Append("<tbody>");
+
+            // Perform pivot rendering grouping logic in memory using LINQ
+            var studentGroups = from DataRow r in dtMarksData.Rows
+                                group r by new
+                                {
+                                    StudentId = Convert.ToInt32(r["StudentId"]),
+                                    StudentNo = r["StudentNo"].ToString(),
+                                    FullName = r["FullName"].ToString()
+                                } into g
+                                select g;
+
+            foreach (var student in studentGroups)
+            {
+                sb.Append("<tr>");
+                sb.AppendFormat("<td>{0}</td>", Server.HtmlEncode(student.Key.StudentNo));
+                sb.AppendFormat("<td class='student-name'>{0}</td>", Server.HtmlEncode(student.Key.FullName));
+
+                decimal aggregateCourseScore = 0;
+
+                foreach (DataRow assRow in dtAssessments.Rows)
+                {
+                    int currentAssId = Convert.ToInt32(assRow["AssessmentId"]);
+                    decimal maxMark = Convert.ToDecimal(assRow["MaxMark"]);
+                    decimal weightage = Convert.ToDecimal(assRow["Weightage"]);
+
+                    var markRow = student.FirstOrDefault(r => r["AssessmentId"] != DBNull.Value && Convert.ToInt32(r["AssessmentId"]) == currentAssId);
+
+                    if (markRow != null && markRow["MarksObtained"] != DBNull.Value)
+                    {
+                        decimal marksObtained = Convert.ToDecimal(markRow["MarksObtained"]);
+                        sb.AppendFormat("<td>{0}</td>", marksObtained.ToString("F2"));
+
+                        // Evaluate weightage contributions safely against zero division conditions
+                        if (maxMark > 0)
+                        {
+                            aggregateCourseScore += (marksObtained / maxMark) * weightage;
+                        }
+                    }
+                    else
+                    {
+                        sb.Append("<td style='color: #cbd5e1;'>N/A</td>");
+                    }
+                }
+
+                // Process the cumulative score output through the contextual grade database rules mapper
+                string evaluatedLetter = GetGradeLetter(aggregateCourseScore);
+                string gradeBadgeClass = "grade-n-a";
+                if (!string.IsNullOrEmpty(evaluatedLetter) && evaluatedLetter != "N/A")
+                {
+                    gradeBadgeClass = "grade-" + evaluatedLetter.Substring(0, 1).ToLower();
+                }
+
+                sb.AppendFormat("<td style='font-weight: bold; color: #047857;'>{0} / 100.00</td>", aggregateCourseScore.ToString("F2"));
+                sb.AppendFormat("<td><span class='grade-badge {0}'>{1}</span></td>", gradeBadgeClass, evaluatedLetter);
+                sb.Append("</tr>");
+            }
+
+            sb.Append("</tbody></table></div>");
+            litSummaryContainer.Text = sb.ToString();
         }
 
         protected void btnSaveAllMarks_Click(object sender, EventArgs e)
@@ -303,7 +452,6 @@ namespace SIMS.Lecturer
                 decimal weightage = 0;
                 bool isAssessmentPublished = false;
 
-                // 1. Fetch parameters from parent Assessment record
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
                     string assessmentSql = "SELECT MaxMark, Weightage, IsPublished FROM Assessments WHERE AssessmentId = @AssessmentId";
@@ -323,7 +471,6 @@ namespace SIMS.Lecturer
                     }
                 }
 
-                // Get Active Enrolled Students
                 DataTable studentList = new DataTable();
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
@@ -349,20 +496,17 @@ namespace SIMS.Lecturer
 
                     if (!string.IsNullOrEmpty(markValue) && decimal.TryParse(markValue, out decimal marks) && marks >= 0)
                     {
-                        // Validate mark doesn't exceed max mark
                         if (marks > maxMark)
                         {
                             ShowError($"Mark {marks} exceeds maximum mark {maxMark} for a student. Please correct and try again.");
                             return;
                         }
 
-                        // 2. Proportional Calculations for WeightedMark and Grade Mapping
                         decimal weightedMark = maxMark > 0 ? (marks / maxMark) * weightage : 0;
                         decimal percentageScore = maxMark > 0 ? (marks / maxMark) * 100 : 0;
 
                         object gradeScaleIdObj = DBNull.Value;
 
-                        // 3. Match GradeScale database rules
                         using (SqlConnection conn = new SqlConnection(connStr))
                         {
                             string scaleSql = "SELECT TOP 1 GradeScaleId FROM GradeScale WHERE @Percentage >= MinMark AND @Percentage <= MaxMark ORDER BY MinMark DESC";
@@ -454,7 +598,10 @@ namespace SIMS.Lecturer
                 }
 
                 ShowSuccess($"Marks saved successfully! New: {marksSaved}, Updated: {marksUpdated}");
-                LoadAssessmentsForGrading(); // Refresh the view
+
+                // Refresh full layout dashboards on completion
+                LoadAssessmentsForGrading();
+                LoadCourseSummaryMatrix();
             }
             catch (Exception ex)
             {
@@ -474,7 +621,6 @@ namespace SIMS.Lecturer
                 {
                     conn.Open();
 
-                    // Get current publish status
                     string getStatusSql = "SELECT IsPublished FROM Assessments WHERE AssessmentId = @AssessmentId";
                     using (SqlCommand getCmd = new SqlCommand(getStatusSql, conn))
                     {
@@ -484,7 +630,6 @@ namespace SIMS.Lecturer
                         newPublishStatus = !currentStatus;
                     }
 
-                    // Toggle the assessment publish status
                     string toggleAssessmentSql = "UPDATE Assessments SET IsPublished = @IsPublished WHERE AssessmentId = @AssessmentId";
                     using (SqlCommand cmd = new SqlCommand(toggleAssessmentSql, conn))
                     {
@@ -493,7 +638,6 @@ namespace SIMS.Lecturer
                         cmd.ExecuteNonQuery();
                     }
 
-                    // Sync marks publish status
                     string syncMarksSql = @"
                         UPDATE StudentMarks 
                         SET IsPublished = (SELECT IsPublished FROM Assessments WHERE AssessmentId = @AssessmentId)
@@ -507,7 +651,10 @@ namespace SIMS.Lecturer
 
                 string statusText = newPublishStatus ? "published" : "unpublished";
                 ShowSuccess($"Assessment has been {statusText} successfully.");
-                LoadAssessmentsForGrading(); // Refresh the view
+
+                // Refresh full layout dashboards on completion
+                LoadAssessmentsForGrading();
+                LoadCourseSummaryMatrix();
             }
             catch (Exception ex)
             {

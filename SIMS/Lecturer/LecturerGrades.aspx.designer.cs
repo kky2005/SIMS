@@ -114,6 +114,15 @@ namespace SIMS.Lecturer
         protected global::System.Web.UI.WebControls.Panel pnlNoAssessments;
 
         /// <summary>
+        /// litSummaryContainer control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Literal litSummaryContainer;
+
+        /// <summary>
         /// hidCourseId control.
         /// </summary>
         /// <remarks>

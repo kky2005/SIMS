@@ -82,7 +82,7 @@
         }
 
         .assessment-title { 
-            font-weight: bold; 
+            font-weight: bold;
             color: #1e293b; 
             font-size: 16px; 
         }
@@ -168,7 +168,7 @@
         .grade-n-a { background: #f1f5f9; color: #64748b; }
 
         .status-published { 
-            background: #dcfce7; 
+            background: #dcfce7;
             color: #166534; 
             padding: 4px 12px; 
             border-radius: 20px; 
@@ -177,7 +177,7 @@
             display: inline-block;
         }
         .status-unpublished { 
-            background: #fef3c7; 
+            background: #fef3c7;
             color: #92400e; 
             padding: 4px 12px; 
             border-radius: 20px; 
@@ -198,9 +198,7 @@
             transition: all 0.2s;
         }
 
-        .btn-publish:hover {
-            background: #047857;
-        }
+        .btn-publish:hover { background: #047857; }
 
         .btn-unpublish {
             background: #d97706;
@@ -214,9 +212,7 @@
             transition: all 0.2s;
         }
 
-        .btn-unpublish:hover {
-            background: #b45309;
-        }
+        .btn-unpublish:hover { background: #b45309; }
 
         .card-footer {
             display: flex;
@@ -270,6 +266,58 @@
             .assessment-header { flex-direction: column; align-items: flex-start; }
             .card-footer { flex-direction: column; gap: 10px; }
         }
+
+        /* Styles for Custom Tabs Interface and Algorithm Box Component */
+        .sims-tabs-nav {
+            display: flex;
+            gap: 6px;
+            border-bottom: 2px solid #e2e8f0;
+            margin-bottom: 25px;
+        }
+        .sims-tab-btn {
+            padding: 12px 24px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-bottom: none;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            color: #64748b;
+            transition: all 0.2s ease;
+            margin-bottom: -2px;
+        }
+        .sims-tab-btn:hover {
+            background: #f1f5f9;
+            color: #334155;
+        }
+        .sims-tab-btn.active {
+            background: white;
+            color: #059669;
+            border-top: 3px solid #059669;
+            border-left: 1px solid #cbd5e1;
+            border-right: 1px solid #cbd5e1;
+            border-bottom: 2px solid white;
+        }
+        .sims-tab-content {
+            display: none;
+        }
+        .sims-tab-content.active {
+            display: block;
+        }
+        .formula-box {
+            display: inline-block;
+            background: #f0fdf4;
+            border: 1px dashed #22c55e;
+            color: #166534;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+            margin-left: 10px;
+            font-weight: normal;
+            text-transform: none;
+        }
     </style>
 </asp:Content>
 
@@ -301,108 +349,128 @@
                 <asp:DropDownList ID="ddlSemester" runat="server" />
             </div>
             <div class="control-group" style="display: flex; flex-direction: column; justify-content: flex-end;">
-                <asp:Button ID="btnLoadAssessments" runat="server" Text="Load Assessments" 
+                <asp:Button ID="btnLoadAssessments" runat="server" Text="Load Course Data" 
                     CssClass="btn btn-outline-success" OnClick="btnLoadAssessments_Click" />
             </div>
         </div>
     </div>
 
-    <div id="assessmentsContainer">
-        <asp:Panel ID="pnlEnterGrades" runat="server">
-            <asp:Repeater ID="rptAssessments" runat="server" OnItemDataBound="rptAssessments_ItemDataBound">
-                <ItemTemplate>
-                    <div class="assessment-card">
-                        <div class="assessment-header">
-                            <div class="assessment-title"><%# Eval("AssessmentName") %></div>
-                            <div class="assessment-actions">
-                                <span class='<%# Convert.ToBoolean(Eval("IsPublished")) ? "status-published" : "status-unpublished" %>'>
-                                    <%# Convert.ToBoolean(Eval("IsPublished")) ? "Published" : "Unpublished" %>
-                                </span>
-                                <asp:Button ID="btnTogglePublish" runat="server" 
-                                    Text='<%# Convert.ToBoolean(Eval("IsPublished")) ? "Unpublish" : "Publish" %>'
-                                    CssClass='<%# Convert.ToBoolean(Eval("IsPublished")) ? "btn-unpublish" : "btn-publish" %>'
-                                    OnClick="btnTogglePublish_Click"
+    <div class="sims-tabs-nav">
+        <button type="button" class="sims-tab-btn active" onclick="switchSimsTab('tabEnterMarks', this)">
+            <i class="fa fa-edit" style="margin-right: 6px;"></i>Enter Assessment Marks
+        </button>
+        <button type="button" class="sims-tab-btn" onclick="switchSimsTab('tabCourseSummary', this)">
+            <i class="fa fa-table" style="margin-right: 6px;"></i>Student Course Summary
+        </button>
+    </div>
+
+    <div id="tabEnterMarks" class="sims-tab-content active">
+        <div id="assessmentsContainer">
+            <asp:Panel ID="pnlEnterGrades" runat="server">
+                <asp:Repeater ID="rptAssessments" runat="server" OnItemDataBound="rptAssessments_ItemDataBound">
+                    <ItemTemplate>
+                        <div class="assessment-card">
+                            <div class="assessment-header">
+                                <div class="assessment-title"><%# Eval("AssessmentName") %></div>
+                                <div class="assessment-actions">
+                                    <span class='<%# Convert.ToBoolean(Eval("IsPublished")) ? "status-published" : "status-unpublished" %>'>
+                                        <%# Convert.ToBoolean(Eval("IsPublished")) ? "Published" : "Unpublished" %>
+                                    </span>
+                                    <asp:Button ID="btnTogglePublish" runat="server" 
+                                        Text='<%# Convert.ToBoolean(Eval("IsPublished")) ? "Unpublish" : "Publish" %>'
+                                        CssClass='<%# Convert.ToBoolean(Eval("IsPublished")) ? "btn-unpublish" : "btn-publish" %>'
+                                        OnClick="btnTogglePublish_Click"
+                                        CommandArgument='<%# Eval("AssessmentId") %>' />
+                                </div>
+                            </div>
+                            <div class="assessment-meta">
+                                <span><strong>Max Mark:</strong> <%# Eval("MaxMark") %></span>
+                                <span><strong>Weightage:</strong> <%# Eval("Weightage") %>%</span>
+                            </div>
+                            <div class="grades-table-wrapper">
+                                <table class="table-sims">
+                                    <thead>
+                                        <tr>
+                                            <th>Student No</th>
+                                            <th>Student Name</th>
+                                            <th>Email</th>
+                                            <th style="width: 120px;">Submission</th>
+                                            <th style="width: 100px;">Mark</th>
+                                            <th style="width: 80px;">Grade</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <asp:Repeater ID="rptStudentMarks" runat="server">
+                                            <ItemTemplate>
+                                                <tr>
+                                                    <td><%# Eval("StudentNo") %></td>
+                                                    <td class="student-name"><%# Eval("FullName") %></td>
+                                                    <td><%# Eval("Email") %></td>
+                                                    <td>
+                                                        <asp:Panel ID="pnlSubmission" runat="server">
+                                                            <asp:Panel ID="pnlHasSubmission" runat="server" Visible="false">
+                                                                <button type="button" class="btn btn-sm btn-info" 
+                                                                        onclick="openSubmissionModal('<%# Eval("FullName") %>', '<%# Eval("FileName") %>', '<%# Eval("SubmittedAt") %>', '<%# Eval("SubmissionStatus") %>', '<%# Eval("FileUrl") %>');"
+                                                                        style="width: 100%; padding: 6px 8px; font-size: 12px;">
+                                                                    <i class="fa fa-file-o"></i> View
+                                                                </button>
+                                                            </asp:Panel>
+                                                            <asp:Panel ID="pnlNoSubmission" runat="server" Visible="false">
+                                                                <span style="color: #94a3b8; font-size: 12px; display: block; padding: 6px 8px; text-align: center; background: #f1f5f9; border-radius: 4px;">
+                                                                    <i class="fa fa-times-circle"></i> Not Submitted
+                                                                </span>
+                                                            </asp:Panel>
+                                                        </asp:Panel>
+                                                    </td>
+                                                    <td>
+                                                        <input type="number" 
+                                                            id="mark_<%# Eval("StudentId") %>"
+                                                            class="mark-input" 
+                                                            name="txtMark_<%# ((System.Data.DataRowView)((RepeaterItem)Container.Parent.Parent).DataItem)["AssessmentId"] %>_<%# Eval("StudentId") %>" 
+                                                            value="<%# Eval("MarksObtained", "{0:F2}") %>"
+                                                            min="0" 
+                                                            max="<%# Eval("MaxMark") %>"
+                                                            step="0.01" />
+                                                     </td>
+                                                    <td>
+                                                        <span class='grade-badge grade-<%# GetGradeLetter(Eval("MarksObtained")).Substring(0, 1).ToLower() %>'>
+                                                            <%# GetGradeLetter(Eval("MarksObtained")) %>
+                                                        </span>
+                                                   </td>
+                                                </tr>
+                                            </ItemTemplate>
+                                        </asp:Repeater>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="card-footer">
+                                <div></div>
+                                <asp:Button ID="btnSaveAllMarks" runat="server" 
+                                    Text="Save All Marks for this Assessment"
+                                    CssClass="btn btn-success"
+                                    OnClick="btnSaveAllMarks_Click"
                                     CommandArgument='<%# Eval("AssessmentId") %>' />
                             </div>
                         </div>
-                        <div class="assessment-meta">
-                            <span><strong>Max Mark:</strong> <%# Eval("MaxMark") %></span>
-                            <span><strong>Weightage:</strong> <%# Eval("Weightage") %>%</span>
-                        </div>
-                        <div class="grades-table-wrapper">
-                            <table class="table-sims">
-                                <thead>
-                                    <tr>
-                                        <th>Student No</th>
-                                        <th>Student Name</th>
-                                        <th>Email</th>
-                                        <th style="width: 120px;">Submission</th>
-                                        <th style="width: 100px;">Mark</th>
-                                        <th style="width: 80px;">Grade</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <asp:Repeater ID="rptStudentMarks" runat="server">
-                                        <ItemTemplate>
-                                            <tr>
-                                                <td><%# Eval("StudentNo") %></td>
-                                                <td class="student-name"><%# Eval("FullName") %></td>
-                                                <td><%# Eval("Email") %></td>
-                                                <td>
-                                                    <asp:Panel ID="pnlSubmission" runat="server">
-                                                        <asp:Panel ID="pnlHasSubmission" runat="server" Visible="false">
-                                                            <button type="button" class="btn btn-sm btn-info" 
-                                                                onclick="openSubmissionModal('<%# Eval("FullName") %>', '<%# Eval("FileName") %>', '<%# Eval("SubmittedAt") %>', '<%# Eval("SubmissionStatus") %>', '<%# Eval("FileUrl") %>');"
-                                                                style="width: 100%; padding: 6px 8px; font-size: 12px;">
-                                                                <i class="fa fa-file-o"></i> View
-                                                            </button>
-                                                        </asp:Panel>
-                                                        <asp:Panel ID="pnlNoSubmission" runat="server" Visible="false">
-                                                            <span style="color: #94a3b8; font-size: 12px; display: block; padding: 6px 8px; text-align: center; background: #f1f5f9; border-radius: 4px;">
-                                                                <i class="fa fa-times-circle"></i> Not Submitted
-                                                            </span>
-                                                        </asp:Panel>
-                                                    </asp:Panel>
-                                                 </td>
-                                                <td>
-                                                    <input type="number" 
-                                                        id="mark_<%# Eval("StudentId") %>"
-                                                        class="mark-input" 
-                                                        name="txtMark_<%# ((System.Data.DataRowView)((RepeaterItem)Container.Parent.Parent).DataItem)["AssessmentId"] %>_<%# Eval("StudentId") %>" 
-                                                        value="<%# Eval("MarksObtained", "{0:F2}") %>"
-                                                        min="0" 
-                                                        max="<%# Eval("MaxMark") %>"
-                                                        step="0.01" />
-                                                 </td>
-                                                <td>
-                                                    <span class='grade-badge grade-<%# GetGradeLetter(Eval("MarksObtained").ToString()).Substring(0, 1).ToLower() %>'>
-                                                        <%# GetGradeLetter(Eval("MarksObtained").ToString()) %>
-                                                    </span>
-                                                 </td>
-                                            </tr>
-                                        </ItemTemplate>
-                                    </asp:Repeater>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="card-footer">
-                            <div></div>
-                            <asp:Button ID="btnSaveAllMarks" runat="server" 
-                                Text="Save All Marks for this Assessment"
-                                CssClass="btn btn-success"
-                                OnClick="btnSaveAllMarks_Click"
-                                CommandArgument='<%# Eval("AssessmentId") %>' />
-                        </div>
-                    </div>
-                </ItemTemplate>
-            </asp:Repeater>
+                    </ItemTemplate>
+                </asp:Repeater>
 
-            <asp:Panel ID="pnlNoAssessments" runat="server" Visible="false" CssClass="no-data">
-                <i class="fa fa-inbox"></i>
-                <h5 style="color: #1e293b; margin: 0 0 10px 0;">No Assessments Found</h5>
-                <p style="margin: 0;">There are no assessments created for this course in the selected period.</p>
+                <asp:Panel ID="pnlNoAssessments" runat="server" Visible="false" CssClass="no-data">
+                    <i class="fa fa-inbox"></i>
+                    <h5 style="color: #1e293b; margin: 0 0 10px 0;">No Assessments Found</h5>
+                    <p style="margin: 0;">There are no assessments created for this course in the selected period.</p>
+                </asp:Panel>
             </asp:Panel>
-        </asp:Panel>
+        </div>
+    </div>
+
+    <div id="tabCourseSummary" class="sims-tab-content">
+        <div class="assessment-card">
+            <div class="assessment-header">
+                <div class="assessment-title"><i class="fa fa-list-alt" style="margin-right: 6px;"></i>Course Performance Summary Matrix</div>
+            </div>
+            <asp:Literal ID="litSummaryContainer" runat="server" />
+        </div>
     </div>
 
     <asp:HiddenField ID="hidCourseId" runat="server" />
@@ -411,7 +479,7 @@
         <div style="background: white; border-radius: 8px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
             <div style="padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
                 <h4 style="margin: 0; color: #1e293b;">Student Submission Details</h4>
-                <button onclick="closeSubmissionModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #64748b;">&times;</button>
+                <button type="button" onclick="closeSubmissionModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #64748b;">&times;</button>
             </div>
             
             <div style="padding: 20px;">
@@ -442,16 +510,31 @@
             </div>
             
             <div style="padding: 20px; border-top: 1px solid #e2e8f0; background: #f8fafc; display: flex; gap: 10px; justify-content: flex-end;">
-                <button onclick="downloadSubmission()" class="btn btn-success" style="margin: 0;">
+                <button type="button" onclick="downloadSubmission()" class="btn btn-success" style="margin: 0;">
                     <i class="fa fa-download"></i> Download File
                 </button>
-                <button onclick="closeSubmissionModal()" class="btn btn-outline-secondary" style="margin: 0;">Close</button>
+                <button type="button" onclick="closeSubmissionModal()" class="btn btn-outline-secondary" style="margin: 0;">Close</button>
             </div>
         </div>
     </div>
 
     <script type="text/javascript">
-        // Hide messages after 5 seconds
+        // Client-side execution loop to alternate view states cleanly between tabular modules
+        function switchSimsTab(tabId, btnSender) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("sims-tab-content");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].classList.remove("active");
+            }
+            tablinks = document.getElementsByClassName("sims-tab-btn");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].classList.remove("active");
+            }
+            document.getElementById(tabId).classList.add("active");
+            btnSender.classList.add("active");
+        }
+
+        // Hide notification components after 5 seconds
         var successPanel = document.querySelector('.success-message');
         var errorPanel = document.querySelector('.error-message');
         if (successPanel && successPanel.offsetParent !== null) {
@@ -463,7 +546,6 @@
 
         var currentSubmissionUrl = '';
         var currentFileName = '';
-
         function openSubmissionModal(studentName, fileName, submittedAt, status, fileUrl) {
             currentSubmissionUrl = fileUrl;
             currentFileName = fileName;
