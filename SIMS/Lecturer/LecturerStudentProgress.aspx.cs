@@ -112,6 +112,7 @@ namespace SIMS.Lecturer
 
             using (SqlConnection conn = new SqlConnection(connStr))
             {
+                // ADDED TotalMarksObtained TO THE SELECT COLUMNS AND CALCULATIONS WITHIN CTE
                 string sql = @"
                 WITH StudentBaseMetrics AS (
                     SELECT 
@@ -142,10 +143,20 @@ namespace SIMS.Lecturer
                             FROM StudentMarks sm
                             INNER JOIN Assessments a ON sm.AssessmentId = a.AssessmentId
                             WHERE sm.StudentId = s.StudentId 
-                              AND a.CourseId = e.CourseId 
-                              AND a.AcademicYear = e.AcademicYear 
-                              AND a.Semester = e.Semester
-                        ), 0) AS CompletedSubmissions
+                                AND a.CourseId = e.CourseId 
+                                AND a.AcademicYear = e.AcademicYear 
+                                AND a.Semester = e.Semester
+                        ), 0) AS CompletedSubmissions,
+
+                        ISNULL((
+                            SELECT (100.0 * SUM(sm.MarksObtained) / NULLIF(SUM(a.MaxMark), 0))
+                            FROM StudentMarks sm
+                            INNER JOIN Assessments a ON sm.AssessmentId = a.AssessmentId
+                            WHERE sm.StudentId = s.StudentId 
+                                AND a.CourseId = e.CourseId 
+                                AND a.AcademicYear = e.AcademicYear 
+                                AND a.Semester = e.Semester
+                        ), 0.0) AS TotalMarksObtained
 
                     FROM Enrolments e
                     INNER JOIN Students s ON e.StudentId = s.StudentId
@@ -167,9 +178,8 @@ namespace SIMS.Lecturer
                     FROM StudentBaseMetrics m
                 )
                 SELECT 
-                    StudentId, StudentNo, FullName, Email, CourseCode, CourseId, AcademicYear, Semester, CurrentGPA, AttendancePercent, CompletedSubmissions,
+                    StudentId, StudentNo, FullName, Email, CourseCode, CourseId, AcademicYear, Semester, CurrentGPA, TotalMarksObtained, AttendancePercent, CompletedSubmissions,
                     CASE 
-                        -- Only penalize GPA if they have actually completed submissions/assessments
                         WHEN AttendancePercent < 80.0 OR (CompletedSubmissions > 0 AND CurrentGPA < 2.00) THEN 'High'
                         WHEN AttendancePercent < 90.0 OR (CompletedSubmissions > 0 AND CurrentGPA < 2.75) THEN 'Medium'
                         ELSE 'Low'
@@ -257,6 +267,7 @@ namespace SIMS.Lecturer
                 clientTable.Columns.Add("Course Code");
                 clientTable.Columns.Add("Attendance Rate");
                 clientTable.Columns.Add("Projected GPA");
+                clientTable.Columns.Add("Total Marks"); // ADDED DATAFIELD COLUMN
                 clientTable.Columns.Add("Risk Level");
 
                 foreach (DataRow row in reportData.Rows)
@@ -268,6 +279,7 @@ namespace SIMS.Lecturer
                         row["CourseCode"],
                         Convert.ToDouble(row["AttendancePercent"]).ToString("F1") + "%",
                         Convert.ToDouble(row["CurrentGPA"]).ToString("F2"),
+                        Convert.ToDouble(row["TotalMarksObtained"]).ToString("F2"), // INJECTED CORRESPONDING DATAROW SCALAR VALUE
                         row["RiskLevel"]
                     );
                 }
@@ -328,16 +340,18 @@ namespace SIMS.Lecturer
                 string applicationVirtualPath = "~/ReportExports/" + fileBaseName;
 
                 StringBuilder sb = new StringBuilder();
-                sb.AppendLine("Student No,Full Name,Email,Course Code,Attendance %,Projected GPA,Risk Level,Details / Reasons");
+                // INJECTED Total Marks INTO CSV STREAM HEADER
+                sb.AppendLine("Student No,Full Name,Email,Course Code,Attendance %,Projected GPA,Total Marks,Risk Level,Details / Reasons");
 
                 foreach (DataRow row in reportData.Rows)
                 {
                     string escapedName = row["FullName"].ToString().Replace("\"", "\"\"");
                     string escapedReason = row["RiskReason"].ToString().Replace("\"", "\"\"");
 
-                    sb.AppendLine(string.Format("\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4:F1}\",\"{5:F2}\",\"{6}\",\"{7}\"",
+                    // MATCHED EXPLICIT FORMAT PLACEMENT WRITER STRINGS
+                    sb.AppendLine(string.Format("\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4:F1}\",\"{5:F2}\",\"{6:F2}\",\"{7}\",\"{8}\"",
                         row["StudentNo"], escapedName, row["Email"], row["CourseCode"],
-                        row["AttendancePercent"], row["CurrentGPA"], row["RiskLevel"], escapedReason
+                        row["AttendancePercent"], row["CurrentGPA"], row["TotalMarksObtained"], row["RiskLevel"], escapedReason
                     ));
                 }
 
@@ -394,23 +408,160 @@ namespace SIMS.Lecturer
             }
         }
 
-        private void TransmitFileStreamSecurely(string exactFilePath, string userVisibleName)
+        private void TransmitFileStreamSecurely(string physicalPath, string userVisibleName)
         {
-            HttpResponse response = HttpContext.Current.Response;
-            response.Clear();
-            response.ClearHeaders();
-            response.ClearContent();
+            try
+            {
+                // 1. Read the raw text elements from the historical CSV logs repository safely
+                string[] fileLines = File.ReadAllLines(physicalPath);
+                if (fileLines.Length == 0)
+                {
+                    ShowSystemFeedback("The selected tracking logs profile data file appears to be empty.", true);
+                    return;
+                }
 
-            response.Buffer = true;
-            response.ContentType = "text/csv";
-            response.AddHeader("Content-Length", new FileInfo(exactFilePath).Length.ToString());
-            response.AddHeader("Content-Disposition", $"attachment; filename=\"{userVisibleName}\"");
-            response.Charset = "utf-8";
+                // Parse file variables to derive dynamic metadata contexts
+                string reportTitle = "STUDENT PERFORMANCE PROGRESS MONITORING REPORT";
+                string cleanTimestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm tt");
 
-            response.TransmitFile(exactFilePath);
-            response.Flush();
+                // Transform user visible file name to target modern excel extension metrics (.xls)
+                string fixedDownloadFileName = Path.GetFileNameWithoutExtension(userVisibleName) + "_Formatted.xls";
 
-            HttpContext.Current.ApplicationInstance.CompleteRequest();
+                // 2. Initialize Professional Spreadsheet Stream Settings
+                Response.Clear();
+                Response.Buffer = true;
+                Response.ContentType = "application/vnd.ms-excel";
+                Response.AddHeader("content-disposition", "attachment;filename=" + fixedDownloadFileName);
+                Response.Charset = "utf-8";
+                Response.ContentEncoding = Encoding.UTF8;
+
+                StringBuilder sb = new StringBuilder();
+
+                // 3. Document Structure XML Definitions
+                sb.AppendLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
+                sb.AppendLine("<?mso-application progid=\"Excel.Sheet\"?>");
+                sb.AppendLine("<Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\"");
+                sb.AppendLine(" xmlns:o=\"urn:schemas-microsoft-com:office:office\"");
+                sb.AppendLine(" xmlns:x=\"urn:schemas-microsoft-com:office:excel\"");
+                sb.AppendLine(" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"");
+                sb.AppendLine(" xmlns:html=\"http://www.w3.org/TR/REC-html40\">");
+
+                // 4. Premium Theme Visual Styles (Matching your dashboard's signature deep red accent palette)
+                sb.AppendLine(" <Styles>");
+                sb.AppendLine("  <Style ss:ID=\"Default\" ss:Name=\"Normal\">");
+                sb.AppendLine("   <Font ss:FontName=\"Segoe UI\" x:CharSet=\"1\" ss:Size=\"11\" ss:Color=\"#1E293B\"/>");
+                sb.AppendLine("  </Style>");
+                sb.AppendLine("  <Style ss:ID=\"ReportHeader\">");
+                sb.AppendLine("   <Font ss:FontName=\"Segoe UI\" ss:Size=\"14\" ss:Bold=\"1\" ss:Color=\"#DC2626\"/>"); // Professional deep red brand match
+                sb.AppendLine("  </Style>");
+                sb.AppendLine("  <Style ss:ID=\"MetadataLabel\">");
+                sb.AppendLine("   <Font ss:FontName=\"Segoe UI\" ss:Size=\"10\" ss:Bold=\"1\" ss:Color=\"#64748B\"/>");
+                sb.AppendLine("  </Style>");
+                sb.AppendLine("  <Style ss:ID=\"MetadataValue\">");
+                sb.AppendLine("   <Font ss:FontName=\"Segoe UI\" ss:Size=\"10\" ss:Color=\"#1E293B\"/>");
+                sb.AppendLine("  </Style>");
+                sb.AppendLine("  <Style ss:ID=\"TableHeader\">");
+                sb.AppendLine("   <Interior ss:Color=\"#FFF5F5\" ss:Pattern=\"Solid\"/>"); // Light tinted background
+                sb.AppendLine("   <Borders>");
+                sb.AppendLine("    <Border ss:Position=\"Bottom\" ss:LineStyle=\"Continuous\" ss:Weight=\"2\" ss:Color=\"#FCA5A5\"/>");
+                sb.AppendLine("   </Borders>");
+                sb.AppendLine("   <Font ss:FontName=\"Segoe UI\" ss:Size=\"11\" ss:Bold=\"1\" ss:Color=\"#991B1B\"/>");
+                sb.AppendLine("  </Style>");
+                sb.AppendLine("  <Style ss:ID=\"DataCell\">");
+                sb.AppendLine("   <Borders>");
+                sb.AppendLine("    <Border ss:Position=\"Bottom\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#F3F4F6\"/>");
+                sb.AppendLine("   </Borders>");
+                sb.AppendLine("  </Style>");
+                sb.AppendLine(" </Styles>");
+
+                // 5. Open Worksheet Segment Workspace
+                sb.AppendLine(" <Worksheet ss:Name=\"Academic Progress Monitoring\">");
+                sb.AppendLine("  <Table>");
+
+                // CRITICAL ENHANCEMENT: Directs Excel to parse content tracking text lines and layout widths instantly
+                sb.AppendLine("   <Column ss:AutoFitWidth=\"1\" ss:Min=\"1\" ss:Max=\"15\"/>");
+
+                // 6. Corporate Metadata Information Block
+                sb.AppendLine("   <Row ss:Height=\"25\">");
+                sb.AppendLine("    <Cell ss:StyleID=\"ReportHeader\"><Data ss:Type=\"String\">" + reportTitle + "</Data></Cell>");
+                sb.AppendLine("   </Row>");
+
+                sb.AppendLine("   <Row>");
+                sb.AppendLine("    <Cell ss:StyleID=\"MetadataLabel\"><Data ss:Type=\"String\">File Identity:</Data></Cell>");
+                sb.AppendLine("    <Cell ss:StyleID=\"MetadataValue\"><Data ss:Type=\"String\">" + ProgressSecurityEscape(userVisibleName) + "</Data></Cell>");
+                sb.AppendLine("   </Row>");
+
+                sb.AppendLine("   <Row>");
+                sb.AppendLine("    <Cell ss:StyleID=\"MetadataLabel\"><Data ss:Type=\"String\">Processed Date:</Data></Cell>");
+                sb.AppendLine("    <Cell ss:StyleID=\"MetadataValue\"><Data ss:Type=\"String\">" + cleanTimestamp + "</Data></Cell>");
+                sb.AppendLine("   </Row>");
+
+                sb.AppendLine("   <Row>");
+                sb.AppendLine("    <Cell ss:StyleID=\"MetadataLabel\"><Data ss:Type=\"String\">Classification:</Data></Cell>");
+                sb.AppendLine("    <Cell ss:StyleID=\"MetadataValue\"><Data ss:Type=\"String\">Restricted Academic Evaluation Record</Data></Cell>");
+                sb.AppendLine("   </Row>");
+
+                sb.AppendLine("   <Row ss:Height=\"15\"></Row>"); // Visual whitespace separator row
+
+                // 7. Parse Data Grid Elements Loop
+                bool isFirstDataRow = true;
+                foreach (string fileLine in fileLines)
+                {
+                    if (string.IsNullOrWhiteSpace(fileLine)) continue;
+
+                    // Split file items by default comma matrices
+                    string[] cellContents = fileLine.Split(',');
+
+                    // Determine if the line is the grid's tracking layout header or regular student cells
+                    string dynamicRowStyleId = isFirstDataRow ? "ss:StyleID=\"TableHeader\" ss:Height=\"22\"" : "ss:StyleID=\"DataCell\" ss:Height=\"20\"";
+                    sb.AppendLine("   <Row " + dynamicRowStyleId + ">");
+
+                    foreach (string directValue in cellContents)
+                    {
+                        // Unquote values safely to clean string metrics
+                        string balancedTextToken = directValue.Trim(' ', '"');
+                        string structuredCleanString = ProgressSecurityEscape(balancedTextToken);
+
+                        sb.AppendLine("    <Cell><Data ss:Type=\"String\">" + structuredCleanString + "</Data></Cell>");
+                    }
+
+                    sb.AppendLine("   </Row>");
+                    isFirstDataRow = false; // Transition parsing focus to regular row layouts
+                }
+
+                // 8. Close Spreadsheet Document Tree Structures
+                sb.AppendLine("  </Table>");
+                sb.AppendLine("  <WorksheetOptions xmlns=\"urn:schemas-microsoft-com:office:excel\">");
+                sb.AppendLine("   <Selected/>");
+                sb.AppendLine("   <ProtectObjects>False</ProtectObjects>");
+                sb.AppendLine("   <ProtectScenarios>False</ProtectScenarios>");
+                sb.AppendLine("  </WorksheetOptions>");
+                sb.AppendLine(" </Worksheet>");
+                sb.AppendLine("</Workbook>");
+
+                Response.Write(sb.ToString());
+                Response.Flush();
+                Response.End();
+            }
+            catch (System.Threading.ThreadAbortException)
+            {
+                // Caught cleanly to bypass standard system stack dumps on Response.End() termination
+            }
+            catch (Exception ex)
+            {
+                ShowSystemFeedback("Transmission Pipeline Exception Interrupted: " + ex.Message, true);
+            }
+        }
+
+        // Escapes special symbols to maintain structural validation of the spreadsheet layout engine
+        private string ProgressSecurityEscape(string input)
+        {
+            if (string.IsNullOrEmpty(input)) return "";
+            return input.Replace("&", "&amp;")
+                        .Replace("<", "&lt;")
+                        .Replace(">", "&gt;")
+                        .Replace("\"", "&quot;")
+                        .Replace("'", "&apos;");
         }
 
         private void LoadReportHistoryLogs()

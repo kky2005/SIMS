@@ -2,6 +2,7 @@
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
+using System.Text;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 
@@ -274,29 +275,24 @@ ORDER BY u.FullName";
                 ViewState["CurrentStudentData"] = value;
             }
         }
-        protected void btnViewStudents_Click(
-    object sender,
-    EventArgs e)
+        protected void btnViewStudents_Click(object sender, EventArgs e)
         {
-            LinkButton btn =
-                (LinkButton)sender;
+            LinkButton btn = (LinkButton)sender;
+            string[] data = btn.CommandArgument.Split('|');
 
-            string[] data =
-                btn.CommandArgument.Split('|');
+            int courseId = Convert.ToInt32(data[0]);
+            int academicYear = Convert.ToInt32(data[1]);
+            int semester = Convert.ToInt32(data[2]);
 
-            int courseId =
-                Convert.ToInt32(data[0]);
+            // FIX: Grab the course name from the repeater item container to pass to the CSV metadata report
+            RepeaterItem item = (RepeaterItem)btn.NamingContainer;
+            Literal litCourseName = item.FindControl("litCourseName") as Literal;
 
-            int academicYear =
-                Convert.ToInt32(data[1]);
+            // Fallback if control lookup isn't used: read text or derive cleanly
+            string courseName = data.Length > 3 ? data[3] : "Assigned Course Track";
+            ViewState["ReportActiveMeta"] = courseName;
 
-            int semester =
-                Convert.ToInt32(data[2]);
-
-            LoadStudents(
-                courseId,
-                academicYear,
-                semester);
+            LoadStudents(courseId, academicYear, semester);
 
             pnlStudentModal.Visible = true;
             pnlStudentModal.CssClass = "modal-overlay show";
@@ -309,37 +305,140 @@ ORDER BY u.FullName";
             pnlStudentModal.Visible = false;
         }
 
-        protected void btnExportCsv_Click(
-    object sender,
-    EventArgs e)
+        protected void btnExportCsv_Click(object sender, EventArgs e)
         {
-            DataTable dt =
-                CurrentStudentData;
+            // Retrieve the active dataset from your existing class properties
+            DataTable dt = CurrentStudentData;
+            if (dt == null || dt.Rows.Count == 0) return;
 
-            if (dt == null || dt.Rows.Count == 0)
-                return;
+            string associatedCourse = Convert.ToString(ViewState["ReportActiveMeta"] ?? "Assigned Course System Track");
+            string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm tt");
 
             Response.Clear();
+            Response.Buffer = true;
 
-            Response.ContentType = "text/csv";
+            // Set content headers to let Excel know it is reading an XML Spreadsheet representation
+            Response.ContentType = "application/vnd.ms-excel";
+            Response.AddHeader("content-disposition", "attachment;filename=Enrolment_Roster_" + DateTime.Now.ToString("yyyyMMdd") + ".xls");
+            Response.Charset = "utf-8";
+            Response.ContentEncoding = Encoding.UTF8;
 
-            Response.AddHeader(
-                "content-disposition",
-                "attachment;filename=StudentList.csv");
+            StringBuilder sb = new StringBuilder();
 
-            Response.Write(
-                "Student No,Student Name,Email,Programme\r\n");
+            // 1. Core Spreadsheet Document Setup
+            sb.AppendLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
+            sb.AppendLine("<?mso-application progid=\"Excel.Sheet\"?>");
+            sb.AppendLine("<Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\"");
+            sb.AppendLine(" xmlns:o=\"urn:schemas-microsoft-com:office:office\"");
+            sb.AppendLine(" xmlns:x=\"urn:schemas-microsoft-com:office:excel\"");
+            sb.AppendLine(" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"");
+            sb.AppendLine(" xmlns:html=\"http://www.w3.org/TR/REC-html40\">");
 
+            // 2. Dedicated UI Styling Panel Definitions
+            sb.AppendLine(" <Styles>");
+            sb.AppendLine("  <Style ss:ID=\"Default\" ss:Name=\"Normal\">");
+            sb.AppendLine("   <Font ss:FontName=\"Segoe UI\" x:CharSet=\"1\" ss:Size=\"11\" ss:Color=\"#1E293B\"/>");
+            sb.AppendLine("  </Style>");
+            sb.AppendLine("  <Style ss:ID=\"ReportHeader\">");
+            sb.AppendLine("   <Font ss:FontName=\"Segoe UI\" ss:Size=\"14\" ss:Bold=\"1\" ss:Color=\"#0D6EFD\"/>");
+            sb.AppendLine("  </Style>");
+            sb.AppendLine("  <Style ss:ID=\"MetadataLabel\">");
+            sb.AppendLine("   <Font ss:FontName=\"Segoe UI\" ss:Size=\"10\" ss:Bold=\"1\" ss:Color=\"#64748B\"/>");
+            sb.AppendLine("  </Style>");
+            sb.AppendLine("  <Style ss:ID=\"MetadataValue\">");
+            sb.AppendLine("   <Font ss:FontName=\"Segoe UI\" ss:Size=\"10\" ss:Color=\"#1E293B\"/>");
+            sb.AppendLine("  </Style>");
+            sb.AppendLine("  <Style ss:ID=\"TableHeader\">");
+            sb.AppendLine("   <Interior ss:Color=\"#F8FAFC\" ss:Pattern=\"Solid\"/>");
+            sb.AppendLine("   <Borders>");
+            sb.AppendLine("    <Border ss:Position=\"Bottom\" ss:LineStyle=\"Continuous\" ss:Weight=\"2\" ss:Color=\"#CBD5E1\"/>");
+            sb.AppendLine("   </Borders>");
+            sb.AppendLine("   <Font ss:FontName=\"Segoe UI\" ss:Size=\"11\" ss:Bold=\"1\" ss:Color=\"#1E293B\"/>");
+            sb.AppendLine("  </Style>");
+            sb.AppendLine("  <Style ss:ID=\"DataCell\">");
+            sb.AppendLine("   <Borders>");
+            sb.AppendLine("    <Border ss:Position=\"Bottom\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#E2E8F0\"/>");
+            sb.AppendLine("   </Borders>");
+            sb.AppendLine("  </Style>");
+            sb.AppendLine(" </Styles>");
+
+            // 3. Document Worksheet Layout Block
+            sb.AppendLine(" <Worksheet ss:Name=\"Enrolment Roster\">");
+            sb.AppendLine("  <Table>");
+
+            // CRITICAL ENHANCEMENT: Instructs Excel to evaluate the longest string per grid column and automatically resize it instantly!
+            sb.AppendLine("   <Column ss:AutoFitWidth=\"1\" ss:Min=\"1\" ss:Max=\"4\"/>");
+
+            // 4. Report Header Block Data Entries
+            sb.AppendLine("   <Row ss:Height=\"25\">");
+            sb.AppendLine("    <Cell ss:StyleID=\"ReportHeader\"><Data ss:Type=\"String\">STUDENT ENROLMENT ROSTER MANAGEMENT REPORT</Data></Cell>");
+            sb.AppendLine("   </Row>");
+
+            sb.AppendLine("   <Row>");
+            sb.AppendLine("    <Cell ss:StyleID=\"MetadataLabel\"><Data ss:Type=\"String\">Course Track:</Data></Cell>");
+            sb.AppendLine("    <Cell ss:StyleID=\"MetadataValue\"><Data ss:Type=\"String\">" + SecurityXmlConvert(associatedCourse) + "</Data></Cell>");
+            sb.AppendLine("   </Row>");
+
+            sb.AppendLine("   <Row>");
+            sb.AppendLine("    <Cell ss:StyleID=\"MetadataLabel\"><Data ss:Type=\"String\">Compile Date:</Data></Cell>");
+            sb.AppendLine("    <Cell ss:StyleID=\"MetadataValue\"><Data ss:Type=\"String\">" + SecurityXmlConvert(timestamp) + "</Data></Cell>");
+            sb.AppendLine("   </Row>");
+
+            sb.AppendLine("   <Row>");
+            sb.AppendLine("    <Cell ss:StyleID=\"MetadataLabel\"><Data ss:Type=\"String\">Classification:</Data></Cell>");
+            sb.AppendLine("    <Cell ss:StyleID=\"MetadataValue\"><Data ss:Type=\"String\">Official Institutional Record</Data></Cell>");
+            sb.AppendLine("   </Row>");
+
+            sb.AppendLine("   <Row ss:Height=\"15\"></Row>"); // Visual whitespace padding
+
+            // 5. Data Matrix Grid Table Column Header
+            sb.AppendLine("   <Row ss:Height=\"22\" ss:StyleID=\"TableHeader\">");
+            sb.AppendLine("    <Cell><Data ss:Type=\"String\">Student No</Data></Cell>");
+            sb.AppendLine("    <Cell><Data ss:Type=\"String\">Student Name</Data></Cell>");
+            sb.AppendLine("    <Cell><Data ss:Type=\"String\">Email Address</Data></Cell>");
+            sb.AppendLine("    <Cell><Data ss:Type=\"String\">Academic Programme Enrollment</Data></Cell>");
+            sb.AppendLine("   </Row>");
+
+            // 6. Data Matrix Value Iterations
             foreach (DataRow row in dt.Rows)
             {
-                Response.Write(
-                    "\"" + row["StudentNo"] + "\","
-                    + "\"" + row["FullName"] + "\","
-                    + "\"" + row["Email"] + "\","
-                    + "\"" + row["ProgrammeName"] + "\"\r\n");
+                string cleanNo = SecurityXmlConvert(row["StudentNo"].ToString());
+                string cleanName = SecurityXmlConvert(row["FullName"].ToString());
+                string cleanEmail = SecurityXmlConvert(row["Email"].ToString());
+                string cleanProg = SecurityXmlConvert(row["ProgrammeName"].ToString());
+
+                sb.AppendLine("   <Row ss:Height=\"20\" ss:StyleID=\"DataCell\">");
+                sb.AppendLine("    <Cell><Data ss:Type=\"String\">" + cleanNo + "</Data></Cell>");
+                sb.AppendLine("    <Cell><Data ss:Type=\"String\">" + cleanName + "</Data></Cell>");
+                sb.AppendLine("    <Cell><Data ss:Type=\"String\">" + cleanEmail + "</Data></Cell>");
+                sb.AppendLine("    <Cell><Data ss:Type=\"String\">" + cleanProg + "</Data></Cell>");
+                sb.AppendLine("   </Row>");
             }
 
+            // 7. Structural Closures
+            sb.AppendLine("  </Table>");
+            sb.AppendLine("  <WorksheetOptions xmlns=\"urn:schemas-microsoft-com:office:excel\">");
+            sb.AppendLine("   <Selected/>");
+            sb.AppendLine("   <ProtectObjects>False</ProtectObjects>");
+            sb.AppendLine("   <ProtectScenarios>False</ProtectScenarios>");
+            sb.AppendLine("  </WorksheetOptions>");
+            sb.AppendLine(" </Worksheet>");
+            sb.AppendLine("</Workbook>");
+
+            Response.Write(sb.ToString());
+            Response.Flush();
             Response.End();
+        }
+
+        // Escapes special characters so they don't corrupt the structural layout of the spreadsheet engine
+        private string SecurityXmlConvert(string input)
+        {
+            if (string.IsNullOrEmpty(input)) return "";
+            return input.Replace("&", "&amp;")
+                        .Replace("<", "&lt;")
+                        .Replace(">", "&gt;")
+                        .Replace("\"", "&quot;")
+                        .Replace("'", "&apos;");
         }
     }
 }

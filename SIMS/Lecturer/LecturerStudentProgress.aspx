@@ -102,6 +102,11 @@
                                         <span style="display: block; font-size: 10px; font-weight: bold; color: #94a3b8; text-transform: uppercase;">Proj. GPA</span>
                                         <span style="font-size: 14px; font-weight: bold; color: #0f172a;"><%# Eval("CurrentGPA", "{0:F2}") %></span>
                                     </div>
+                                    <%-- ADDED TOTAL MARKS SECTION IN STUDENT TRACKER VIEW --%>
+                                    <div style="text-align: center; min-width: 100px; padding: 4px 10px; background: #faf5ff; border-radius: 6px; border: 1px solid #f3e8ff;">
+                                        <span style="display: block; font-size: 10px; font-weight: bold; color: #a855f7; text-transform: uppercase;">Total Marks</span>
+                                        <span style="font-size: 14px; font-weight: bold; color: #6b21a8;"><%# Eval("TotalMarksObtained", "{0:F2}") %></span>
+                                    </div>
                                     <div style="text-align: center; min-width: 110px;">
                                         <span style="display: block; font-size: 10px; font-weight: bold; color: #94a3b8; text-transform: uppercase;">Assessments</span>
                                         <span style="font-size: 13px; font-weight: 500; color: #475569;"><%# Eval("CompletedSubmissions") %> Graded</span>
@@ -168,7 +173,18 @@
                     </div>
                     
                     <div style="overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 6px;">
-                        <asp:GridView ID="gvReportPreview" runat="server" GridLines="None" Width="100%" AutoGenerateColumns="true" CssClass="report-grid" EmptyDataText="No student anomalies met this criteria scope.">
+                        <%-- EXPLICIT GRIDVIEW COLUMNS DEFINITION TO INCLUDE TOTAL MARKS PREVIEW --%>
+                        <asp:GridView ID="gvReportPreview" runat="server" GridLines="None" Width="100%" AutoGenerateColumns="false" CssClass="report-grid" EmptyDataText="No student anomalies met this criteria scope.">
+                            <Columns>
+                                <asp:BoundField DataField="Student No" HeaderText="Student No" />
+                                <asp:BoundField DataField="Full Name" HeaderText="Full Name" />
+                                <asp:BoundField DataField="Email" HeaderText="Email" />
+                                <asp:BoundField DataField="Course Code" HeaderText="Course Code" />
+                                <asp:BoundField DataField="Attendance Rate" HeaderText="Attendance Rate" />
+                                <asp:BoundField DataField="Projected GPA" HeaderText="Projected GPA" />
+                                <asp:BoundField DataField="Total Marks" HeaderText="Total Marks" DataFormatString="{0:F2}" />
+                                <asp:BoundField DataField="Risk Level" HeaderText="Risk Level" />
+                            </Columns>
                         </asp:GridView>
                     </div>
                 </asp:Panel>

@@ -309,20 +309,18 @@
                 <div class="course-card">
                     <div class="course-code"><%# Eval("CourseCode") %></div>
                     <div class="course-name"><%# Eval("CourseName") %></div>
-                    
                     <div class="course-info">
                         <div class="course-info-item">
                             <i class="fa fa-users" style="color:#0d6efd;"></i>
-
                             <asp:LinkButton
                                 ID="btnViewStudents"
                                 runat="server"
                                 CssClass="student-link"
                                 Text='<%# Eval("TotalStudents") + " Students" %>'
-                                CommandArgument='<%# Eval("CourseId") + "|" + Eval("AcademicYear") + "|" + Eval("AssignmentSemester") %>'
+                                CommandArgument='<%# Eval("CourseId") + "|" + Eval("AcademicYear") + "|" + Eval("AssignmentSemester") + "|" + Eval("CourseCode") + " - " + Eval("CourseName") %>'
                                 OnClick="btnViewStudents_Click" />
                         </div>
-                        <div class="course-info-item">
+                                            <div class="course-info-item">
                             <i class="fa fa-award" style="color: #16a34a;"></i>
                             <strong><%# Eval("CreditHours") %></strong> Credits
                         </div>

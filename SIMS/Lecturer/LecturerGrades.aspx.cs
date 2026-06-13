@@ -370,8 +370,8 @@ namespace SIMS.Lecturer
             }
 
             // Explicitly embed the mathematical formula algorithm representation beside the Total Mark header
-            sb.Append("<th>Total Marks <span class='formula-box' title='Total Marks Calculation Rules Engine'>Algorithm: &Sigma; ((Marks Obtained / Max Mark) &times; Weightage)</span></th>");
-            sb.Append("<th>Final Grade</th>");
+            sb.Append("<th>Total Marks <span class='formula-box' title='Total Marks Calculation Rules Engine'>Algorithm: (&Sigma; Marks Obtained / &Sigma; Max Mark) &times; 100</span></th>"); sb.Append("<th>GPA</th>"); sb.Append("<th>Final Grade</th>");
+
             sb.Append("</tr></thead>");
             sb.Append("<tbody>");
 
@@ -391,26 +391,22 @@ namespace SIMS.Lecturer
                 sb.AppendFormat("<td>{0}</td>", Server.HtmlEncode(student.Key.StudentNo));
                 sb.AppendFormat("<td class='student-name'>{0}</td>", Server.HtmlEncode(student.Key.FullName));
 
-                decimal aggregateCourseScore = 0;
+                decimal totalMarksObtained = 0;
+                decimal totalMaxMarks = 0;
 
                 foreach (DataRow assRow in dtAssessments.Rows)
                 {
                     int currentAssId = Convert.ToInt32(assRow["AssessmentId"]);
                     decimal maxMark = Convert.ToDecimal(assRow["MaxMark"]);
-                    decimal weightage = Convert.ToDecimal(assRow["Weightage"]);
 
                     var markRow = student.FirstOrDefault(r => r["AssessmentId"] != DBNull.Value && Convert.ToInt32(r["AssessmentId"]) == currentAssId);
-
                     if (markRow != null && markRow["MarksObtained"] != DBNull.Value)
                     {
                         decimal marksObtained = Convert.ToDecimal(markRow["MarksObtained"]);
                         sb.AppendFormat("<td>{0}</td>", marksObtained.ToString("F2"));
 
-                        // Evaluate weightage contributions safely against zero division conditions
-                        if (maxMark > 0)
-                        {
-                            aggregateCourseScore += (marksObtained / maxMark) * weightage;
-                        }
+                        totalMarksObtained += marksObtained;
+                        totalMaxMarks += maxMark;
                     }
                     else
                     {
@@ -418,8 +414,16 @@ namespace SIMS.Lecturer
                     }
                 }
 
+                // Compute percentage based on the sum of obtained / sum of max marks
+                decimal aggregateCourseScore = 0;
+                if (totalMaxMarks > 0)
+                {
+                    aggregateCourseScore = (totalMarksObtained / totalMaxMarks) * 100;
+                }
+
                 // Process the cumulative score output through the contextual grade database rules mapper
                 string evaluatedLetter = GetGradeLetter(aggregateCourseScore);
+                string evaluatedGPA = GetGradePoint(aggregateCourseScore);
                 string gradeBadgeClass = "grade-n-a";
                 if (!string.IsNullOrEmpty(evaluatedLetter) && evaluatedLetter != "N/A")
                 {
@@ -427,12 +431,32 @@ namespace SIMS.Lecturer
                 }
 
                 sb.AppendFormat("<td style='font-weight: bold; color: #047857;'>{0} / 100.00</td>", aggregateCourseScore.ToString("F2"));
+                sb.AppendFormat("<td>{0}</td>", evaluatedGPA);
                 sb.AppendFormat("<td><span class='grade-badge {0}'>{1}</span></td>", gradeBadgeClass, evaluatedLetter);
                 sb.Append("</tr>");
             }
 
             sb.Append("</tbody></table></div>");
             litSummaryContainer.Text = sb.ToString();
+        }
+
+        public string GetGradePoint(decimal marks)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(connStr))
+                {
+                    using (SqlCommand cmd = new SqlCommand(
+                        "SELECT TOP 1 GradePoint FROM GradeScale WHERE @Marks >= MinMark AND @Marks <= MaxMark ORDER BY MinMark DESC", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@Marks", marks);
+                        conn.Open();
+                        object result = cmd.ExecuteScalar();
+                        return result != null ? Convert.ToDecimal(result).ToString("F2") : "0.00";
+                    }
+                }
+            }
+            catch { return "0.00"; }
         }
 
         protected void btnSaveAllMarks_Click(object sender, EventArgs e)

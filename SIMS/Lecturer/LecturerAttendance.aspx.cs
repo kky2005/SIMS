@@ -367,109 +367,192 @@ namespace SIMS.Lecturer
                 attendanceDate = DateTime.Now;
             }
 
+            // Capture dynamic course title from the page layout and format the timestamp
+            string courseTitle = string.IsNullOrEmpty(litCourseName.Text) ? "Assigned Academic Track" : litCourseName.Text;
+            string compileTimestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm tt");
+            string formattedAttendanceDate = attendanceDate.ToString("yyyy-MM-dd");
+
             DataTable dt = new DataTable();
 
-            try
+            using (SqlConnection conn = new SqlConnection(connStr))
             {
-                using (SqlConnection conn = new SqlConnection(connStr))
+                string sql = @"
+            SELECT 
+                s.StudentNo AS [Student ID],
+                u.FullName AS [Student Name],
+                u.Email AS [Email],
+                ISNULL(a.Status, 'Absent') AS [Attendance Status]
+            FROM Enrolments e
+            INNER JOIN Students s ON e.StudentId = s.StudentId
+            INNER JOIN Users u ON s.UserId = u.UserId
+            LEFT JOIN Attendance a ON e.EnrolmentId = a.EnrolmentId 
+                AND CAST(a.AttendanceDate AS DATE) = CAST(@AttendanceDate AS DATE)
+            WHERE e.CourseId = @CourseId 
+              AND e.AcademicYear = @AcademicYear 
+              AND e.Semester = @Semester
+              AND e.Status = 'Active'";
+
+                if (!string.IsNullOrEmpty(statusFilter) && statusFilter != "All")
                 {
-                    // FIXED: Table name changed to Enrolments, joined with Users to access FullName and Email
-                    string sql = @"
-                SELECT 
-                    s.StudentNo AS [Student ID],
-                    u.FullName AS [Student Name],
-                    u.Email AS [Email],
-                    ISNULL(a.Status, 'Absent') AS [Attendance Status],
-                    @AttendanceDate AS [Record Date]
-                FROM Enrolments e
-                INNER JOIN Students s ON e.StudentId = s.StudentId
-                INNER JOIN Users u ON s.UserId = u.UserId
-                LEFT JOIN Attendance a ON e.EnrolmentId = a.EnrolmentId 
-                    AND CAST(a.AttendanceDate AS DATE) = CAST(@AttendanceDate AS DATE)
-                WHERE e.CourseId = @CourseId 
-                  AND e.AcademicYear = @AcademicYear 
-                  AND e.Semester = @Semester
-                  AND e.Status = 'Active'";
-
-                    if (!string.IsNullOrEmpty(statusFilter) && statusFilter != "All")
+                    if (statusFilter == "Absent")
                     {
-                        if (statusFilter == "Absent")
-                        {
-                            sql += " AND (a.Status IS NULL OR a.Status = 'Absent')";
-                        }
-                        else
-                        {
-                            sql += " AND a.Status = @StatusFilter";
-                        }
+                        sql += " AND (a.Status IS NULL OR a.Status = 'Absent')";
                     }
-
-                    sql += " ORDER BY s.StudentNo ASC";
-
-                    using (SqlCommand cmd = new SqlCommand(sql, conn))
+                    else
                     {
-                        cmd.Parameters.AddWithValue("@CourseId", courseId);
-                        cmd.Parameters.AddWithValue("@AcademicYear", year);
-                        cmd.Parameters.AddWithValue("@Semester", semester);
-                        cmd.Parameters.AddWithValue("@AttendanceDate", attendanceDate.Date);
-
-                        if (!string.IsNullOrEmpty(statusFilter) && statusFilter != "All" && statusFilter != "Absent")
-                        {
-                            cmd.Parameters.AddWithValue("@StatusFilter", statusFilter);
-                        }
-
-                        using (SqlDataAdapter da = new SqlDataAdapter(cmd))
-                        {
-                            da.Fill(dt);
-                        }
+                        sql += " AND a.Status = @StatusFilter";
                     }
                 }
 
-                if (dt.Rows.Count > 0)
+                sql += " ORDER BY s.StudentNo ASC";
+
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
                 {
-                    Response.Clear();
-                    Response.Buffer = true;
-                    Response.AddHeader("content-disposition", "attachment;filename=AttendanceReport.csv");
-                    Response.Charset = "";
-                    Response.ContentType = "application/text";
+                    cmd.Parameters.AddWithValue("@CourseId", courseId);
+                    cmd.Parameters.AddWithValue("@AcademicYear", year);
+                    cmd.Parameters.AddWithValue("@Semester", semester);
+                    cmd.Parameters.AddWithValue("@AttendanceDate", attendanceDate.Date);
 
-                    StringBuilder sb = new StringBuilder();
-
-                    // Add headers
-                    for (int i = 0; i < dt.Columns.Count; i++)
+                    if (!string.IsNullOrEmpty(statusFilter) && statusFilter != "All" && statusFilter != "Absent")
                     {
-                        sb.Append(dt.Columns[i].ColumnName + (i == dt.Columns.Count - 1 ? "" : ","));
-                    }
-                    sb.Append("\r\n");
-
-                    // Add rows
-                    foreach (DataRow row in dt.Rows)
-                    {
-                        for (int i = 0; i < dt.Columns.Count; i++)
-                        {
-                            string cellValue = row[i].ToString().Replace(",", ";").Replace("\r", "").Replace("\n", " ");
-                            sb.Append(cellValue + (i == dt.Columns.Count - 1 ? "" : ","));
-                        }
-                        sb.Append("\r\n");
+                        cmd.Parameters.AddWithValue("@StatusFilter", statusFilter);
                     }
 
-                    Response.Output.Write(sb.ToString());
-                    Response.Flush();
-                    Response.End();
+                    using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                    {
+                        da.Fill(dt);
+                    }
                 }
-                else
+            }
+
+            if (dt.Rows.Count > 0)
+            {
+                Response.Clear();
+                Response.Buffer = true;
+
+                // Serve as Excel XML Spreadsheet to handle auto-fitting and design layouts safely
+                Response.ContentType = "application/vnd.ms-excel";
+                Response.AddHeader("content-disposition", "attachment;filename=Attendance_Report_" + attendanceDate.ToString("yyyyMMdd") + ".xls");
+                Response.Charset = "utf-8";
+                Response.ContentEncoding = Encoding.UTF8;
+
+                StringBuilder sb = new StringBuilder();
+
+                // 1. Spreadsheet Framework Setup
+                sb.AppendLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
+                sb.AppendLine("<?mso-application progid=\"Excel.Sheet\"?>");
+                sb.AppendLine("<Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\"");
+                sb.AppendLine(" xmlns:o=\"urn:schemas-microsoft-com:office:office\"");
+                sb.AppendLine(" xmlns:x=\"urn:schemas-microsoft-com:office:excel\"");
+                sb.AppendLine(" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"");
+                sb.AppendLine(" xmlns:html=\"http://www.w3.org/TR/REC-html40\">");
+
+                // 2. Executive Theme Styling Panel (Colors, Fonts, and Grid Borders)
+                sb.AppendLine(" <Styles>");
+                sb.AppendLine("  <Style ss:ID=\"Default\" ss:Name=\"Normal\">");
+                sb.AppendLine("   <Font ss:FontName=\"Segoe UI\" x:CharSet=\"1\" ss:Size=\"11\" ss:Color=\"#1E293B\"/>");
+                sb.AppendLine("  </Style>");
+                sb.AppendLine("  <Style ss:ID=\"ReportHeader\">");
+                sb.AppendLine("   <Font ss:FontName=\"Segoe UI\" ss:Size=\"14\" ss:Bold=\"1\" ss:Color=\"#0D6EFD\"/>");
+                sb.AppendLine("  </Style>");
+                sb.AppendLine("  <Style ss:ID=\"MetadataLabel\">");
+                sb.AppendLine("   <Font ss:FontName=\"Segoe UI\" ss:Size=\"10\" ss:Bold=\"1\" ss:Color=\"#64748B\"/>");
+                sb.AppendLine("  </Style>");
+                sb.AppendLine("  <Style ss:ID=\"MetadataValue\">");
+                sb.AppendLine("   <Font ss:FontName=\"Segoe UI\" ss:Size=\"10\" ss:Color=\"#1E293B\"/>");
+                sb.AppendLine("  </Style>");
+                sb.AppendLine("  <Style ss:ID=\"TableHeader\">");
+                sb.AppendLine("   <Interior ss:Color=\"#F8FAFC\" ss:Pattern=\"Solid\"/>");
+                sb.AppendLine("   <Borders>");
+                sb.AppendLine("    <Border ss:Position=\"Bottom\" ss:LineStyle=\"Continuous\" ss:Weight=\"2\" ss:Color=\"#CBD5E1\"/>");
+                sb.AppendLine("   </Borders>");
+                sb.AppendLine("   <Font ss:FontName=\"Segoe UI\" ss:Size=\"11\" ss:Bold=\"1\" ss:Color=\"#1E293B\"/>");
+                sb.AppendLine("  </Style>");
+                sb.AppendLine("  <Style ss:ID=\"DataCell\">");
+                sb.AppendLine("   <Borders>");
+                sb.AppendLine("    <Border ss:Position=\"Bottom\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#E2E8F0\"/>");
+                sb.AppendLine("   </Borders>");
+                sb.AppendLine("  </Style>");
+                sb.AppendLine(" </Styles>");
+
+                // 3. Worksheet Generation
+                sb.AppendLine(" <Worksheet ss:Name=\"Attendance Record\">");
+                sb.AppendLine("  <Table>");
+
+                // CRITICAL FIX: Direct Excel layout instruction to scan data context and adjust widths instantly
+                sb.AppendLine("   <Column ss:AutoFitWidth=\"1\" ss:Min=\"1\" ss:Max=\"4\"/>");
+
+                // 4. Executive Context Block (Dynamic Course and Date Specification)
+                sb.AppendLine("   <Row ss:Height=\"25\">");
+                sb.AppendLine("    <Cell ss:StyleID=\"ReportHeader\"><Data ss:Type=\"String\">OFFICIAL ATTENDANCE ROSTER REPORT</Data></Cell>");
+                sb.AppendLine("   </Row>");
+
+                sb.AppendLine("   <Row>");
+                sb.AppendLine("    <Cell ss:StyleID=\"MetadataLabel\"><Data ss:Type=\"String\">Course Track:</Data></Cell>");
+                sb.AppendLine("    <Cell ss:StyleID=\"MetadataValue\"><Data ss:Type=\"String\">" + SecurityXmlConvert(courseTitle) + "</Data></Cell>");
+                sb.AppendLine("   </Row>");
+
+                sb.AppendLine("   <Row>");
+                sb.AppendLine("    <Cell ss:StyleID=\"MetadataLabel\"><Data ss:Type=\"String\">Attendance Date:</Data></Cell>");
+                sb.AppendLine("    <Cell ss:StyleID=\"MetadataValue\"><Data ss:Type=\"String\">" + SecurityXmlConvert(formattedAttendanceDate) + "</Data></Cell>");
+                sb.AppendLine("   </Row>");
+
+                sb.AppendLine("   <Row>");
+                sb.AppendLine("    <Cell ss:StyleID=\"MetadataLabel\"><Data ss:Type=\"String\">Exported On:</Data></Cell>");
+                sb.AppendLine("    <Cell ss:StyleID=\"MetadataValue\"><Data ss:Type=\"String\">" + SecurityXmlConvert(compileTimestamp) + "</Data></Cell>");
+                sb.AppendLine("   </Row>");
+
+                sb.AppendLine("   <Row ss:Height=\"15\"></Row>"); // Visual whitespace separator
+
+                // 5. Grid Header Fields
+                sb.AppendLine("   <Row ss:Height=\"22\" ss:StyleID=\"TableHeader\">");
+                foreach (DataColumn col in dt.Columns)
                 {
-                    ShowError("No records available to export for the selected filters.");
+                    sb.AppendLine("    <Cell><Data ss:Type=\"String\">" + SecurityXmlConvert(col.ColumnName) + "</Data></Cell>");
                 }
+                sb.AppendLine("   </Row>");
+
+                // 6. Data Value Population Loops
+                foreach (DataRow row in dt.Rows)
+                {
+                    sb.AppendLine("   <Row ss:Height=\"20\" ss:StyleID=\"DataCell\">");
+                    foreach (object cellValue in row.ItemArray)
+                    {
+                        string cleanValue = SecurityXmlConvert(cellValue?.ToString() ?? "");
+                        sb.AppendLine("    <Cell><Data ss:Type=\"String\">" + cleanValue + "</Data></Cell>");
+                    }
+                    sb.AppendLine("   </Row>");
+                }
+
+                // 7. Closures
+                sb.AppendLine("  </Table>");
+                sb.AppendLine("  <WorksheetOptions xmlns=\"urn:schemas-microsoft-com:office:excel\">");
+                sb.AppendLine("   <Selected/>");
+                sb.AppendLine("   <ProtectObjects>False</ProtectObjects>");
+                sb.AppendLine("   <ProtectScenarios>False</ProtectScenarios>");
+                sb.AppendLine("  </WorksheetOptions>");
+                sb.AppendLine(" </Worksheet>");
+                sb.AppendLine("</Workbook>");
+
+                Response.Write(sb.ToString());
+                Response.Flush();
+                Response.End();
             }
-            catch (System.Threading.ThreadAbortException)
+            else
             {
-                // Caught safely to prevent unexpected app standard stack dumps during Response.End()
+                ShowError("No records available to export for the selected filters.");
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error exporting attendance CSV: {ex.Message}");
-                ShowError("Error generating report dataset: " + ex.Message);
-            }
+        }
+
+        // Escapes problematic characters to protect the document template structure from compiler exceptions
+        private string SecurityXmlConvert(string input)
+        {
+            if (string.IsNullOrEmpty(input)) return "";
+            return input.Replace("&", "&amp;")
+                        .Replace("<", "&lt;")
+                        .Replace(">", "&gt;")
+                        .Replace("\"", "&quot;")
+                        .Replace("'", "&apos;");
         }
 
         protected void rptAttendance_ItemDataBound(object sender, RepeaterItemEventArgs e)
