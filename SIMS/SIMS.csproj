@@ -309,6 +309,7 @@
       <DependentUpon>Login.aspx</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Services\AcademicProgressService.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Lecturer\LecturerMaster.Master" />
@@ -322,6 +323,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="ReportExports\" />
     <Folder Include="UploadedMaterials\" />
   </ItemGroup>
   <PropertyGroup>

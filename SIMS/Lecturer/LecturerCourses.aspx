@@ -246,6 +246,31 @@
             color: #991b1b;
         }
 
+        .student-link {
+            color: #0d6efd;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .student-link:hover {
+            text-decoration: underline;
+        }
+
+        .student-grid {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .student-grid th,
+        .student-grid td {
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .student-grid th {
+            background: #f8fafc;
+        }
+
         @media (max-width: 768px) {
             .course-actions {
                 flex-direction: column;
@@ -284,13 +309,18 @@
                 <div class="course-card">
                     <div class="course-code"><%# Eval("CourseCode") %></div>
                     <div class="course-name"><%# Eval("CourseName") %></div>
-                    
                     <div class="course-info">
                         <div class="course-info-item">
-                            <i class="fa fa-users" style="color: #0d6efd;"></i>
-                            <strong><%# Eval("TotalStudents") %></strong> Students
+                            <i class="fa fa-users" style="color:#0d6efd;"></i>
+                            <asp:LinkButton
+                                ID="btnViewStudents"
+                                runat="server"
+                                CssClass="student-link"
+                                Text='<%# Eval("TotalStudents") + " Students" %>'
+                                CommandArgument='<%# Eval("CourseId") + "|" + Eval("AcademicYear") + "|" + Eval("AssignmentSemester") + "|" + Eval("CourseCode") + " - " + Eval("CourseName") %>'
+                                OnClick="btnViewStudents_Click" />
                         </div>
-                        <div class="course-info-item">
+                                            <div class="course-info-item">
                             <i class="fa fa-award" style="color: #16a34a;"></i>
                             <strong><%# Eval("CreditHours") %></strong> Credits
                         </div>
@@ -342,5 +372,78 @@
         <h5 style="margin: 0 0 10px 0; color: #1e293b;">No Courses Found</h5>
         <p style="margin: 0;">You don't have any courses assigned.</p>
     </asp:Panel>
+    <asp:Panel ID="pnlStudentModal"
+    runat="server"
+    CssClass="modal-overlay"
+    Visible="false">
 
+    <div class="modal-content">
+
+        <div class="modal-header">
+            <h3>Registered Students</h3>
+
+            <asp:Button
+                ID="btnCloseModalTop"
+                runat="server"
+                Text="×"
+                CssClass="modal-close"
+                OnClick="btnCloseModal_Click" />
+        </div>
+
+        <asp:Label
+            ID="lblCourseTitle"
+            runat="server"
+            Font-Bold="true" />
+
+        <br /><br />
+
+        <asp:GridView
+            ID="gvStudents"
+            runat="server"
+            AutoGenerateColumns="false"
+            CssClass="student-grid">
+
+            <Columns>
+
+                <asp:BoundField
+                    DataField="StudentNo"
+                    HeaderText="Student No" />
+
+                <asp:BoundField
+                    DataField="FullName"
+                    HeaderText="Student Name" />
+
+                <asp:BoundField
+                    DataField="Email"
+                    HeaderText="Email" />
+
+                <asp:BoundField
+                    DataField="ProgrammeName"
+                    HeaderText="Programme" />
+
+            </Columns>
+
+        </asp:GridView>
+
+        <div class="form-actions">
+
+            <asp:Button
+                ID="btnExportCsv"
+                runat="server"
+                Text="Export CSV"
+                CssClass="btn btn-success"
+                OnClick="btnExportCsv_Click" />
+
+            <asp:Button
+                ID="btnCloseModal"
+                runat="server"
+                Text="Close"
+                CssClass="btn btn-secondary"
+                OnClick="btnCloseModal_Click" />
+
+        </div>
+
+    </div>
+
+</asp:Panel>
 </asp:Content>

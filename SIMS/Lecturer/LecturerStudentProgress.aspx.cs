@@ -2,6 +2,7 @@
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
+using System.IO;
 using System.Text;
 using System.Web;
 using System.Web.UI;
@@ -11,7 +12,7 @@ namespace SIMS.Lecturer
 {
     public partial class LecturerStudentProgress : LecturerBase
     {
-        private string connStr = ConfigurationManager.ConnectionStrings["SIMS_DB"].ConnectionString;
+        private readonly string connStr = ConfigurationManager.ConnectionStrings["SIMS_DB"].ConnectionString;
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -21,10 +22,11 @@ namespace SIMS.Lecturer
             {
                 LoadCourses();
                 ExecuteSearch();
+                LoadReportHistoryLogs();
             }
         }
 
-        void LoadCourses()
+        private void LoadCourses()
         {
             try
             {
@@ -32,18 +34,17 @@ namespace SIMS.Lecturer
 
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
-                    // REMOVED rigid current-day/month constraints so past, current, and future assigned courses show up dynamically
                     string sql = @"
-                SELECT DISTINCT
-                    c.CourseId,
-                    c.CourseCode,
-                    c.CourseName,
-                    ca.AcademicYear,
-                    ca.Semester
-                FROM CourseAssignments ca
-                INNER JOIN Courses c ON c.CourseId = ca.CourseId
-                WHERE ca.LecturerId = @LecturerId
-                ORDER BY ca.AcademicYear DESC, ca.Semester DESC, c.CourseCode ASC";
+                        SELECT DISTINCT
+                            c.CourseId,
+                            c.CourseCode,
+                            c.CourseName,
+                            ca.AcademicYear,
+                            ca.Semester
+                        FROM CourseAssignments ca
+                        INNER JOIN Courses c ON c.CourseId = ca.CourseId
+                        WHERE ca.LecturerId = @LecturerId
+                        ORDER BY ca.AcademicYear DESC, ca.Semester DESC, c.CourseCode ASC";
 
                     using (SqlCommand cmd = new SqlCommand(sql, conn))
                     {
@@ -54,7 +55,6 @@ namespace SIMS.Lecturer
                             DataTable dt = new DataTable();
                             da.Fill(dt);
 
-                            // Add a descriptive display field combining Code, Name and Academic Period
                             dt.Columns.Add("DisplayTitle", typeof(string));
                             foreach (DataRow row in dt.Rows)
                             {
@@ -65,125 +65,151 @@ namespace SIMS.Lecturer
                             ddlCourse.DataTextField = "DisplayTitle";
                             ddlCourse.DataValueField = "CourseId";
                             ddlCourse.DataBind();
+
+                            ddlReportCourse.DataSource = dt;
+                            ddlReportCourse.DataTextField = "DisplayTitle";
+                            ddlReportCourse.DataValueField = "CourseId";
+                            ddlReportCourse.DataBind();
                         }
                     }
                 }
 
                 ddlCourse.Items.Insert(0, new ListItem("-- All Assigned Courses --", "0"));
+                ddlReportCourse.Items.Insert(0, new ListItem("-- Entire Course Workloads --", "0"));
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error loading courses: {ex.Message}");
                 ShowSystemFeedback($"Error loading associated courses: {ex.Message}", true);
             }
         }
 
+        protected void SwitchTab_Click(object sender, EventArgs e)
+        {
+            Button btn = (Button)sender;
+            int targetView = int.Parse(btn.CommandArgument);
+            mvProgressViews.ActiveViewIndex = targetView;
+
+            btnTabTracker.CssClass = "tab-btn" + (targetView == 0 ? " active-tab" : "");
+            btnTabReports.CssClass = "tab-btn" + (targetView == 1 ? " active-tab" : "");
+
+            if (targetView == 1)
+            {
+                ClearReportPreview();
+                LoadReportHistoryLogs();
+            }
+            else
+            {
+                ExecuteSearch();
+            }
+        }
+
+        #region TAB 1: STUDENT TRACKER METRICS VIEW
+
         private DataTable GetProgressDataMetrics(int courseId)
         {
+            DataTable dt = new DataTable();
             int lecturerId = CurrentLecturerId;
-            int currentYear = DateTime.Now.Year;
-            int currentSemester = GetCurrentSemester();
 
             using (SqlConnection conn = new SqlConnection(connStr))
             {
-                // Expanded query calculating Risk dynamically across explicit structural points: Attendance and Cumulative CGPA
+                // ADDED TotalMarksObtained TO THE SELECT COLUMNS AND CALCULATIONS WITHIN CTE
                 string sql = @"
-    SELECT
-        s.StudentId,
-        s.StudentNo,
-        u.FullName,
-        u.Email,
-        c.CourseCode, -- Added to identify the student's current course
-        ISNULL(att.AttendancePercent, 0.0) AS AttendancePercent,
-        ISNULL(gpa.CGPA, 0.00) AS CurrentGPA,
-        CASE 
-            WHEN ISNULL(att.AttendancePercent, 100) < 55 OR ISNULL(gpa.CGPA, 4.0) < 2.00 THEN 'High'
-            WHEN ISNULL(att.AttendancePercent, 100) < 65 OR ISNULL(gpa.CGPA, 4.0) < 2.50 THEN 'Medium'
-            ELSE 'Low'
-        END AS RiskLevel,
-        COUNT(DISTINCT a.AssessmentId) AS AssignmentStatus
-    FROM Enrolments e
-    INNER JOIN Students s ON s.StudentId = e.StudentId
-    INNER JOIN Users u ON u.UserId = s.UserId
-    INNER JOIN Courses c ON c.CourseId = e.CourseId
-    LEFT JOIN (
-        SELECT EnrolmentId,
-               100.0 * SUM(CASE WHEN Status = 'Present' THEN 1 ELSE 0 END) / NULLIF(COUNT(*), 0) AS AttendancePercent
-        FROM Attendance
-        GROUP BY EnrolmentId
-    ) att ON att.EnrolmentId = e.EnrolmentId
-    LEFT JOIN (
-        SELECT StudentId, GPA, CGPA,
-               ROW_NUMBER() OVER (PARTITION BY StudentId ORDER BY CalculatedAt DESC) as rn
-        FROM GPARecords
-    ) gpa ON gpa.StudentId = s.StudentId AND gpa.rn = 1
-    LEFT JOIN Assessments a ON a.CourseId = e.CourseId
-    INNER JOIN CourseAssignments ca ON ca.CourseId = e.CourseId 
-                                   AND ca.AcademicYear = e.AcademicYear 
-                                   AND ca.Semester = e.Semester
-    WHERE ca.LecturerId = @LecturerId
-      AND e.Status = 'Active'";
+                WITH StudentBaseMetrics AS (
+                    SELECT 
+                        s.StudentId,
+                        s.StudentNo,
+                        u.FullName,
+                        u.Email,
+                        c.CourseCode,
+                        c.CourseId,
+                        e.AcademicYear,
+                        e.Semester,
+                        e.EnrolmentId,
+                        
+                        ISNULL((
+                            SELECT 100.0 * SUM(CASE WHEN att.Status = 'Present' THEN 1 ELSE 0 END) / NULLIF(COUNT(*), 0)
+                            FROM Attendance att WHERE att.EnrolmentId = e.EnrolmentId
+                        ), 100.0) AS AttendancePercent,
 
-                if (courseId > 0)
-                {
-                    sql += " AND e.CourseId = @CourseId";
-                }
+                        ISNULL((
+                            SELECT 100.0 * SUM(sm.MarksObtained) / NULLIF(SUM(a.MaxMark), 0)
+                            FROM StudentMarks sm
+                            INNER JOIN Assessments a ON sm.AssessmentId = a.AssessmentId
+                            WHERE sm.StudentId = s.StudentId AND a.CourseId = e.CourseId AND a.AcademicYear = e.AcademicYear AND a.Semester = e.Semester
+                        ), 0.0) AS AssessmentMarkPercent,
 
-                // Added c.CourseCode to the GROUP BY clause
-                sql += " GROUP BY s.StudentId, s.StudentNo, u.FullName, u.Email, c.CourseCode, att.AttendancePercent, gpa.CGPA ORDER BY s.StudentNo";
+                        ISNULL((
+                            SELECT COUNT(DISTINCT sm.AssessmentId)
+                            FROM StudentMarks sm
+                            INNER JOIN Assessments a ON sm.AssessmentId = a.AssessmentId
+                            WHERE sm.StudentId = s.StudentId 
+                                AND a.CourseId = e.CourseId 
+                                AND a.AcademicYear = e.AcademicYear 
+                                AND a.Semester = e.Semester
+                        ), 0) AS CompletedSubmissions,
+
+                        ISNULL((
+                            SELECT (100.0 * SUM(sm.MarksObtained) / NULLIF(SUM(a.MaxMark), 0))
+                            FROM StudentMarks sm
+                            INNER JOIN Assessments a ON sm.AssessmentId = a.AssessmentId
+                            WHERE sm.StudentId = s.StudentId 
+                                AND a.CourseId = e.CourseId 
+                                AND a.AcademicYear = e.AcademicYear 
+                                AND a.Semester = e.Semester
+                        ), 0.0) AS TotalMarksObtained
+
+                    FROM Enrolments e
+                    INNER JOIN Students s ON e.StudentId = s.StudentId
+                    INNER JOIN Users u ON s.UserId = u.UserId
+                    INNER JOIN Courses c ON e.CourseId = c.CourseId
+                    INNER JOIN CourseAssignments ca ON c.CourseId = ca.CourseId AND e.AcademicYear = ca.AcademicYear AND e.Semester = ca.Semester
+                    WHERE ca.LecturerId = @LecturerId 
+                      AND (@CourseId = 0 OR e.CourseId = @CourseId)
+                      AND e.Status = 'Active'
+                ),
+                MetricsWithGPA AS (
+                    SELECT 
+                        m.*,
+                        ISNULL((
+                            SELECT TOP 1 gs.GradePoint FROM GradeScale gs 
+                            WHERE m.AssessmentMarkPercent >= gs.MinMark AND m.AssessmentMarkPercent <= gs.MaxMark
+                            ORDER BY gs.MinMark DESC
+                        ), 0.00) AS CurrentGPA
+                    FROM StudentBaseMetrics m
+                )
+                SELECT 
+                    StudentId, StudentNo, FullName, Email, CourseCode, CourseId, AcademicYear, Semester, CurrentGPA, TotalMarksObtained, AttendancePercent, CompletedSubmissions,
+                    CASE 
+                        WHEN AttendancePercent < 80.0 OR (CompletedSubmissions > 0 AND CurrentGPA < 2.00) THEN 'High'
+                        WHEN AttendancePercent < 90.0 OR (CompletedSubmissions > 0 AND CurrentGPA < 2.75) THEN 'Medium'
+                        ELSE 'Low'
+                    END AS RiskLevel,
+                    CASE 
+                        WHEN AttendancePercent < 80.0 AND CompletedSubmissions > 0 AND CurrentGPA < 2.00 THEN 'High Risk: Attendance is below 80% and Course GPA is below 2.00'
+                        WHEN AttendancePercent < 80.0 THEN 'High Risk: Poor Attendance record (< 80%)'
+                        WHEN CompletedSubmissions > 0 AND CurrentGPA < 2.00 THEN 'High Risk: Low Academic Grade Failings (GPA < 2.00)'
+                        WHEN AttendancePercent < 90.0 AND CompletedSubmissions > 0 AND CurrentGPA < 2.75 THEN 'Medium Risk: Borderline Attendance (< 90%) and GPA (< 2.75)'
+                        WHEN AttendancePercent < 90.0 THEN 'Medium Risk: Suboptimal Class Attendance (< 90%)'
+                        WHEN CompletedSubmissions > 0 AND CurrentGPA < 2.75 THEN 'Medium Risk: Modest Academic Assessment Average (GPA < 2.75)'
+                        ELSE 'Low Risk: Satisfactory performance metrics maintained.'
+                    END AS RiskReason
+                FROM MetricsWithGPA
+                ORDER BY FullName ASC";
+
                 using (SqlCommand cmd = new SqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@LecturerId", lecturerId);
-                    cmd.Parameters.AddWithValue("@Year", currentYear);
-                    cmd.Parameters.AddWithValue("@Semester", currentSemester);
-                    if (courseId > 0) cmd.Parameters.AddWithValue("@CourseId", courseId);
-
+                    cmd.Parameters.AddWithValue("@CourseId", courseId);
                     using (SqlDataAdapter da = new SqlDataAdapter(cmd))
                     {
-                        DataTable dt = new DataTable();
                         da.Fill(dt);
-                        return dt;
                     }
                 }
             }
+            return dt;
         }
 
-        private void ExecuteSearch()
-        {
-            try
-            {
-                int courseId = int.Parse(ddlCourse.SelectedValue ?? "0");
-                string riskFilter = ddlRiskLevel.SelectedValue;
-
-                DataTable dt = GetProgressDataMetrics(courseId);
-
-                if (!string.IsNullOrEmpty(riskFilter) && dt.Rows.Count > 0)
-                {
-                    DataView dv = dt.DefaultView;
-                    dv.RowFilter = $"RiskLevel = '{riskFilter}'";
-                    rptStudentProgress.DataSource = dv;
-                    pnlNoData.Visible = (dv.Count == 0);
-                }
-                else
-                {
-                    rptStudentProgress.DataSource = dt;
-                    pnlNoData.Visible = (dt.Rows.Count == 0);
-                }
-
-                rptStudentProgress.DataBind();
-            }
-            catch (Exception ex)
-            {
-                ShowSystemFeedback($"Error collecting metrics pipeline: {ex.Message}", true);
-            }
-        }
-
-        protected void btnApplyFilter_Click(object sender, EventArgs e)
-        {
-            ExecuteSearch();
-        }
-
-        protected void btnExportReport_Click(object sender, EventArgs e)
+        public void ExecuteSearch()
         {
             try
             {
@@ -192,110 +218,435 @@ namespace SIMS.Lecturer
 
                 DataTable dt = GetProgressDataMetrics(courseId);
                 DataView dv = dt.DefaultView;
+
                 if (!string.IsNullOrEmpty(riskFilter))
                 {
                     dv.RowFilter = $"RiskLevel = '{riskFilter}'";
                 }
 
-                DataTable filteredRecords = dv.ToTable();
-
-                // Structural Feature: Dynamic database persistence into the Reports table schema
-                int loggedReportId = LogReportGenerationToDatabase(courseId, riskFilter);
-
-                // Compile CSV Memory Document
-                StringBuilder sb = new StringBuilder();
-                // 1. Update the CSV column headers text string line to include Course Code:
-                sb.AppendLine("Report Audit ID,Student Number,Full Name,Course Code,Email Address,Attendance %,CGPA,Risk Designation,Assessments Enrolled");
-
-                // 2. Update loop iteration values statement block mapping:
-                foreach (DataRow row in filteredRecords.Rows)
-                {
-                    double attVal = Convert.ToDouble(row["AttendancePercent"]);
-                    double gpaVal = Convert.ToDouble(row["CurrentGPA"]);
-
-                    sb.AppendLine($"\"{loggedReportId}\",\"{row["StudentNo"]}\",\"{row["FullName"]}\",\"{row["CourseCode"]}\",\"{row["Email"]}\",\"{attVal:F1}%\",\"{gpaVal:F2}\",\"{row["RiskLevel"]}\",\"{row["AssignmentStatus"]}\"");
-                }
-
-                // Clear downstream response pipelines to emit dynamic file download binary contents directly
-                HttpResponse response = HttpContext.Current.Response;
-                response.Clear();
-                response.ContentType = "text/csv";
-                response.AddHeader("content-disposition", $"attachment;filename=Student_Progress_Report_Sem{GetCurrentSemester()}_{DateTime.Now:yyyyMMdd}.csv");
-                response.Buffer = true;
-                response.Write(sb.ToString());
-                response.Flush();
-                response.End();
-            }
-            catch (System.Threading.ThreadAbortException)
-            {
-                // Catch standard safely-thrown inner redirect system architecture exceptions on End() operations
+                rptStudentProgress.DataSource = dv;
+                rptStudentProgress.DataBind();
+                pnlNoData.Visible = (dv.Count == 0);
             }
             catch (Exception ex)
             {
-                ShowSystemFeedback($"Failed to compile structural download: {ex.Message}", true);
+                ShowSystemFeedback($"Error evaluating criteria profiles: {ex.Message}", true);
             }
         }
 
-        private int LogReportGenerationToDatabase(int courseId, string riskCriteria)
+        protected void btnFilter_Click(object sender, EventArgs e)
         {
-            using (SqlConnection conn = new SqlConnection(connStr))
+            ExecuteSearch();
+        }
+
+        #endregion
+
+        #region TAB 2: REPORT ENGINE WITH SECURE STREAMING
+
+        protected void btnGenerateReport_Click(object sender, EventArgs e)
+        {
+            try
             {
-                // Inserts a tracker log inside your explicit 'Reports' table architecture
-                string sql = @"
-                    INSERT INTO Reports (GeneratedBy, ReportType, AcademicYear, Semester, FilterCriteria, GeneratedAt)
-                    OUTPUT INSERTED.ReportId
-                    VALUES (@User, 'Lecturer Student Progress Tracker Flag Output', @Year, @Sem, @Criteria, SYSUTCDATETIME());";
+                int courseId = int.Parse(ddlReportCourse.SelectedValue ?? "0");
+                string riskFilter = ddlReportRisk.SelectedValue;
 
-                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                DataTable dt = GetProgressDataMetrics(courseId);
+                DataView dv = dt.DefaultView;
+
+                if (!string.IsNullOrEmpty(riskFilter) && riskFilter != "All")
                 {
-                    // Assuming basic authentication framework context exposes global identity references directly
-                    cmd.Parameters.AddWithValue("@User", CurrentLecturerId);
-                    cmd.Parameters.AddWithValue("@Year", DateTime.Now.Year);
-                    cmd.Parameters.AddWithValue("@Sem", GetCurrentSemester());
-                    cmd.Parameters.AddWithValue("@Criteria", $"Course ID Target: {courseId} | Risk Selection Filter Constraints: {riskCriteria}");
+                    dv.RowFilter = $"RiskLevel = '{riskFilter}'";
+                }
 
-                    conn.Open();
-                    return (int)cmd.ExecuteScalar();
+                DataTable reportData = dv.ToTable();
+
+                DataTable clientTable = new DataTable();
+                clientTable.Columns.Add("Student No");
+                clientTable.Columns.Add("Full Name");
+                clientTable.Columns.Add("Email");
+                clientTable.Columns.Add("Course Code");
+                clientTable.Columns.Add("Attendance Rate");
+                clientTable.Columns.Add("Projected GPA");
+                clientTable.Columns.Add("Total Marks"); // ADDED DATAFIELD COLUMN
+                clientTable.Columns.Add("Risk Level");
+
+                foreach (DataRow row in reportData.Rows)
+                {
+                    clientTable.Rows.Add(
+                        row["StudentNo"],
+                        row["FullName"],
+                        row["Email"],
+                        row["CourseCode"],
+                        Convert.ToDouble(row["AttendancePercent"]).ToString("F1") + "%",
+                        Convert.ToDouble(row["CurrentGPA"]).ToString("F2"),
+                        Convert.ToDouble(row["TotalMarksObtained"]).ToString("F2"), // INJECTED CORRESPONDING DATAROW SCALAR VALUE
+                        row["RiskLevel"]
+                    );
+                }
+
+                litReportTitle.Text = "Student Performance Exceptions Preview Analysis";
+                gvReportPreview.DataSource = clientTable;
+                gvReportPreview.DataBind();
+
+                ViewState["LecturerReportBuffer"] = reportData;
+                ViewState["LecturerReportTitle"] = "Student Progress Summary";
+                ViewState["LecturerReportScope"] = $"Course ID: {courseId} | Filter: {riskFilter}";
+
+                pnlReportWorkspace.Visible = true;
+                lblReportFeedback.Visible = false;
+
+                if (clientTable.Rows.Count == 0)
+                {
+                    lblReportFeedback.Text = "No records matched your specified filter configuration.";
+                    lblReportFeedback.Style["background-color"] = "#fffbeb";
+                    lblReportFeedback.Style["color"] = "#b45309";
+                    lblReportFeedback.Style["border"] = "1px solid #fef3c7";
+                    lblReportFeedback.Visible = true;
                 }
             }
+            catch (Exception ex)
+            {
+                ShowSystemFeedback($"Generation Pipeline Interrupted: {ex.Message}", true);
+            }
         }
 
-        protected void rptStudentProgress_ItemCommand(object source, RepeaterCommandEventArgs e)
+        protected void btnCompileCSVReport_Click(object sender, EventArgs e)
         {
-            if (e.CommandName == "IssueWarning")
+            DataTable reportData = ViewState["LecturerReportBuffer"] as DataTable;
+            string reportClassification = Convert.ToString(ViewState["LecturerReportTitle"]);
+            string appliedRestrictions = Convert.ToString(ViewState["LecturerReportScope"]);
+
+            if (reportData == null || reportData.Rows.Count == 0)
             {
-                int targetStudentId = Convert.ToInt32(e.CommandArgument);
-                int currentCourseId = int.Parse(ddlCourse.SelectedValue == "0" ? "1" : ddlCourse.SelectedValue); // Safely map to an active structural class identifier
+                lblReportFeedback.Text = "Please click 'Generate Workload Preview' before executing file compile downstreams.";
+                lblReportFeedback.Style["background-color"] = "#fee2e2";
+                lblReportFeedback.Style["color"] = "#991b1b";
+                lblReportFeedback.Style["border"] = "1px solid #fca5a5";
+                lblReportFeedback.Visible = true;
+                return;
+            }
+
+            try
+            {
+                string targetFolder = Server.MapPath("~/ReportExports/");
+                if (!Directory.Exists(targetFolder))
+                {
+                    Directory.CreateDirectory(targetFolder);
+                }
+
+                string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                string fileBaseName = $"StudentProgressReport_{timestamp}.csv";
+                string physicalWritePath = Path.Combine(targetFolder, fileBaseName);
+                string applicationVirtualPath = "~/ReportExports/" + fileBaseName;
+
+                StringBuilder sb = new StringBuilder();
+                // INJECTED Total Marks INTO CSV STREAM HEADER
+                sb.AppendLine("Student No,Full Name,Email,Course Code,Attendance %,Projected GPA,Total Marks,Risk Level,Details / Reasons");
+
+                foreach (DataRow row in reportData.Rows)
+                {
+                    string escapedName = row["FullName"].ToString().Replace("\"", "\"\"");
+                    string escapedReason = row["RiskReason"].ToString().Replace("\"", "\"\"");
+
+                    // MATCHED EXPLICIT FORMAT PLACEMENT WRITER STRINGS
+                    sb.AppendLine(string.Format("\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4:F1}\",\"{5:F2}\",\"{6:F2}\",\"{7}\",\"{8}\"",
+                        row["StudentNo"], escapedName, row["Email"], row["CourseCode"],
+                        row["AttendancePercent"], row["CurrentGPA"], row["TotalMarksObtained"], row["RiskLevel"], escapedReason
+                    ));
+                }
+
+                File.WriteAllText(physicalWritePath, sb.ToString(), Encoding.UTF8);
+
+                int currentUserId = CurrentUserId;
+                using (SqlConnection conn = new SqlConnection(connStr))
+                {
+                    conn.Open();
+                    int reportId = 0;
+                    string insertReportSql = @"
+                        INSERT INTO [dbo].[Reports] (ReportType, AcademicYear, Semester, FilterCriteria, GeneratedBy, GeneratedAt)
+                        VALUES (@ReportType, @Year, @Sem, @Criteria, @User, SYSUTCDATETIME());
+                        SELECT CAST(SCOPE_IDENTITY() as int);";
+
+                    int month = DateTime.Now.Month;
+                    int calculatedSemester = (month <= 4) ? 1 : (month <= 8) ? 2 : 3;
+
+                    using (SqlCommand cmd = new SqlCommand(insertReportSql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@ReportType", reportClassification);
+                        cmd.Parameters.AddWithValue("@Year", DateTime.Now.Year);
+                        cmd.Parameters.AddWithValue("@Sem", calculatedSemester);
+                        cmd.Parameters.AddWithValue("@Criteria", appliedRestrictions);
+                        cmd.Parameters.AddWithValue("@User", currentUserId);
+                        reportId = (int)cmd.ExecuteScalar();
+                    }
+
+                    if (reportId > 0)
+                    {
+                        string insertExportSql = @"
+                            INSERT INTO [dbo].[ReportExports] (ReportId, ExportFormat, FilePath, ExportedAt)
+                            VALUES (@ReportId, 'CSV', @Path, SYSUTCDATETIME());";
+
+                        using (SqlCommand cmdExport = new SqlCommand(insertExportSql, conn))
+                        {
+                            cmdExport.Parameters.AddWithValue("@ReportId", reportId);
+                            cmdExport.Parameters.AddWithValue("@Path", applicationVirtualPath);
+                            cmdExport.ExecuteNonQuery();
+                        }
+                    }
+                }
+
+                LoadReportHistoryLogs();
+                TransmitFileStreamSecurely(physicalWritePath, fileBaseName);
+            }
+            catch (Exception ex)
+            {
+                lblReportFeedback.Text = $"Compilation Exception Disrupted: {ex.Message}";
+                lblReportFeedback.Style["background-color"] = "#fee2e2";
+                lblReportFeedback.Style["color"] = "#991b1b";
+                lblReportFeedback.Style["border"] = "1px solid #fca5a5";
+                lblReportFeedback.Visible = true;
+            }
+        }
+
+        private void TransmitFileStreamSecurely(string physicalPath, string userVisibleName)
+        {
+            try
+            {
+                // 1. Read the raw text elements from the historical CSV logs repository safely
+                string[] fileLines = File.ReadAllLines(physicalPath);
+                if (fileLines.Length == 0)
+                {
+                    ShowSystemFeedback("The selected tracking logs profile data file appears to be empty.", true);
+                    return;
+                }
+
+                // Parse file variables to derive dynamic metadata contexts
+                string reportTitle = "STUDENT PERFORMANCE PROGRESS MONITORING REPORT";
+                string cleanTimestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm tt");
+
+                // Transform user visible file name to target modern excel extension metrics (.xls)
+                string fixedDownloadFileName = Path.GetFileNameWithoutExtension(userVisibleName) + "_Formatted.xls";
+
+                // 2. Initialize Professional Spreadsheet Stream Settings
+                Response.Clear();
+                Response.Buffer = true;
+                Response.ContentType = "application/vnd.ms-excel";
+                Response.AddHeader("content-disposition", "attachment;filename=" + fixedDownloadFileName);
+                Response.Charset = "utf-8";
+                Response.ContentEncoding = Encoding.UTF8;
+
+                StringBuilder sb = new StringBuilder();
+
+                // 3. Document Structure XML Definitions
+                sb.AppendLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
+                sb.AppendLine("<?mso-application progid=\"Excel.Sheet\"?>");
+                sb.AppendLine("<Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\"");
+                sb.AppendLine(" xmlns:o=\"urn:schemas-microsoft-com:office:office\"");
+                sb.AppendLine(" xmlns:x=\"urn:schemas-microsoft-com:office:excel\"");
+                sb.AppendLine(" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"");
+                sb.AppendLine(" xmlns:html=\"http://www.w3.org/TR/REC-html40\">");
+
+                // 4. Premium Theme Visual Styles (Matching your dashboard's signature deep red accent palette)
+                sb.AppendLine(" <Styles>");
+                sb.AppendLine("  <Style ss:ID=\"Default\" ss:Name=\"Normal\">");
+                sb.AppendLine("   <Font ss:FontName=\"Segoe UI\" x:CharSet=\"1\" ss:Size=\"11\" ss:Color=\"#1E293B\"/>");
+                sb.AppendLine("  </Style>");
+                sb.AppendLine("  <Style ss:ID=\"ReportHeader\">");
+                sb.AppendLine("   <Font ss:FontName=\"Segoe UI\" ss:Size=\"14\" ss:Bold=\"1\" ss:Color=\"#DC2626\"/>"); // Professional deep red brand match
+                sb.AppendLine("  </Style>");
+                sb.AppendLine("  <Style ss:ID=\"MetadataLabel\">");
+                sb.AppendLine("   <Font ss:FontName=\"Segoe UI\" ss:Size=\"10\" ss:Bold=\"1\" ss:Color=\"#64748B\"/>");
+                sb.AppendLine("  </Style>");
+                sb.AppendLine("  <Style ss:ID=\"MetadataValue\">");
+                sb.AppendLine("   <Font ss:FontName=\"Segoe UI\" ss:Size=\"10\" ss:Color=\"#1E293B\"/>");
+                sb.AppendLine("  </Style>");
+                sb.AppendLine("  <Style ss:ID=\"TableHeader\">");
+                sb.AppendLine("   <Interior ss:Color=\"#FFF5F5\" ss:Pattern=\"Solid\"/>"); // Light tinted background
+                sb.AppendLine("   <Borders>");
+                sb.AppendLine("    <Border ss:Position=\"Bottom\" ss:LineStyle=\"Continuous\" ss:Weight=\"2\" ss:Color=\"#FCA5A5\"/>");
+                sb.AppendLine("   </Borders>");
+                sb.AppendLine("   <Font ss:FontName=\"Segoe UI\" ss:Size=\"11\" ss:Bold=\"1\" ss:Color=\"#991B1B\"/>");
+                sb.AppendLine("  </Style>");
+                sb.AppendLine("  <Style ss:ID=\"DataCell\">");
+                sb.AppendLine("   <Borders>");
+                sb.AppendLine("    <Border ss:Position=\"Bottom\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#F3F4F6\"/>");
+                sb.AppendLine("   </Borders>");
+                sb.AppendLine("  </Style>");
+                sb.AppendLine(" </Styles>");
+
+                // 5. Open Worksheet Segment Workspace
+                sb.AppendLine(" <Worksheet ss:Name=\"Academic Progress Monitoring\">");
+                sb.AppendLine("  <Table>");
+
+                // CRITICAL ENHANCEMENT: Directs Excel to parse content tracking text lines and layout widths instantly
+                sb.AppendLine("   <Column ss:AutoFitWidth=\"1\" ss:Min=\"1\" ss:Max=\"15\"/>");
+
+                // 6. Corporate Metadata Information Block
+                sb.AppendLine("   <Row ss:Height=\"25\">");
+                sb.AppendLine("    <Cell ss:StyleID=\"ReportHeader\"><Data ss:Type=\"String\">" + reportTitle + "</Data></Cell>");
+                sb.AppendLine("   </Row>");
+
+                sb.AppendLine("   <Row>");
+                sb.AppendLine("    <Cell ss:StyleID=\"MetadataLabel\"><Data ss:Type=\"String\">File Identity:</Data></Cell>");
+                sb.AppendLine("    <Cell ss:StyleID=\"MetadataValue\"><Data ss:Type=\"String\">" + ProgressSecurityEscape(userVisibleName) + "</Data></Cell>");
+                sb.AppendLine("   </Row>");
+
+                sb.AppendLine("   <Row>");
+                sb.AppendLine("    <Cell ss:StyleID=\"MetadataLabel\"><Data ss:Type=\"String\">Processed Date:</Data></Cell>");
+                sb.AppendLine("    <Cell ss:StyleID=\"MetadataValue\"><Data ss:Type=\"String\">" + cleanTimestamp + "</Data></Cell>");
+                sb.AppendLine("   </Row>");
+
+                sb.AppendLine("   <Row>");
+                sb.AppendLine("    <Cell ss:StyleID=\"MetadataLabel\"><Data ss:Type=\"String\">Classification:</Data></Cell>");
+                sb.AppendLine("    <Cell ss:StyleID=\"MetadataValue\"><Data ss:Type=\"String\">Restricted Academic Evaluation Record</Data></Cell>");
+                sb.AppendLine("   </Row>");
+
+                sb.AppendLine("   <Row ss:Height=\"15\"></Row>"); // Visual whitespace separator row
+
+                // 7. Parse Data Grid Elements Loop
+                bool isFirstDataRow = true;
+                foreach (string fileLine in fileLines)
+                {
+                    if (string.IsNullOrWhiteSpace(fileLine)) continue;
+
+                    // Split file items by default comma matrices
+                    string[] cellContents = fileLine.Split(',');
+
+                    // Determine if the line is the grid's tracking layout header or regular student cells
+                    string dynamicRowStyleId = isFirstDataRow ? "ss:StyleID=\"TableHeader\" ss:Height=\"22\"" : "ss:StyleID=\"DataCell\" ss:Height=\"20\"";
+                    sb.AppendLine("   <Row " + dynamicRowStyleId + ">");
+
+                    foreach (string directValue in cellContents)
+                    {
+                        // Unquote values safely to clean string metrics
+                        string balancedTextToken = directValue.Trim(' ', '"');
+                        string structuredCleanString = ProgressSecurityEscape(balancedTextToken);
+
+                        sb.AppendLine("    <Cell><Data ss:Type=\"String\">" + structuredCleanString + "</Data></Cell>");
+                    }
+
+                    sb.AppendLine("   </Row>");
+                    isFirstDataRow = false; // Transition parsing focus to regular row layouts
+                }
+
+                // 8. Close Spreadsheet Document Tree Structures
+                sb.AppendLine("  </Table>");
+                sb.AppendLine("  <WorksheetOptions xmlns=\"urn:schemas-microsoft-com:office:excel\">");
+                sb.AppendLine("   <Selected/>");
+                sb.AppendLine("   <ProtectObjects>False</ProtectObjects>");
+                sb.AppendLine("   <ProtectScenarios>False</ProtectScenarios>");
+                sb.AppendLine("  </WorksheetOptions>");
+                sb.AppendLine(" </Worksheet>");
+                sb.AppendLine("</Workbook>");
+
+                Response.Write(sb.ToString());
+                Response.Flush();
+                Response.End();
+            }
+            catch (System.Threading.ThreadAbortException)
+            {
+                // Caught cleanly to bypass standard system stack dumps on Response.End() termination
+            }
+            catch (Exception ex)
+            {
+                ShowSystemFeedback("Transmission Pipeline Exception Interrupted: " + ex.Message, true);
+            }
+        }
+
+        // Escapes special symbols to maintain structural validation of the spreadsheet layout engine
+        private string ProgressSecurityEscape(string input)
+        {
+            if (string.IsNullOrEmpty(input)) return "";
+            return input.Replace("&", "&amp;")
+                        .Replace("<", "&lt;")
+                        .Replace(">", "&gt;")
+                        .Replace("\"", "&quot;")
+                        .Replace("'", "&apos;");
+        }
+
+        private void LoadReportHistoryLogs()
+        {
+            try
+            {
+                int currentUserId = CurrentUserId;
+
+                using (SqlConnection conn = new SqlConnection(connStr))
+                {
+                    conn.Open();
+                    string sql = @"
+                        SELECT 
+                            e.[ExportId],
+                            r.[ReportType] AS [Classification],
+                            r.[FilterCriteria] AS [ScopeFilters],
+                            e.[ExportedAt] AS [ExportedAt],
+                            e.[FilePath] AS [FilePath],
+                            'Completed' AS [Status]
+                        FROM [dbo].[ReportExports] e
+                        INNER JOIN [dbo].[Reports] r ON e.[ReportId] = r.[ReportId]
+                        WHERE r.[GeneratedBy] = @GeneratedBy
+                        ORDER BY e.[ExportedAt] DESC";
+
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@GeneratedBy", currentUserId);
+                        using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                        {
+                            DataTable dt = new DataTable();
+                            da.Fill(dt);
+                            gvReportHistory.DataSource = dt;
+                            gvReportHistory.DataBind();
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Audit Log Fetch Failed: " + ex.Message);
+            }
+        }
+
+        protected void gvReportHistory_RowCommand(object sender, GridViewCommandEventArgs e)
+        {
+            if (e.CommandName == "DownloadReportFile")
+            {
+                string virtualPath = Convert.ToString(e.CommandArgument);
+
+                if (string.IsNullOrEmpty(virtualPath))
+                {
+                    ShowSystemFeedback("The targeted file path information is missing inside the audit database records.", true);
+                    return;
+                }
 
                 try
                 {
-                    using (SqlConnection conn = new SqlConnection(connStr))
+                    string physicalPath = Server.MapPath(virtualPath);
+
+                    if (File.Exists(physicalPath))
                     {
-                        // Operational feature tracking straight into the 'AcademicWarnings' table framework
-                        string sql = @"
-                            INSERT INTO AcademicWarnings (StudentId, CourseId, WarningType, Reason, Severity, Status, IssuedBy, IssuedAt)
-                            VALUES (@StudentId, @CourseId, 'Performance Risk Warning', 'Automated flag issued due to automated threshold system analytics drop on Attendance/Marks matrices.', 'Medium', 'Active', @IssuedBy, SYSUTCDATETIME());";
-
-                        using (SqlCommand cmd = new SqlCommand(sql, conn))
-                        {
-                            cmd.Parameters.AddWithValue("@StudentId", targetStudentId);
-                            cmd.Parameters.AddWithValue("@CourseId", currentCourseId);
-                            cmd.Parameters.AddWithValue("@IssuedBy", CurrentLecturerId);
-
-                            conn.Open();
-                            cmd.ExecuteNonQuery();
-                        }
+                        string userVisibleName = Path.GetFileName(physicalPath);
+                        TransmitFileStreamSecurely(physicalPath, userVisibleName);
                     }
-
-                    ShowSystemFeedback("Academic warning flag successfully generated and preserved in tracking tables.", false);
-                    ExecuteSearch(); // Clear down and reload view representation models
+                    else
+                    {
+                        ShowSystemFeedback("The requested CSV asset can no longer be located on the hosting filesystem storage.", true);
+                    }
                 }
                 catch (Exception ex)
                 {
-                    ShowSystemFeedback($"Failed tracking historical action context warning logs: {ex.Message}", true);
+                    ShowSystemFeedback($"File Retrieval Engine Interrupted: {ex.Message}", true);
                 }
             }
         }
+
+        private void ClearReportPreview()
+        {
+            pnlReportWorkspace.Visible = false;
+            gvReportPreview.DataSource = null;
+            gvReportPreview.DataBind();
+            lblReportFeedback.Visible = false;
+        }
+
+        #endregion
 
         private void ShowSystemFeedback(string txt, bool isError)
         {
@@ -304,14 +655,6 @@ namespace SIMS.Lecturer
             lblStatusMessage.Style["background-color"] = isError ? "#fee2e2" : "#dcfce7";
             lblStatusMessage.Style["color"] = isError ? "#991b1b" : "#166534";
             lblStatusMessage.Style["border"] = isError ? "1px solid #fca5a5" : "1px solid #86efac";
-        }
-
-        private int GetCurrentSemester()
-        {
-            int month = DateTime.Now.Month;
-            if (month <= 4) return 1;
-            if (month <= 8) return 2;
-            return 3;
         }
     }
 }
