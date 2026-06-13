@@ -89,8 +89,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="HeadOfProgramme\HOPAnnouncements.aspx" />
+    <Content Include="HeadOfProgramme\HOPArchivedAdmissions.aspx" />
+    <Content Include="HeadOfProgramme\HOPArchivedEnrolments.aspx" />
     <Content Include="HeadOfProgramme\HOPAssignUserRole.aspx" />
+    <Content Include="HeadOfProgramme\HOPAuditLogs.aspx" />
     <Content Include="HeadOfProgramme\HOPDashboard.aspx" />
+    <Content Include="HeadOfProgramme\HOPManageAcademicCalendar.aspx" />
     <Content Include="HeadOfProgramme\HOPManageAdmissions.aspx" />
     <Content Include="HeadOfProgramme\HOPManageCourses.aspx" />
     <Content Include="HeadOfProgramme\HOPManageEnrolments.aspx" />
@@ -123,6 +128,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AuthenticationHelper.cs" />
+
     <Compile Include="BLL\StudentAccountBLL.cs" />
     <Compile Include="BLL\StudentAttendanceBLL.cs" />
     <Compile Include="BLL\StudentCourseBLL.cs" />
@@ -139,12 +145,42 @@
     <Compile Include="DAL\StudentNotificationDAL.cs" />
     <Compile Include="DAL\StudentPaymentDAL.cs" />
     <Compile Include="DAL\Student_ResultDAL.cs" />
+
+    <Compile Include="HeadOfProgramme\HOPAnnouncements.aspx.cs">
+      <DependentUpon>HOPAnnouncements.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPAnnouncements.aspx.designer.cs">
+      <DependentUpon>HOPAnnouncements.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPArchivedAdmissions.aspx.cs">
+      <DependentUpon>HOPArchivedAdmissions.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPArchivedAdmissions.aspx.designer.cs">
+      <DependentUpon>HOPArchivedAdmissions.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPArchivedEnrolments.aspx.cs">
+      <DependentUpon>HOPArchivedEnrolments.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPArchivedEnrolments.aspx.designer.cs">
+      <DependentUpon>HOPArchivedEnrolments.aspx</DependentUpon>
+    </Compile>
+
     <Compile Include="HeadOfProgramme\HOPAssignUserRole.aspx.cs">
       <DependentUpon>HOPAssignUserRole.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="HeadOfProgramme\HOPAssignUserRole.aspx.designer.cs">
       <DependentUpon>HOPAssignUserRole.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPAuditLogs.aspx.cs">
+      <DependentUpon>HOPAuditLogs.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPAuditLogs.aspx.designer.cs">
+      <DependentUpon>HOPAuditLogs.aspx</DependentUpon>
     </Compile>
     <Compile Include="HeadOfProgramme\HOPBase.cs">
       <SubType>ASPXCodeBehind</SubType>
@@ -158,6 +194,13 @@
     </Compile>
     <Compile Include="HeadOfProgramme\HOPDashboard.aspx.designer.cs">
       <DependentUpon>HOPDashboard.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPManageAcademicCalendar.aspx.cs">
+      <DependentUpon>HOPManageAcademicCalendar.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="HeadOfProgramme\HOPManageAcademicCalendar.aspx.designer.cs">
+      <DependentUpon>HOPManageAcademicCalendar.aspx</DependentUpon>
     </Compile>
     <Compile Include="HeadOfProgramme\HOPManageAdmissions.aspx.cs">
       <DependentUpon>HOPManageAdmissions.aspx</DependentUpon>
@@ -296,6 +339,7 @@
       <DependentUpon>Login.aspx</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+
     <Compile Include="Student\AcademicResults.aspx.cs">
       <DependentUpon>AcademicResults.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -373,6 +417,9 @@
     <Compile Include="Student\StudentPayment.aspx.designer.cs">
       <DependentUpon>StudentPayment.aspx</DependentUpon>
     </Compile>
+
+    <Compile Include="Services\AcademicProgressService.cs" />
+
   </ItemGroup>
   <ItemGroup>
     <Content Include="Lecturer\LecturerMaster.Master" />
@@ -388,6 +435,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="ReportExports\" />
     <Folder Include="UploadedMaterials\" />
   </ItemGroup>
   <PropertyGroup>

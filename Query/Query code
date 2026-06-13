@@ -142,7 +142,7 @@ CREATE TABLE Enrolments (
     CourseId INT NOT NULL,
     AcademicYear SMALLINT NOT NULL,
     Semester TINYINT NOT NULL,
-    Status NVARCHAR(20) DEFAULT 'Active',
+    Status NVARCHAR(20) DEFAULT 'Pending',
     EnrolledAt DATETIME2 DEFAULT SYSUTCDATETIME(),
     DroppedAt DATETIME2,
 
@@ -184,6 +184,9 @@ CREATE TABLE Assessments (
     MaxMark DECIMAL(5,2) DEFAULT 100,
     Weightage DECIMAL(5,2) NOT NULL,
     IsPublished BIT DEFAULT 0,
+    DueDate DATETIME2 NULL,
+    IsSubmissionRequired BIT NOT NULL DEFAULT 0,
+    Description NVARCHAR(500) NULL;
 
     CONSTRAINT FK_Assessments_Courses
         FOREIGN KEY (CourseId) REFERENCES Courses(CourseId)
@@ -423,3 +426,84 @@ CREATE TABLE LoginAttempts (
         FOREIGN KEY (UserId) REFERENCES Users(UserId)
 );
 GO
+
+CREATE TABLE [dbo].[Admissions] (
+    [AdmissionId]    INT           IDENTITY (1, 1) NOT NULL,
+    [StudentId]      INT           NOT NULL,
+    [ProgrammeId]    INT           NOT NULL,
+    [IntakeYear]     SMALLINT      NOT NULL,
+    [IntakeSemester] TINYINT       NOT NULL,
+    [Status]         NVARCHAR (20) CONSTRAINT [DF_Admissions_Status] DEFAULT ('Pending') NULL,
+    [RequestedAt]    DATETIME2 (7) CONSTRAINT [DF_Admissions_RequestedAt] DEFAULT (sysutcdatetime()) NOT NULL,
+    [AdmittedAt]     DATETIME2 (7) NULL,
+    [RejectedAt]     DATETIME2 (7) NULL,
+    PRIMARY KEY CLUSTERED ([AdmissionId] ASC),
+    CONSTRAINT [FK_Admissions_Students] FOREIGN KEY ([StudentId]) REFERENCES [dbo].[Students] ([StudentId]),
+    CONSTRAINT [FK_Admissions_Programmes] FOREIGN KEY ([ProgrammeId]) REFERENCES [dbo].[Programmes] ([ProgrammeId])
+);
+
+
+GO
+CREATE NONCLUSTERED INDEX [IX_Admissions_Status_RequestedAt]
+    ON [dbo].[Admissions]([Status] ASC, [RequestedAt] DESC);
+
+
+GO
+CREATE NONCLUSTERED INDEX [IX_Admissions_Student_Programme_Intake]
+    ON [dbo].[Admissions]([StudentId] ASC, [ProgrammeId] ASC, [IntakeYear] ASC, [IntakeSemester] ASC);
+
+CREATE TABLE CourseRegistrationRequests (
+    RequestId INT IDENTITY(1,1) PRIMARY KEY,
+    StudentId INT NOT NULL,
+    CourseId INT NOT NULL,
+    RequestType NVARCHAR(20) NOT NULL, -- Register or Drop
+    Status NVARCHAR(20) DEFAULT 'Pending', -- Pending, Approved, Rejected
+    RequestedAt DATETIME2 DEFAULT SYSUTCDATETIME(),
+    ReviewedBy INT NULL,
+    ReviewedAt DATETIME2 NULL,
+    AdminRemarks NVARCHAR(300) NULL,
+
+    CONSTRAINT FK_CourseRegistrationRequests_Students
+        FOREIGN KEY (StudentId) REFERENCES Students(StudentId),
+
+    CONSTRAINT FK_CourseRegistrationRequests_Courses
+        FOREIGN KEY (CourseId) REFERENCES Courses(CourseId),
+
+    CONSTRAINT FK_CourseRegistrationRequests_Users
+        FOREIGN KEY (ReviewedBy) REFERENCES Users(UserId)
+);
+
+CREATE UNIQUE INDEX UX_CourseRegistrationRequests_Pending
+ON CourseRegistrationRequests (StudentId, CourseId, RequestType)
+WHERE Status = 'Pending';
+GO
+
+CREATE TABLE AssessmentSubmissions (
+    SubmissionId INT IDENTITY(1,1) PRIMARY KEY,
+
+    AssessmentId INT NOT NULL,
+    StudentId INT NOT NULL,
+
+    FileUrl NVARCHAR(500) NOT NULL,
+    FileName NVARCHAR(255) NULL,
+
+    AttemptNo INT NOT NULL DEFAULT 1,
+    IsLatest BIT NOT NULL DEFAULT 1,
+
+    SubmittedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    Status NVARCHAR(30) NOT NULL DEFAULT 'Submitted',
+
+    CONSTRAINT FK_AssessmentSubmissions_Assessments
+        FOREIGN KEY (AssessmentId) REFERENCES Assessments(AssessmentId),
+
+    CONSTRAINT FK_AssessmentSubmissions_Students
+        FOREIGN KEY (StudentId) REFERENCES Students(StudentId)
+);
+GO
+
+CREATE UNIQUE INDEX UX_AssessmentSubmissions_Latest
+ON AssessmentSubmissions (AssessmentId, StudentId)
+WHERE IsLatest = 1;
+GO
+
+

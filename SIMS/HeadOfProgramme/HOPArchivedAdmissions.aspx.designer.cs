@@ -9,7 +9,7 @@
 
 namespace SIMS.HeadOfProgramme
 {
-    public partial class HOPManageAdmissions
+    public partial class HOPArchivedAdmissions
     {
         protected global::System.Web.UI.WebControls.Label lblMessage;
         protected global::System.Web.UI.WebControls.TextBox txtSearchStudent;
@@ -18,13 +18,8 @@ namespace SIMS.HeadOfProgramme
         protected global::System.Web.UI.WebControls.TextBox txtToDate;
         protected global::System.Web.UI.WebControls.Button btnFilter;
         protected global::System.Web.UI.WebControls.Button btnReset;
-        protected global::System.Web.UI.WebControls.Label lblPendingCount;
-        protected global::System.Web.UI.WebControls.GridView gvPending;
-        protected global::System.Web.UI.WebControls.Label lblApprovedCount;
-        protected global::System.Web.UI.WebControls.Button btnArchiveSelectedApproved;
-        protected global::System.Web.UI.WebControls.Button btnDeleteSelectedRejected;
-        protected global::System.Web.UI.WebControls.GridView gvApproved;
-        protected global::System.Web.UI.WebControls.Label lblRejectedCount;
-        protected global::System.Web.UI.WebControls.GridView gvRejected;
+        protected global::System.Web.UI.WebControls.Label lblArchivedCount;
+        protected global::System.Web.UI.WebControls.Button btnRestoreSelected;
+        protected global::System.Web.UI.WebControls.GridView gvArchived;
     }
 }

@@ -340,12 +340,15 @@
                 flex-direction: column;
             }
         }
-            .upload-form { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
-            .form-group { display:flex; flex-direction:column; margin-bottom:12px; }
-            .form-group label { font-weight:600; margin-bottom:6px; }
-            .form-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
-            .materials-table { background:white; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; }
-            .table-sims th, .table-sims td { padding:10px 12px; border-bottom:1px solid #e2e8f0; }
+        .upload-form { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+        .form-group { display:flex; flex-direction:column; margin-bottom:12px; }
+        .form-group label { font-weight:600; margin-bottom:6px; }
+        .form-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
+        .materials-table { background:white; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; }
+        .table-sims th, .table-sims td { padding:10px 12px; border-bottom:1px solid #e2e8f0; }
+        
+        /* New context-specific layout helpers */
+        .btn-sm-action { padding: 4px 8px; font-size: 12px; margin-right: 2px; display: inline-block; }
     </style>
 </asp:Content>
 
@@ -367,7 +370,8 @@
     </asp:Panel>
 
     <div class="upload-form">
-        <!-- Read-only course & assignment -->
+        <h4 style="margin-top:0; margin-bottom:15px;"><asp:Literal ID="litFormMode" runat="server" Text="Upload New Material" /></h4>
+        
         <div class="form-group">
             <label>Course</label>
             <asp:Literal ID="litCourseName" runat="server" />
@@ -380,7 +384,7 @@
             </div>
             <div class="form-group" style="width:160px;">
                 <label>Semester</label>
-                <asp:Literal ID="litSemester" runat="server" />
+                 <asp:Literal ID="litSemester" runat="server" />
             </div>
         </div>
 
@@ -394,13 +398,27 @@
             <asp:TextBox ID="txtDescription" runat="server" TextMode="MultiLine" placeholder="Enter description" />
         </div>
 
-        <div class="form-group">
+        <div class="form-group" id="divFileUpload" runat="server">
             <label>Upload File</label>
             <asp:FileUpload ID="fuMaterial" runat="server" />
             <small style="color:#64748b;">Allowed: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, ZIP (Max 50MB)</small>
         </div>
+        
+        <div class="form-group" id="divFileCurrent" runat="server" visible="false">
+            <label>Current Associated File</label>
+            <span style="font-size: 13px; color:#7c3aed; font-weight:bold;">
+                <asp:Literal ID="litCurrentFile" runat="server" />
+            </span>
+            <small style="color:#64748b; display:block; margin-top:5px;">
+                Note: Leave empty to keep the existing file. Upload a new file to replace it.
+            </small>
+    
+            <div style="margin-top:10px;">
+                <asp:FileUpload ID="fuMaterialReplace" runat="server" />
+            </div>
+        </div>
 
-        <div class="form-group">
+         <div class="form-group">
             <asp:CheckBox ID="chkIsVisible" runat="server" Checked="true" Text="Make visible to students" />
         </div>
 
@@ -409,10 +427,10 @@
             <asp:Button ID="btnClear" runat="server" Text="Clear" CssClass="btn btn-outline-secondary" OnClick="btnClear_Click" />
         </div>
 
-        <!-- Hidden fields -->
         <asp:HiddenField ID="hidCourseId" runat="server" />
         <asp:HiddenField ID="hidAcademicYear" runat="server" />
         <asp:HiddenField ID="hidSemester" runat="server" />
+        <asp:HiddenField ID="hidEditingMaterialId" runat="server" Value="" />
     </div>
 
     <h4 style="margin-top:8px;">Uploaded Materials</h4>
@@ -424,22 +442,39 @@
                     <th>File Type</th>
                     <th>Uploaded At</th>
                     <th style="width:120px;">Visibility</th>
-                    <th style="width:160px;">Action</th>
+                    <th style="width:280px;">Action</th>
                 </tr>
             </thead>
             <tbody>
-                <asp:Repeater ID="rptMaterials" runat="server" OnItemDataBound="rptMaterials_ItemDataBound">
+                <asp:Repeater ID="rptMaterials" runat="server" OnItemCommand="rptMaterials_ItemCommand" OnItemDataBound="rptMaterials_ItemDataBound">
                     <ItemTemplate>
                         <tr>
                             <td><strong><%# Eval("Title") %></strong><div style="font-size:12px;color:#64748b;"><%# Eval("Description") %></div></td>
-                            <td><%# Eval("FileType") %></td>
-                            <td><%# ((DateTime)Eval("UploadedAt")).ToString("dd MMM yyyy HH:mm") %></td>
+                            <td><span class="file-type-badge"><%# Eval("FileType") %></span></td>
+                            <td><%# Eval("UploadedAt") != DBNull.Value ? Convert.ToDateTime(Eval("UploadedAt")).ToString("dd MMM yyyy HH:mm") : "-" %></td>
                             <td>
-                                <asp:Label ID="lblVisible" runat="server" Text='<%# Convert.ToBoolean(Eval("IsVisible")) ? "Visible" : "Hidden" %>' />
+                                <span class='<%# Convert.ToBoolean(Eval("IsVisible")) ? "status-visible" : "status-hidden" %>'>
+                                    <%# Convert.ToBoolean(Eval("IsVisible")) ? "Visible" : "Hidden" %>
+                                </span>
                             </td>
                             <td>
-                                <asp:HyperLink ID="hlDownload" runat="server" NavigateUrl='<%# Eval("FileUrl") %>' Text="Download" Target="_blank" CssClass="btn btn-sm btn-outline-primary"></asp:HyperLink>
-                                <asp:Button ID="btnDelete" runat="server" Text="Delete" CssClass="btn btn-sm btn-danger" CommandArgument='<%# Eval("MaterialId") %>' OnClick="btnDelete_Click" OnClientClick="return confirm('Delete this material?');" />
+                                <asp:HyperLink ID="hlDownload" runat="server" NavigateUrl='<%# Eval("FileUrl") %>' Text="Download" Target="_blank" CssClass="btn btn-sm btn-outline-primary btn-sm-action"></asp:HyperLink>
+                                
+                                <asp:Button ID="btnToggleVisibility" runat="server" 
+                                            Text='<%# Convert.ToBoolean(Eval("IsVisible")) ? "Hide" : "Show" %>' 
+                                            CssClass='<%# Convert.ToBoolean(Eval("IsVisible")) ? "btn btn-sm btn-warning btn-sm-action" : "btn btn-sm btn-success btn-sm-action" %>' 
+                                            CommandName="ToggleVisibility" 
+                                            CommandArgument='<%# Eval("MaterialId") %>' />
+                                
+                                <asp:Button ID="btnEdit" runat="server" Text="Edit" 
+                                            CssClass="btn btn-sm btn-secondary btn-sm-action" 
+                                            CommandName="EditMaterial" 
+                                            CommandArgument='<%# Eval("MaterialId") %>' />
+                                
+                                <asp:Button ID="btnDelete" runat="server" Text="Delete" CssClass="btn btn-sm btn-danger btn-sm-action" 
+                                            CommandName="DeleteMaterial"
+                                            CommandArgument='<%# Eval("MaterialId") %>' 
+                                            OnClientClick="return confirm('Delete this material?');" />
                             </td>
                         </tr>
                     </ItemTemplate>
@@ -460,7 +495,6 @@
 
             [successEl, errorEl].forEach(function (el) {
                 if (!el) return;
-                // If element is visible (rendered and not display:none), hide after 5s
                 if (el.offsetParent !== null) {
                     setTimeout(function () { el.style.display = 'none'; }, 5000);
                 }
