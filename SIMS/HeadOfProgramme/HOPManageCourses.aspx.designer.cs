@@ -95,6 +95,18 @@ namespace SIMS.HeadOfProgramme
         /// </remarks>
         protected global::System.Web.UI.WebControls.TextBox txtSemester;
 
+
+
+        /// <summary>
+        /// txtAcademicYear control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.TextBox txtAcademicYear;
+
+        /// <summary>
+        /// lbLecturers control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.ListBox lbLecturers;
+
         /// <summary>
         /// ddlIsActive control.
         /// </summary>
@@ -129,6 +141,11 @@ namespace SIMS.HeadOfProgramme
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox txtFilterCourse;
+        protected global::System.Web.UI.WebControls.DropDownList ddlFilterProgramme;
+        protected global::System.Web.UI.WebControls.DropDownList ddlFilterActive;
+        protected global::System.Web.UI.WebControls.Button btnFilter;
+        protected global::System.Web.UI.WebControls.Button btnResetFilter;
         protected global::System.Web.UI.WebControls.GridView gvCourses;
     }
 }

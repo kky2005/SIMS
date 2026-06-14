@@ -102,6 +102,11 @@ namespace SIMS.HeadOfProgramme
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox txtFilterUser;
+        protected global::System.Web.UI.WebControls.DropDownList ddlFilterRole;
+        protected global::System.Web.UI.WebControls.DropDownList ddlFilterUserActive;
+        protected global::System.Web.UI.WebControls.Button btnFilter;
+        protected global::System.Web.UI.WebControls.Button btnResetFilter;
         protected global::System.Web.UI.WebControls.GridView gvUsers;
     }
 }

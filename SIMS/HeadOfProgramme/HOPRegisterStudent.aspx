@@ -37,7 +37,16 @@
         <div class="mt-3"><asp:Button ID="btnSave" runat="server" Text="Save Student" CssClass="btn btn-primary" OnClick="btnSave_Click" /><asp:Button ID="btnClear" runat="server" Text="Clear" CssClass="btn btn-secondary ms-2" OnClick="btnClear_Click" CausesValidation="false" /></div>
     </div></div>
 
-    <div class="card-sims"><div class="card-header-sims"><h5>Student List</h5></div><div class="card-body-sims">
+        <div class="card-sims mb-4"><div class="card-header-sims"><h5>Filter Students</h5></div><div class="card-body-sims">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4"><label class="form-label">Search Student</label><asp:TextBox ID="txtFilterStudent" runat="server" CssClass="form-control" placeholder="Search name, email or student no"></asp:TextBox></div>
+            <div class="col-md-3"><label class="form-label">Programme</label><asp:DropDownList ID="ddlFilterProgramme" runat="server" CssClass="form-select"></asp:DropDownList></div>
+            <div class="col-md-2"><label class="form-label">Status</label><asp:DropDownList ID="ddlFilterStatus" runat="server" CssClass="form-select"><asp:ListItem Value="">All</asp:ListItem><asp:ListItem>Active</asp:ListItem><asp:ListItem>Inactive</asp:ListItem><asp:ListItem>Graduated</asp:ListItem><asp:ListItem>Suspended</asp:ListItem></asp:DropDownList></div>
+            <div class="col-md-3"><asp:Button ID="btnFilter" runat="server" Text="Filter" CssClass="btn btn-primary" OnClick="btnFilter_Click" /><asp:Button ID="btnResetFilter" runat="server" Text="Reset" CssClass="btn btn-secondary ms-2" OnClick="btnResetFilter_Click" CausesValidation="false" /></div>
+        </div>
+    </div></div>
+
+<div class="card-sims"><div class="card-header-sims"><h5>Student List</h5></div><div class="card-body-sims">
         <asp:GridView ID="gvStudents" runat="server" CssClass="table table-bordered table-hover" AutoGenerateColumns="False" DataKeyNames="StudentId" OnRowCommand="gvStudents_RowCommand">
             <Columns>
                 <asp:BoundField DataField="StudentNo" HeaderText="Student No" />
@@ -48,7 +57,7 @@
                 <asp:BoundField DataField="Status" HeaderText="Status" />
                 <asp:TemplateField HeaderText="Actions"><ItemTemplate><div class="action-btns">
                     <asp:LinkButton runat="server" CommandName="EditStudent" CommandArgument='<%# Eval("StudentId") %>' CssClass="btn btn-sm btn-warning">Edit</asp:LinkButton>
-                    <asp:LinkButton runat="server" CommandName="DeleteStudent" CommandArgument='<%# Eval("StudentId") %>' CssClass="btn btn-sm btn-danger" OnClientClick="return confirm('Delete this student?');">Delete</asp:LinkButton>
+                    <asp:LinkButton runat="server" CommandName="DeleteStudent" CommandArgument='<%# Eval("StudentId") %>' CssClass="btn btn-sm btn-warning" OnClientClick="return confirm('Deactivate this student?');">Deactivate</asp:LinkButton>
                 </div></ItemTemplate></asp:TemplateField>
             </Columns>
         </asp:GridView>

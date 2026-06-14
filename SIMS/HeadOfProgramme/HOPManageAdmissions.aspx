@@ -26,7 +26,7 @@
 
 <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" runat="server">
     <h2 class="page-title">Manage Admission Requests</h2>
-    <p class="page-subtitle">Students submit admission requests. HOP can approve or reject pending requests.</p>
+    <p class="page-subtitle">Applicants submit admission requests. HOP can admit or reject pending requests.</p>
 
     <asp:Label ID="lblMessage" runat="server" CssClass="message-box d-block"></asp:Label>
 
@@ -38,8 +38,8 @@
             <div class="filter-box">
                 <div class="row g-3">
                     <div class="col-md-3">
-                        <label class="form-label">Student Name / No</label>
-                        <asp:TextBox ID="txtSearchStudent" runat="server" CssClass="form-control" placeholder="Search student"></asp:TextBox>
+                        <label class="form-label">Applicant Name / No / Email</label>
+                        <asp:TextBox ID="txtSearchStudent" runat="server" CssClass="form-control" placeholder="Search applicant"></asp:TextBox>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Programme</label>
@@ -76,7 +76,7 @@
                 <Columns>
                     <asp:BoundField DataField="AdmissionId" HeaderText="ID" />
                     <asp:BoundField DataField="StudentNo" HeaderText="Student No" />
-                    <asp:BoundField DataField="StudentName" HeaderText="Student" />
+                    <asp:BoundField DataField="StudentName" HeaderText="Applicant" />
                     <asp:BoundField DataField="ProgrammeName" HeaderText="Programme" />
                     <asp:BoundField DataField="IntakeYear" HeaderText="Intake Year" />
                     <asp:BoundField DataField="IntakeSemester" HeaderText="Intake Sem" />
@@ -87,7 +87,7 @@
                     <asp:TemplateField HeaderText="Actions">
                         <ItemTemplate>
                             <div class="action-btns">
-                                <asp:LinkButton ID="btnApprove" runat="server" CommandName="ApproveAdmission" CommandArgument='<%# Eval("AdmissionId") %>' CssClass="btn btn-sm btn-success" OnClientClick="return confirm('Approve this admission request?');">Approve</asp:LinkButton>
+                                <asp:LinkButton ID="btnApprove" runat="server" CommandName="ApproveAdmission" CommandArgument='<%# Eval("AdmissionId") %>' CssClass="btn btn-sm btn-success" OnClientClick="return confirm('Admit this admission request?');">Admit</asp:LinkButton>
                                 <asp:LinkButton ID="btnReject" runat="server" CommandName="RejectAdmission" CommandArgument='<%# Eval("AdmissionId") %>' CssClass="btn btn-sm btn-danger" OnClientClick="return confirm('Reject this admission request?');">Reject</asp:LinkButton>
                             </div>
                         </ItemTemplate>
@@ -101,13 +101,13 @@
     <div class="card-sims mb-4">
         <div class="card-header-sims">
             <div class="d-flex justify-content-between align-items-center w-100">
-                <h5>Approved Admissions <asp:Label ID="lblApprovedCount" runat="server" CssClass="section-count"></asp:Label></h5>
+                <h5>Admitted Admissions <asp:Label ID="lblApprovedCount" runat="server" CssClass="section-count"></asp:Label></h5>
                 <a href="HOPArchivedAdmissions.aspx" class="btn btn-sm btn-outline-secondary">View Archived Admissions</a>
             </div>
         </div>
         <div class="card-body-sims">
             <div class="bulk-actions">
-                <asp:Button ID="btnArchiveSelectedApproved" runat="server" Text="Archive Selected" CssClass="btn btn-warning" OnClick="btnArchiveSelectedApproved_Click" OnClientClick="return confirm('Archive selected approved admissions?');" />
+                <asp:Button ID="btnArchiveSelectedApproved" runat="server" Text="Archive Selected" CssClass="btn btn-warning" OnClick="btnArchiveSelectedApproved_Click" OnClientClick="return confirm('Archive selected admitted admissions?');" />
             </div>
             <asp:GridView ID="gvApproved" runat="server"
                 CssClass="table table-bordered table-hover"
@@ -126,23 +126,23 @@
                     </asp:TemplateField>
                     <asp:BoundField DataField="AdmissionId" HeaderText="ID" />
                     <asp:BoundField DataField="StudentNo" HeaderText="Student No" />
-                    <asp:BoundField DataField="StudentName" HeaderText="Student" />
+                    <asp:BoundField DataField="StudentName" HeaderText="Applicant" />
                     <asp:BoundField DataField="ProgrammeName" HeaderText="Programme" />
                     <asp:BoundField DataField="IntakeYear" HeaderText="Intake Year" />
                     <asp:BoundField DataField="IntakeSemester" HeaderText="Intake Sem" />
                     <asp:BoundField DataField="RequestedAt" HeaderText="Requested Date" DataFormatString="{0:yyyy-MM-dd HH:mm}" NullDisplayText="-" />
-                    <asp:BoundField DataField="AdmittedAt" HeaderText="Approved Date" DataFormatString="{0:yyyy-MM-dd HH:mm}" NullDisplayText="-" />
+                    <asp:BoundField DataField="AdmittedAt" HeaderText="Admitted Date" DataFormatString="{0:yyyy-MM-dd HH:mm}" NullDisplayText="-" />
                     <asp:TemplateField HeaderText="Status">
                         <ItemTemplate><asp:Label ID="lblStatus" runat="server" Text='<%# Eval("Status") %>'></asp:Label></ItemTemplate>
                     </asp:TemplateField>
-                    <asp:BoundField DataField="LastActionBy" HeaderText="Approved By" />
+                    <asp:BoundField DataField="LastActionBy" HeaderText="Admitted By" />
                     <asp:TemplateField HeaderText="Actions">
                         <ItemTemplate>
-                            <asp:LinkButton ID="btnArchiveApproved" runat="server" CommandName="ArchiveAdmission" CommandArgument='<%# Eval("AdmissionId") %>' CssClass="btn btn-sm btn-warning" OnClientClick="return confirm('Archive this approved admission record?');">Archive</asp:LinkButton>
+                            <asp:LinkButton ID="btnArchiveApproved" runat="server" CommandName="ArchiveAdmission" CommandArgument='<%# Eval("AdmissionId") %>' CssClass="btn btn-sm btn-warning" OnClientClick="return confirm('Archive this admitted admission record?');">Archive</asp:LinkButton>
                         </ItemTemplate>
                     </asp:TemplateField>
                 </Columns>
-                <EmptyDataTemplate><div class="empty-box">No approved admissions found.</div></EmptyDataTemplate>
+                <EmptyDataTemplate><div class="empty-box">No admitted admissions found.</div></EmptyDataTemplate>
             </asp:GridView>
         </div>
     </div>
@@ -172,7 +172,7 @@
                     </asp:TemplateField>
                     <asp:BoundField DataField="AdmissionId" HeaderText="ID" />
                     <asp:BoundField DataField="StudentNo" HeaderText="Student No" />
-                    <asp:BoundField DataField="StudentName" HeaderText="Student" />
+                    <asp:BoundField DataField="StudentName" HeaderText="Applicant" />
                     <asp:BoundField DataField="ProgrammeName" HeaderText="Programme" />
                     <asp:BoundField DataField="IntakeYear" HeaderText="Intake Year" />
                     <asp:BoundField DataField="IntakeSemester" HeaderText="Intake Sem" />

@@ -46,7 +46,7 @@ namespace SIMS.HeadOfProgramme
         private void LoadAllTables()
         {
             LoadPendingRequests();
-            LoadApprovedRequests();
+            LoadAdmittedRequests();
             LoadRejectedRequests();
         }
 
@@ -58,9 +58,9 @@ namespace SIMS.HeadOfProgramme
             lblPendingCount.Text = "(" + dt.Rows.Count + ")";
         }
 
-        private void LoadApprovedRequests()
+        private void LoadAdmittedRequests()
         {
-            DataTable dt = LoadRequestsByStatus("Approved");
+            DataTable dt = LoadRequestsByStatus("Admitted");
             gvApproved.DataSource = dt;
             gvApproved.DataBind();
             lblApprovedCount.Text = "(" + dt.Rows.Count + ")";
@@ -82,7 +82,15 @@ namespace SIMS.HeadOfProgramme
                     SELECT
                         a.AdmissionId,
                         ISNULL(s.StudentNo, '-') AS StudentNo,
-                        u.FullName AS StudentName,
+                        a.FullName AS StudentName,
+                        a.FullName,
+                        a.NationalId,
+                        a.Nationality,
+                        a.PhoneNumber,
+                        a.PreviousInstitution,
+                        a.HighestQualification,
+                        a.PreviousCGPA,
+                        ap.Email AS ApplicantEmail,
                         p.ProgrammeName,
                         a.IntakeYear,
                         a.IntakeSemester,
@@ -90,12 +98,13 @@ namespace SIMS.HeadOfProgramme
                         a.RequestedAt,
                         a.AdmittedAt,
                         a.RejectedAt,
+                        a.RejectionReason,
                         ISNULL(lastLog.Action, '-') AS LastAction,
                         ISNULL(adminUser.FullName, '-') AS LastActionBy,
                         lastLog.ActionDate AS LastActionDate
                     FROM Admissions a
-                    INNER JOIN Students s ON s.StudentId = a.StudentId
-                    INNER JOIN Users u ON u.UserId = s.UserId
+                    LEFT JOIN Applicants ap ON ap.UserId = a.UserId
+                    LEFT JOIN Students s ON s.StudentId = a.StudentId
                     INNER JOIN Programmes p ON p.ProgrammeId = a.ProgrammeId
                     OUTER APPLY
                     (
@@ -105,6 +114,15 @@ namespace SIMS.HeadOfProgramme
                           AND al.RecordId = a.AdmissionId
                         ORDER BY al.ActionDate DESC
                     ) lastLog
+                    OUTER APPLY
+                    (
+                        SELECT TOP 1 al.Action, al.ActionDate
+                        FROM AuditLogs al
+                        WHERE al.TableAffected = 'Admissions'
+                          AND al.RecordId = a.AdmissionId
+                          AND al.Action IN ('Archived admission record', 'Restored archived admission record')
+                        ORDER BY al.ActionDate DESC
+                    ) archiveLog
                     LEFT JOIN Users adminUser ON adminUser.UserId = lastLog.UserId
                     WHERE 1 = 1";
 
@@ -114,11 +132,15 @@ namespace SIMS.HeadOfProgramme
                 sql += " AND a.Status = @Status";
                 cmd.Parameters.AddWithValue("@Status", status);
 
+                // New table has no Archived status. Archived records are hidden by the latest archive audit log.
+                if (status == "Admitted")
+                    sql += " AND (archiveLog.Action IS NULL OR archiveLog.Action <> 'Archived admission record')";
+
                 AddCommonFilters(ref sql, cmd);
 
                 if (status == "Pending")
                     sql += " ORDER BY a.RequestedAt DESC";
-                else if (status == "Approved")
+                else if (status == "Admitted")
                     sql += " ORDER BY a.AdmittedAt DESC, a.RequestedAt DESC";
                 else
                     sql += " ORDER BY a.RejectedAt DESC, a.RequestedAt DESC";
@@ -138,7 +160,9 @@ namespace SIMS.HeadOfProgramme
             {
                 sql += @" AND (
                             ISNULL(s.StudentNo, '') LIKE @StudentSearch
-                            OR ISNULL(u.FullName, '') LIKE @StudentSearch
+                            OR ISNULL(a.FullName, '') LIKE @StudentSearch
+                            OR ISNULL(a.NationalId, '') LIKE @StudentSearch
+                            OR ISNULL(ap.Email, '') LIKE @StudentSearch
                           )";
                 cmd.Parameters.AddWithValue("@StudentSearch", "%" + txtSearchStudent.Text.Trim() + "%");
             }
@@ -191,7 +215,7 @@ namespace SIMS.HeadOfProgramme
                 return;
 
             if (e.CommandName == "ApproveAdmission")
-                ApproveAdmission(admissionId);
+                AdmitAdmission(admissionId);
             else if (e.CommandName == "RejectAdmission")
                 RejectAdmission(admissionId);
             else
@@ -222,7 +246,7 @@ namespace SIMS.HeadOfProgramme
 
             if (selectedIds.Count == 0)
             {
-                ShowMessage("Please select at least one approved admission to archive.", false);
+                ShowMessage("Please select at least one admitted admission to archive.", false);
                 return;
             }
 
@@ -275,7 +299,7 @@ namespace SIMS.HeadOfProgramme
             return selectedIds;
         }
 
-        private void ApproveAdmission(int admissionId)
+        private void AdmitAdmission(int admissionId)
         {
             using (SqlConnection conn = new SqlConnection(connStr))
             {
@@ -290,16 +314,17 @@ namespace SIMS.HeadOfProgramme
                         throw new Exception("Admission request not found.");
 
                     if (info.Status != "Pending")
-                        throw new Exception("Only pending admission requests can be approved.");
+                        throw new Exception("Only pending admission requests can be admitted.");
 
-                    if (HasApprovedDuplicate(conn, tran, info))
-                        throw new Exception("This student already has an approved admission for the same programme, intake year and semester.");
+                    if (HasAdmittedDuplicate(conn, tran, info))
+                        throw new Exception("This applicant already has an admitted admission for the same programme, intake year and semester.");
 
                     string updateAdmissionSql = @"
                         UPDATE Admissions
-                        SET Status = 'Approved',
+                        SET Status = 'Admitted',
                             AdmittedAt = SYSUTCDATETIME(),
-                            RejectedAt = NULL
+                            RejectedAt = NULL,
+                            RejectionReason = NULL
                         WHERE AdmissionId = @AdmissionId
                           AND Status = 'Pending'";
 
@@ -309,45 +334,48 @@ namespace SIMS.HeadOfProgramme
                         int affected = updateCmd.ExecuteNonQuery();
 
                         if (affected == 0)
-                            throw new Exception("Unable to approve. The request may already have been processed.");
+                            throw new Exception("Unable to admit. The request may already have been processed.");
                     }
 
-                    string updateStudentSql = @"
-                        UPDATE Students
-                        SET ProgrammeId = @ProgrammeId,
-                            IntakeYear = @IntakeYear,
-                            IntakeSemester = @IntakeSemester,
-                            CurrentSemester = 1,
-                            AdmissionDate = SYSUTCDATETIME(),
-                            Status = 'Active'
-                        WHERE StudentId = @StudentId";
-
-                    using (SqlCommand studentCmd = new SqlCommand(updateStudentSql, conn, tran))
+                    if (info.StudentId.HasValue)
                     {
-                        studentCmd.Parameters.AddWithValue("@ProgrammeId", info.ProgrammeId);
-                        studentCmd.Parameters.AddWithValue("@IntakeYear", info.IntakeYear);
-                        studentCmd.Parameters.AddWithValue("@IntakeSemester", info.IntakeSemester);
-                        studentCmd.Parameters.AddWithValue("@StudentId", info.StudentId);
-                        studentCmd.ExecuteNonQuery();
+                        string updateStudentSql = @"
+                            UPDATE Students
+                            SET ProgrammeId = @ProgrammeId,
+                                IntakeYear = @IntakeYear,
+                                IntakeSemester = @IntakeSemester,
+                                CurrentSemester = 1,
+                                AdmissionDate = SYSUTCDATETIME(),
+                                Status = 'Active'
+                            WHERE StudentId = @StudentId";
+
+                        using (SqlCommand studentCmd = new SqlCommand(updateStudentSql, conn, tran))
+                        {
+                            studentCmd.Parameters.AddWithValue("@ProgrammeId", info.ProgrammeId);
+                            studentCmd.Parameters.AddWithValue("@IntakeYear", info.IntakeYear);
+                            studentCmd.Parameters.AddWithValue("@IntakeSemester", info.IntakeSemester);
+                            studentCmd.Parameters.AddWithValue("@StudentId", info.StudentId.Value);
+                            studentCmd.ExecuteNonQuery();
+                        }
                     }
 
                     InsertAuditLog(
                         conn,
                         tran,
                         CurrentUserId,
-                        "Approved admission request",
+                        "Admitted admission request",
                         admissionId,
                         "Status=Pending; AdmittedAt=NULL; RejectedAt=NULL",
-                        "Status=Approved; Student=" + info.StudentName + "; Programme=" + info.ProgrammeName
+                        "Status=Admitted; Applicant=" + info.StudentName + "; Programme=" + info.ProgrammeName
                     );
 
                     tran.Commit();
-                    ShowMessage("Admission request approved successfully.", true);
+                    ShowMessage("Admission request admitted successfully.", true);
                 }
                 catch (Exception ex)
                 {
                     tran.Rollback();
-                    ShowMessage("Error approving admission: " + ex.Message, false);
+                    ShowMessage("Error admitting admission: " + ex.Message, false);
                 }
             }
         }
@@ -373,7 +401,8 @@ namespace SIMS.HeadOfProgramme
                         UPDATE Admissions
                         SET Status = 'Rejected',
                             AdmittedAt = NULL,
-                            RejectedAt = SYSUTCDATETIME()
+                            RejectedAt = SYSUTCDATETIME(),
+                            RejectionReason = ISNULL(RejectionReason, 'Rejected by Head of Programme')
                         WHERE AdmissionId = @AdmissionId
                           AND Status = 'Pending'";
 
@@ -393,7 +422,7 @@ namespace SIMS.HeadOfProgramme
                         "Rejected admission request",
                         admissionId,
                         "Status=Pending; AdmittedAt=NULL; RejectedAt=NULL",
-                        "Status=Rejected; Student=" + info.StudentName + "; Programme=" + info.ProgrammeName
+                        "Status=Rejected; Applicant=" + info.StudentName + "; Programme=" + info.ProgrammeName
                     );
 
                     tran.Commit();
@@ -406,7 +435,6 @@ namespace SIMS.HeadOfProgramme
                 }
             }
         }
-
 
         private void ArchiveAdmission(int admissionId)
         {
@@ -422,23 +450,8 @@ namespace SIMS.HeadOfProgramme
                     if (info == null)
                         throw new Exception("Admission record not found.");
 
-                    if (info.Status != "Approved")
-                        throw new Exception("Only approved admissions can be archived.");
-
-                    string updateSql = @"
-                        UPDATE Admissions
-                        SET Status = 'Archived'
-                        WHERE AdmissionId = @AdmissionId
-                          AND Status = 'Approved'";
-
-                    using (SqlCommand updateCmd = new SqlCommand(updateSql, conn, tran))
-                    {
-                        updateCmd.Parameters.AddWithValue("@AdmissionId", admissionId);
-                        int affected = updateCmd.ExecuteNonQuery();
-
-                        if (affected == 0)
-                            throw new Exception("Unable to archive. The admission may already have been updated.");
-                    }
+                    if (info.Status != "Admitted")
+                        throw new Exception("Only admitted admissions can be archived.");
 
                     InsertAuditLog(
                         conn,
@@ -446,8 +459,8 @@ namespace SIMS.HeadOfProgramme
                         CurrentUserId,
                         "Archived admission record",
                         admissionId,
-                        "Status=Approved; Student=" + info.StudentName + "; Programme=" + info.ProgrammeName,
-                        "Status=Archived; Record moved to archived admissions"
+                        "Status=Admitted; Applicant=" + info.StudentName + "; Programme=" + info.ProgrammeName,
+                        "Record hidden from admitted admissions list"
                     );
 
                     tran.Commit();
@@ -476,10 +489,10 @@ namespace SIMS.HeadOfProgramme
                         throw new Exception("Admission record not found.");
 
                     if (info.Status == "Pending")
-                        throw new Exception("Pending requests cannot be deleted here. Approve or reject them first.");
+                        throw new Exception("Pending requests cannot be deleted here. Admit or reject them first.");
 
-                    if (info.Status == "Approved" || info.Status == "Archived")
-                        throw new Exception("Approved or archived admissions should not be deleted here. Archive approved records instead.");
+                    if (info.Status == "Admitted")
+                        throw new Exception("Admitted admissions should not be deleted here. Archive admitted records instead.");
 
                     InsertAuditLog(
                         conn,
@@ -487,9 +500,15 @@ namespace SIMS.HeadOfProgramme
                         CurrentUserId,
                         "Deleted admission record",
                         admissionId,
-                        "Status=" + info.Status + "; Student=" + info.StudentName + "; Programme=" + info.ProgrammeName,
+                        "Status=" + info.Status + "; Applicant=" + info.StudentName + "; Programme=" + info.ProgrammeName,
                         "Record deleted from Admissions"
                     );
+
+                    using (SqlCommand unlinkApplicantCmd = new SqlCommand("UPDATE Applicants SET AdmissionId = NULL WHERE AdmissionId = @AdmissionId", conn, tran))
+                    {
+                        unlinkApplicantCmd.Parameters.AddWithValue("@AdmissionId", admissionId);
+                        unlinkApplicantCmd.ExecuteNonQuery();
+                    }
 
                     using (SqlCommand deleteCmd = new SqlCommand("DELETE FROM Admissions WHERE AdmissionId = @AdmissionId", conn, tran))
                     {
@@ -513,16 +532,15 @@ namespace SIMS.HeadOfProgramme
             string sql = @"
                 SELECT
                     a.AdmissionId,
+                    a.UserId,
                     a.StudentId,
                     a.ProgrammeId,
                     a.IntakeYear,
                     a.IntakeSemester,
                     a.Status,
-                    u.FullName AS StudentName,
+                    a.FullName AS StudentName,
                     p.ProgrammeName
                 FROM Admissions a
-                INNER JOIN Students s ON s.StudentId = a.StudentId
-                INNER JOIN Users u ON u.UserId = s.UserId
                 INNER JOIN Programmes p ON p.ProgrammeId = a.ProgrammeId
                 WHERE a.AdmissionId = @AdmissionId";
 
@@ -538,7 +556,8 @@ namespace SIMS.HeadOfProgramme
                     return new AdmissionInfo
                     {
                         AdmissionId = Convert.ToInt32(reader["AdmissionId"]),
-                        StudentId = Convert.ToInt32(reader["StudentId"]),
+                        UserId = Convert.ToInt32(reader["UserId"]),
+                        StudentId = reader["StudentId"] == DBNull.Value ? (int?)null : Convert.ToInt32(reader["StudentId"]),
                         ProgrammeId = Convert.ToInt32(reader["ProgrammeId"]),
                         IntakeYear = Convert.ToInt16(reader["IntakeYear"]),
                         IntakeSemester = Convert.ToByte(reader["IntakeSemester"]),
@@ -550,21 +569,21 @@ namespace SIMS.HeadOfProgramme
             }
         }
 
-        private bool HasApprovedDuplicate(SqlConnection conn, SqlTransaction tran, AdmissionInfo info)
+        private bool HasAdmittedDuplicate(SqlConnection conn, SqlTransaction tran, AdmissionInfo info)
         {
             string sql = @"
                 SELECT COUNT(*)
                 FROM Admissions
-                WHERE StudentId = @StudentId
+                WHERE UserId = @UserId
                   AND ProgrammeId = @ProgrammeId
                   AND IntakeYear = @IntakeYear
                   AND IntakeSemester = @IntakeSemester
-                  AND Status = 'Approved'
+                  AND Status = 'Admitted'
                   AND AdmissionId <> @AdmissionId";
 
             using (SqlCommand cmd = new SqlCommand(sql, conn, tran))
             {
-                cmd.Parameters.AddWithValue("@StudentId", info.StudentId);
+                cmd.Parameters.AddWithValue("@UserId", info.UserId);
                 cmd.Parameters.AddWithValue("@ProgrammeId", info.ProgrammeId);
                 cmd.Parameters.AddWithValue("@IntakeYear", info.IntakeYear);
                 cmd.Parameters.AddWithValue("@IntakeSemester", info.IntakeSemester);
@@ -624,12 +643,10 @@ namespace SIMS.HeadOfProgramme
 
             if (status == "Pending")
                 lblStatus.CssClass += " status-pending";
-            else if (status == "Approved")
+            else if (status == "Admitted")
                 lblStatus.CssClass += " status-approved";
             else if (status == "Rejected")
                 lblStatus.CssClass += " status-rejected";
-            else if (status == "Archived")
-                lblStatus.CssClass += " status-archived";
         }
 
         private void ShowMessage(string message, bool success)
@@ -643,7 +660,8 @@ namespace SIMS.HeadOfProgramme
         private class AdmissionInfo
         {
             public int AdmissionId { get; set; }
-            public int StudentId { get; set; }
+            public int UserId { get; set; }
+            public int? StudentId { get; set; }
             public int ProgrammeId { get; set; }
             public short IntakeYear { get; set; }
             public byte IntakeSemester { get; set; }

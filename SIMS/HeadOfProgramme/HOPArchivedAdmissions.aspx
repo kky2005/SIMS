@@ -23,7 +23,7 @@
     <div class="d-flex justify-content-between align-items-center mb-2">
         <div>
             <h2 class="page-title">Archived Admissions</h2>
-            <p class="page-subtitle">View archived approved admissions and restore them back to Approved when needed.</p>
+            <p class="page-subtitle">View archived admitted admissions and restore them back to Admitted when needed.</p>
         </div>
         <a href="HOPManageAdmissions.aspx" class="btn btn-outline-secondary">Back to Admissions</a>
     </div>
@@ -36,8 +36,8 @@
             <div class="filter-box">
                 <div class="row g-3">
                     <div class="col-md-3">
-                        <label class="form-label">Student Name / No</label>
-                        <asp:TextBox ID="txtSearchStudent" runat="server" CssClass="form-control" placeholder="Search student"></asp:TextBox>
+                        <label class="form-label">Applicant Name / No / Email</label>
+                        <asp:TextBox ID="txtSearchStudent" runat="server" CssClass="form-control" placeholder="Search applicant"></asp:TextBox>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Programme</label>
@@ -84,19 +84,19 @@
                     </asp:TemplateField>
                     <asp:BoundField DataField="AdmissionId" HeaderText="ID" />
                     <asp:BoundField DataField="StudentNo" HeaderText="Student No" />
-                    <asp:BoundField DataField="StudentName" HeaderText="Student" />
+                    <asp:BoundField DataField="StudentName" HeaderText="Applicant" />
                     <asp:BoundField DataField="ProgrammeName" HeaderText="Programme" />
                     <asp:BoundField DataField="IntakeYear" HeaderText="Intake Year" />
                     <asp:BoundField DataField="IntakeSemester" HeaderText="Intake Sem" />
                     <asp:BoundField DataField="RequestedAt" HeaderText="Requested Date" DataFormatString="{0:yyyy-MM-dd HH:mm}" NullDisplayText="-" />
-                    <asp:BoundField DataField="AdmittedAt" HeaderText="Approved Date" DataFormatString="{0:yyyy-MM-dd HH:mm}" NullDisplayText="-" />
+                    <asp:BoundField DataField="AdmittedAt" HeaderText="Admitted Date" DataFormatString="{0:yyyy-MM-dd HH:mm}" NullDisplayText="-" />
                     <asp:TemplateField HeaderText="Status">
                         <ItemTemplate><asp:Label ID="lblStatus" runat="server" Text='<%# Eval("Status") %>'></asp:Label></ItemTemplate>
                     </asp:TemplateField>
                     <asp:BoundField DataField="LastActionBy" HeaderText="Archived By" />
                     <asp:TemplateField HeaderText="Actions">
                         <ItemTemplate>
-                            <asp:LinkButton ID="btnRestore" runat="server" CommandName="RestoreAdmission" CommandArgument='<%# Eval("AdmissionId") %>' CssClass="btn btn-sm btn-success" OnClientClick="return confirm('Restore this admission back to Approved?');">Restore</asp:LinkButton>
+                            <asp:LinkButton ID="btnRestore" runat="server" CommandName="RestoreAdmission" CommandArgument='<%# Eval("AdmissionId") %>' CssClass="btn btn-sm btn-success" OnClientClick="return confirm('Restore this admission back to Admitted?');">Restore</asp:LinkButton>
                         </ItemTemplate>
                     </asp:TemplateField>
                 </Columns>
