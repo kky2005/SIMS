@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
+using System.Text;
+using System.Web;
 using System.Data.SqlClient;
 using System.Web.UI.WebControls;
 
@@ -214,7 +216,12 @@ namespace SIMS.HeadOfProgramme
             if (!int.TryParse(Convert.ToString(e.CommandArgument), out admissionId))
                 return;
 
-            if (e.CommandName == "ApproveAdmission")
+            if (e.CommandName == "ViewDetails")
+            {
+                LoadApplicantDetails(admissionId);
+                return;
+            }
+            else if (e.CommandName == "ApproveAdmission")
                 AdmitAdmission(admissionId);
             else if (e.CommandName == "RejectAdmission")
                 RejectAdmission(admissionId);
@@ -230,7 +237,12 @@ namespace SIMS.HeadOfProgramme
             if (!int.TryParse(Convert.ToString(e.CommandArgument), out admissionId))
                 return;
 
-            if (e.CommandName == "ArchiveAdmission")
+            if (e.CommandName == "ViewDetails")
+            {
+                LoadApplicantDetails(admissionId);
+                return;
+            }
+            else if (e.CommandName == "ArchiveAdmission")
                 ArchiveAdmission(admissionId);
             else if (e.CommandName == "DeleteAdmission")
                 DeleteAdmission(admissionId);
@@ -280,6 +292,149 @@ namespace SIMS.HeadOfProgramme
 
             LoadAllTables();
             ShowMessage(deletedCount + " selected admission record(s) deleted successfully.", true);
+        }
+
+
+
+        protected void btnExportAdmitted_Click(object sender, EventArgs e)
+        {
+            ExportAdmissionsByStatus("Admitted");
+        }
+
+        protected void btnExportRejected_Click(object sender, EventArgs e)
+        {
+            ExportAdmissionsByStatus("Rejected");
+        }
+
+        private void ExportAdmissionsByStatus(string status)
+        {
+            DataTable dt = LoadRequestsByStatus(status);
+
+            if (dt.Rows.Count == 0)
+            {
+                ShowMessage("No " + status.ToLower() + " admission records found to export.", false);
+                return;
+            }
+
+            string fileName = status + "_Admissions_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".csv";
+
+            StringBuilder csv = new StringBuilder();
+            string[] exportColumns = new string[]
+            {
+                "AdmissionId", "StudentNo", "StudentName", "ApplicantEmail", "NationalId",
+                "Nationality", "PhoneNumber", "PreviousInstitution", "HighestQualification",
+                "PreviousCGPA", "ProgrammeName", "IntakeYear", "IntakeSemester",
+                "Status", "RequestedAt", "AdmittedAt", "RejectedAt", "RejectionReason", "LastActionBy"
+            };
+
+            csv.AppendLine(string.Join(",", exportColumns));
+
+            foreach (DataRow row in dt.Rows)
+            {
+                List<string> values = new List<string>();
+
+                foreach (string column in exportColumns)
+                {
+                    object value = dt.Columns.Contains(column) ? row[column] : "";
+                    values.Add(ToCsvValue(value));
+                }
+
+                csv.AppendLine(string.Join(",", values));
+            }
+
+            Response.Clear();
+            Response.Buffer = true;
+            Response.ClearContent();
+            Response.ClearHeaders();
+            Response.ContentType = "text/csv";
+            Response.ContentEncoding = Encoding.UTF8;
+            Response.AddHeader("Content-Disposition", "attachment; filename=" + fileName);
+
+            // UTF-8 BOM so Excel opens special characters correctly.
+            Response.Write("\uFEFF");
+            Response.Write(csv.ToString());
+
+            // Stop ASP.NET from rendering the rest of the .aspx page into the CSV file.
+            Response.End();
+        }
+
+        private string ToCsvValue(object value)
+        {
+            if (value == null || value == DBNull.Value)
+                return "\"\"";
+
+            string text = Convert.ToString(value);
+            text = text.Replace("\"", "\"\"");
+            return "\"" + text + "\"";
+        }
+
+        private void LoadApplicantDetails(int admissionId)
+        {
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                string sql = @"
+                    SELECT
+                        a.AdmissionId,
+                        a.FullName,
+                        a.DateOfBirth,
+                        a.Gender,
+                        a.NationalId,
+                        a.Nationality,
+                        a.PhoneNumber,
+                        a.PreviousInstitution,
+                        a.HighestQualification,
+                        a.PreviousCGPA,
+                        a.Status,
+                        a.RequestedAt,
+                        a.RejectionReason,
+                        ap.Email AS ApplicantEmail,
+                        p.ProgrammeName,
+                        a.IntakeYear,
+                        a.IntakeSemester
+                    FROM Admissions a
+                    LEFT JOIN Applicants ap ON ap.UserId = a.UserId
+                    INNER JOIN Programmes p ON p.ProgrammeId = a.ProgrammeId
+                    WHERE a.AdmissionId = @AdmissionId";
+
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@AdmissionId", admissionId);
+                    conn.Open();
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (!reader.Read())
+                        {
+                            pnlApplicantDetails.Visible = false;
+                            ShowMessage("Applicant details could not be found.", false);
+                            return;
+                        }
+
+                        lblDetailFullName.Text = reader["FullName"].ToString();
+                        lblDetailEmail.Text = reader["ApplicantEmail"] == DBNull.Value ? "-" : reader["ApplicantEmail"].ToString();
+                        lblDetailPhone.Text = reader["PhoneNumber"].ToString();
+                        lblDetailDOB.Text = Convert.ToDateTime(reader["DateOfBirth"]).ToString("yyyy-MM-dd");
+                        lblDetailGender.Text = reader["Gender"].ToString();
+                        lblDetailNationalId.Text = reader["NationalId"].ToString();
+                        lblDetailNationality.Text = reader["Nationality"].ToString();
+                        lblDetailPreviousInstitution.Text = reader["PreviousInstitution"].ToString();
+                        lblDetailHighestQualification.Text = reader["HighestQualification"].ToString();
+                        lblDetailPreviousCGPA.Text = reader["PreviousCGPA"] == DBNull.Value ? "-" : Convert.ToDecimal(reader["PreviousCGPA"]).ToString("0.00");
+                        lblDetailProgramme.Text = reader["ProgrammeName"].ToString();
+                        lblDetailIntake.Text = reader["IntakeYear"] + " Semester " + reader["IntakeSemester"];
+                        lblDetailStatus.Text = reader["Status"].ToString();
+                        lblDetailRequestedAt.Text = Convert.ToDateTime(reader["RequestedAt"]).ToString("yyyy-MM-dd HH:mm");
+                        lblDetailRejectionReason.Text = reader["RejectionReason"] == DBNull.Value ? "-" : reader["RejectionReason"].ToString();
+
+                        pnlApplicantDetails.Visible = true;
+                    }
+                }
+            }
+        }
+
+        protected void btnCloseDetails_Click(object sender, EventArgs e)
+        {
+            pnlApplicantDetails.Visible = false;
         }
 
         private List<int> GetSelectedIds(GridView grid, string checkboxId)

@@ -65,6 +65,7 @@
         <div class="card-body-sims">
             <div class="bulk-actions">
                 <asp:Button ID="btnRestoreSelected" runat="server" Text="Restore Selected" CssClass="btn btn-success" OnClick="btnRestoreSelected_Click" OnClientClick="return confirm('Restore selected archived admissions?');" />
+                <asp:Button ID="btnExportCsv" runat="server" Text="Export CSV" CssClass="btn btn-outline-primary" OnClick="btnExportCsv_Click" />
             </div>
 
             <asp:GridView ID="gvArchived" runat="server"

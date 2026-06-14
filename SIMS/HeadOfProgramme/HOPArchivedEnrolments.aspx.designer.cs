@@ -20,6 +20,7 @@ namespace SIMS.HeadOfProgramme
         protected global::System.Web.UI.WebControls.Button btnReset;
         protected global::System.Web.UI.WebControls.HyperLink lnkBack;
         protected global::System.Web.UI.WebControls.Label lblArchivedCount;
+        protected global::System.Web.UI.WebControls.Button btnExportArchived;
         protected global::System.Web.UI.WebControls.Button btnRestoreSelected;
         protected global::System.Web.UI.WebControls.GridView gvArchived;
     }

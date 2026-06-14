@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.IO;
+using System.Text;
 using System.Web.UI.WebControls;
 
 namespace SIMS.HeadOfProgramme
@@ -77,6 +80,396 @@ namespace SIMS.HeadOfProgramme
         }
         private void BindFilterProgrammes() { BindDropDown(ddlFilterProgramme, "SELECT ProgrammeId,ProgrammeName FROM Programmes ORDER BY ProgrammeName", "ProgrammeName", "ProgrammeId"); ddlFilterProgramme.Items.Insert(0, new ListItem("All Programmes", "")); }
         private void AddStudentParams(SqlCommand s, int userId) { s.Parameters.AddWithValue("@UserId", userId); s.Parameters.AddWithValue("@P", ddlProgramme.SelectedValue); s.Parameters.AddWithValue("@No", txtStudentNo.Text.Trim()); s.Parameters.AddWithValue("@Year", txtIntakeYear.Text); s.Parameters.AddWithValue("@ISem", txtIntakeSemester.Text); s.Parameters.AddWithValue("@Date", string.IsNullOrEmpty(txtAdmissionDate.Text) ? (object)DBNull.Value : txtAdmissionDate.Text); s.Parameters.AddWithValue("@CSem", txtCurrentSemester.Text); s.Parameters.AddWithValue("@Status", ddlStatus.SelectedValue); }
+
+
+        protected void btnPreviewAdmissionCsv_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (!fuAdmissionCsv.HasFile)
+                {
+                    ShowMessage(lblMessage, "Please choose an admitted admissions CSV file first.", false);
+                    return;
+                }
+
+                string ext = Path.GetExtension(fuAdmissionCsv.FileName).ToLower();
+                if (ext != ".csv")
+                {
+                    ShowMessage(lblMessage, "Only CSV files are supported.", false);
+                    return;
+                }
+
+                DataTable preview = BuildImportPreviewTable();
+
+                using (StreamReader reader = new StreamReader(fuAdmissionCsv.FileContent, Encoding.UTF8, true))
+                {
+                    string csvText = reader.ReadToEnd();
+                    DataTable csvTable = ReadCsvToTable(csvText);
+
+                    if (csvTable.Rows.Count == 0)
+                    {
+                        ShowMessage(lblMessage, "The CSV file has no records.", false);
+                        return;
+                    }
+
+                    foreach (DataRow row in csvTable.Rows)
+                    {
+                        string status = GetCsvValue(row, "Status");
+                        if (!status.Equals("Admitted", StringComparison.OrdinalIgnoreCase))
+                            continue;
+
+                        DataRow newRow = preview.NewRow();
+                        newRow["AdmissionId"] = GetCsvValue(row, "AdmissionId");
+                        newRow["StudentNo"] = CleanStudentNo(GetCsvValue(row, "StudentNo"));
+                        newRow["StudentName"] = GetCsvValue(row, "StudentName");
+                        newRow["ApplicantEmail"] = GetCsvValue(row, "ApplicantEmail");
+                        newRow["PhoneNumber"] = GetCsvValue(row, "PhoneNumber");
+                        newRow["ProgrammeName"] = GetCsvValue(row, "ProgrammeName");
+                        newRow["IntakeYear"] = GetCsvValue(row, "IntakeYear");
+                        newRow["IntakeSemester"] = GetCsvValue(row, "IntakeSemester");
+                        newRow["Status"] = "Admitted";
+                        newRow["ImportRemark"] = ValidateImportPreviewRow(newRow);
+                        preview.Rows.Add(newRow);
+                    }
+                }
+
+                if (preview.Rows.Count == 0)
+                {
+                    ShowMessage(lblMessage, "No admitted admission records were found in the CSV.", false);
+                    return;
+                }
+
+                Session["AdmissionImportPreview"] = preview;
+                gvImportPreview.DataSource = preview;
+                gvImportPreview.DataBind();
+                pnlImportPreview.Visible = true;
+                btnConfirmImportStudents.Visible = true;
+                btnCancelImport.Visible = true;
+
+                ShowMessage(lblMessage, preview.Rows.Count + " admitted record(s) loaded for preview. Please check them before confirming.", true);
+            }
+            catch (Exception ex)
+            {
+                ShowMessage(lblMessage, "CSV preview failed. " + ex.Message, false);
+            }
+        }
+
+        protected void btnConfirmImportStudents_Click(object sender, EventArgs e)
+        {
+            DataTable preview = Session["AdmissionImportPreview"] as DataTable;
+
+            if (preview == null || preview.Rows.Count == 0)
+            {
+                ShowMessage(lblMessage, "No CSV preview found. Please upload and preview the file again.", false);
+                return;
+            }
+
+            int imported = 0;
+            int skipped = 0;
+            List<string> errors = new List<string>();
+
+            using (SqlConnection con = new SqlConnection(ConnStr))
+            {
+                con.Open();
+
+                foreach (DataRow row in preview.Rows)
+                {
+                    SqlTransaction tx = con.BeginTransaction();
+
+                    try
+                    {
+                        string validation = ValidateImportPreviewRow(row);
+                        if (validation != "Ready")
+                        {
+                            skipped++;
+                            tx.Rollback();
+                            errors.Add(row["StudentName"] + ": " + validation);
+                            continue;
+                        }
+
+                        int admissionId = Convert.ToInt32(row["AdmissionId"]);
+                        string fullName = Convert.ToString(row["StudentName"]).Trim();
+                        string email = Convert.ToString(row["ApplicantEmail"]).Trim();
+                        string phone = Convert.ToString(row["PhoneNumber"]).Trim();
+                        string programmeName = Convert.ToString(row["ProgrammeName"]).Trim();
+                        int intakeYear = Convert.ToInt32(row["IntakeYear"]);
+                        int intakeSemester = Convert.ToInt32(row["IntakeSemester"]);
+                        int programmeId = GetProgrammeIdByName(con, tx, programmeName);
+
+                        if (programmeId == 0)
+                            throw new Exception("Programme not found: " + programmeName);
+
+                        if (EmailExists(con, tx, email))
+                            throw new Exception("Email already exists in Users.");
+
+                        string studentNo = Convert.ToString(row["StudentNo"]).Trim();
+                        if (string.IsNullOrWhiteSpace(studentNo) || studentNo == "-")
+                            studentNo = GenerateStudentNo(con, tx, intakeYear);
+
+                        if (StudentNoExists(con, tx, studentNo))
+                            throw new Exception("Student No already exists: " + studentNo);
+
+                        SqlCommand userCmd = new SqlCommand(
+                            "INSERT INTO Users(RoleId,FullName,Email,PasswordHash,Phone,IsActive) OUTPUT INSERTED.UserId VALUES(@Role,@Name,@Email,@Pass,@Phone,1)",
+                            con,
+                            tx
+                        );
+                        userCmd.Parameters.AddWithValue("@Role", GetRoleId("Student"));
+                        userCmd.Parameters.AddWithValue("@Name", fullName);
+                        userCmd.Parameters.AddWithValue("@Email", email);
+                        userCmd.Parameters.AddWithValue("@Pass", HashPassword("Student@123"));
+                        userCmd.Parameters.AddWithValue("@Phone", phone);
+                        int userId = Convert.ToInt32(userCmd.ExecuteScalar());
+
+                        SqlCommand studentCmd = new SqlCommand(
+                            "INSERT INTO Students(UserId,ProgrammeId,StudentNo,IntakeYear,IntakeSemester,AdmissionDate,CurrentSemester,Status) OUTPUT INSERTED.StudentId VALUES(@UserId,@ProgrammeId,@StudentNo,@IntakeYear,@IntakeSemester,SYSUTCDATETIME(),1,'Active')",
+                            con,
+                            tx
+                        );
+                        studentCmd.Parameters.AddWithValue("@UserId", userId);
+                        studentCmd.Parameters.AddWithValue("@ProgrammeId", programmeId);
+                        studentCmd.Parameters.AddWithValue("@StudentNo", studentNo);
+                        studentCmd.Parameters.AddWithValue("@IntakeYear", intakeYear);
+                        studentCmd.Parameters.AddWithValue("@IntakeSemester", intakeSemester);
+                        int studentId = Convert.ToInt32(studentCmd.ExecuteScalar());
+
+                        SqlCommand updateAdmissionCmd = new SqlCommand(
+                            "UPDATE Admissions SET StudentId=@StudentId WHERE AdmissionId=@AdmissionId AND Status='Admitted'",
+                            con,
+                            tx
+                        );
+                        updateAdmissionCmd.Parameters.AddWithValue("@StudentId", studentId);
+                        updateAdmissionCmd.Parameters.AddWithValue("@AdmissionId", admissionId);
+                        updateAdmissionCmd.ExecuteNonQuery();
+
+                        InsertAuditLog(
+                            con,
+                            tx,
+                            "Imported admitted admission as student",
+                            "Students",
+                            studentId,
+                            "Imported from Admissions CSV AdmissionId=" + admissionId,
+                            "Name=" + fullName + "; Email=" + email + "; StudentNo=" + studentNo + "; ProgrammeId=" + programmeId + "; UserId=" + userId
+                        );
+
+                        tx.Commit();
+                        imported++;
+                    }
+                    catch (Exception ex)
+                    {
+                        tx.Rollback();
+                        skipped++;
+                        errors.Add(row["StudentName"] + ": " + ex.Message);
+                    }
+                }
+            }
+
+            Session["AdmissionImportPreview"] = null;
+            pnlImportPreview.Visible = false;
+            btnConfirmImportStudents.Visible = false;
+            btnCancelImport.Visible = false;
+            BindGrid();
+
+            string message = imported + " student(s) imported successfully.";
+            if (skipped > 0)
+                message += " " + skipped + " record(s) skipped. " + string.Join(" | ", errors.ToArray());
+
+            ShowMessage(lblMessage, message, imported > 0);
+        }
+
+        protected void btnCancelImport_Click(object sender, EventArgs e)
+        {
+            Session["AdmissionImportPreview"] = null;
+            pnlImportPreview.Visible = false;
+            btnConfirmImportStudents.Visible = false;
+            btnCancelImport.Visible = false;
+            gvImportPreview.DataSource = null;
+            gvImportPreview.DataBind();
+            ShowMessage(lblMessage, "CSV import preview cancelled.", true);
+        }
+
+        private DataTable BuildImportPreviewTable()
+        {
+            DataTable dt = new DataTable();
+            dt.Columns.Add("AdmissionId");
+            dt.Columns.Add("StudentNo");
+            dt.Columns.Add("StudentName");
+            dt.Columns.Add("ApplicantEmail");
+            dt.Columns.Add("PhoneNumber");
+            dt.Columns.Add("ProgrammeName");
+            dt.Columns.Add("IntakeYear");
+            dt.Columns.Add("IntakeSemester");
+            dt.Columns.Add("Status");
+            dt.Columns.Add("ImportRemark");
+            return dt;
+        }
+
+        private DataTable ReadCsvToTable(string csvText)
+        {
+            DataTable dt = new DataTable();
+            List<List<string>> rows = ParseCsv(csvText);
+
+            if (rows.Count == 0)
+                return dt;
+
+            foreach (string header in rows[0])
+                dt.Columns.Add(header.Trim());
+
+            for (int i = 1; i < rows.Count; i++)
+            {
+                if (rows[i].Count == 1 && string.IsNullOrWhiteSpace(rows[i][0]))
+                    continue;
+
+                DataRow dr = dt.NewRow();
+
+                for (int c = 0; c < dt.Columns.Count; c++)
+                {
+                    dr[c] = c < rows[i].Count ? rows[i][c] : "";
+                }
+
+                dt.Rows.Add(dr);
+            }
+
+            return dt;
+        }
+
+        private List<List<string>> ParseCsv(string csvText)
+        {
+            List<List<string>> rows = new List<List<string>>();
+            List<string> row = new List<string>();
+            StringBuilder value = new StringBuilder();
+            bool inQuotes = false;
+
+            for (int i = 0; i < csvText.Length; i++)
+            {
+                char ch = csvText[i];
+
+                if (ch == '"')
+                {
+                    if (inQuotes && i + 1 < csvText.Length && csvText[i + 1] == '"')
+                    {
+                        value.Append('"');
+                        i++;
+                    }
+                    else
+                    {
+                        inQuotes = !inQuotes;
+                    }
+                }
+                else if (ch == ',' && !inQuotes)
+                {
+                    row.Add(value.ToString());
+                    value.Length = 0;
+                }
+                else if ((ch == '\r' || ch == '\n') && !inQuotes)
+                {
+                    if (ch == '\r' && i + 1 < csvText.Length && csvText[i + 1] == '\n')
+                        i++;
+
+                    row.Add(value.ToString());
+                    rows.Add(row);
+                    row = new List<string>();
+                    value.Length = 0;
+                }
+                else
+                {
+                    value.Append(ch);
+                }
+            }
+
+            if (value.Length > 0 || row.Count > 0)
+            {
+                row.Add(value.ToString());
+                rows.Add(row);
+            }
+
+            if (rows.Count > 0 && rows[0].Count > 0)
+                rows[0][0] = rows[0][0].TrimStart('\uFEFF');
+
+            return rows;
+        }
+
+        private string GetCsvValue(DataRow row, string column)
+        {
+            if (!row.Table.Columns.Contains(column) || row[column] == DBNull.Value)
+                return "";
+
+            return Convert.ToString(row[column]).Trim();
+        }
+
+        private string CleanStudentNo(string studentNo)
+        {
+            if (string.IsNullOrWhiteSpace(studentNo) || studentNo.Trim() == "-")
+                return "";
+
+            return studentNo.Trim();
+        }
+
+        private string ValidateImportPreviewRow(DataRow row)
+        {
+            int tempInt;
+
+            if (!int.TryParse(Convert.ToString(row["AdmissionId"]), out tempInt))
+                return "Invalid AdmissionId";
+
+            if (string.IsNullOrWhiteSpace(Convert.ToString(row["StudentName"])))
+                return "Missing name";
+
+            if (string.IsNullOrWhiteSpace(Convert.ToString(row["ApplicantEmail"])))
+                return "Missing email";
+
+            if (string.IsNullOrWhiteSpace(Convert.ToString(row["ProgrammeName"])))
+                return "Missing programme";
+
+            if (!int.TryParse(Convert.ToString(row["IntakeYear"]), out tempInt))
+                return "Invalid intake year";
+
+            if (!int.TryParse(Convert.ToString(row["IntakeSemester"]), out tempInt))
+                return "Invalid intake semester";
+
+            return "Ready";
+        }
+
+        private int GetProgrammeIdByName(SqlConnection con, SqlTransaction tx, string programmeName)
+        {
+            SqlCommand cmd = new SqlCommand("SELECT ProgrammeId FROM Programmes WHERE ProgrammeName=@ProgrammeName", con, tx);
+            cmd.Parameters.AddWithValue("@ProgrammeName", programmeName);
+            object result = cmd.ExecuteScalar();
+            return result == null ? 0 : Convert.ToInt32(result);
+        }
+
+        private bool EmailExists(SqlConnection con, SqlTransaction tx, string email)
+        {
+            SqlCommand cmd = new SqlCommand("SELECT COUNT(*) FROM Users WHERE Email=@Email", con, tx);
+            cmd.Parameters.AddWithValue("@Email", email);
+            return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
+        }
+
+        private bool StudentNoExists(SqlConnection con, SqlTransaction tx, string studentNo)
+        {
+            SqlCommand cmd = new SqlCommand("SELECT COUNT(*) FROM Students WHERE StudentNo=@StudentNo", con, tx);
+            cmd.Parameters.AddWithValue("@StudentNo", studentNo);
+            return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
+        }
+
+        private string GenerateStudentNo(SqlConnection con, SqlTransaction tx, int intakeYear)
+        {
+            string prefix = "S" + intakeYear.ToString().Substring(2);
+            SqlCommand cmd = new SqlCommand("SELECT COUNT(*) FROM Students WHERE StudentNo LIKE @Prefix", con, tx);
+            cmd.Parameters.AddWithValue("@Prefix", prefix + "%");
+            int count = Convert.ToInt32(cmd.ExecuteScalar()) + 1;
+
+            string studentNo;
+            do
+            {
+                studentNo = prefix + count.ToString("0000");
+                count++;
+            }
+            while (StudentNoExists(con, tx, studentNo));
+
+            return studentNo;
+        }
+
 
         protected void gvStudents_RowCommand(object sender, GridViewCommandEventArgs e)
         {

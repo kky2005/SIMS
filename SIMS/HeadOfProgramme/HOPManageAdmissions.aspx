@@ -20,6 +20,11 @@
         .bulk-actions { margin-bottom: 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
         .empty-box { padding: 24px; text-align: center; color: #64748b; border: 1px dashed #cbd5e1; border-radius: 10px; }
         .section-count { font-size: 13px; color: #64748b; margin-left: 8px; }
+        .details-box { background: #ffffff; border: 1px solid #dbeafe; border-radius: 12px; padding: 18px; margin-bottom: 18px; box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06); }
+        .details-title { font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 12px; }
+        .details-label { font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 2px; }
+        .details-value { color: #0f172a; margin-bottom: 12px; word-break: break-word; }
+        .details-actions { text-align: right; margin-top: 4px; }
     </style>
 
 </asp:Content>
@@ -29,6 +34,75 @@
     <p class="page-subtitle">Applicants submit admission requests. HOP can admit or reject pending requests.</p>
 
     <asp:Label ID="lblMessage" runat="server" CssClass="message-box d-block"></asp:Label>
+
+    <asp:Panel ID="pnlApplicantDetails" runat="server" CssClass="details-box" Visible="false">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+            <div class="details-title">Applicant Details</div>
+            <asp:Button ID="btnCloseDetails" runat="server" Text="Close" CssClass="btn btn-sm btn-outline-secondary" OnClick="btnCloseDetails_Click" />
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="details-label">Full Name</div>
+                <div class="details-value"><asp:Label ID="lblDetailFullName" runat="server" /></div>
+            </div>
+            <div class="col-md-4">
+                <div class="details-label">Email</div>
+                <div class="details-value"><asp:Label ID="lblDetailEmail" runat="server" /></div>
+            </div>
+            <div class="col-md-4">
+                <div class="details-label">Phone Number</div>
+                <div class="details-value"><asp:Label ID="lblDetailPhone" runat="server" /></div>
+            </div>
+            <div class="col-md-4">
+                <div class="details-label">Date of Birth</div>
+                <div class="details-value"><asp:Label ID="lblDetailDOB" runat="server" /></div>
+            </div>
+            <div class="col-md-4">
+                <div class="details-label">Gender</div>
+                <div class="details-value"><asp:Label ID="lblDetailGender" runat="server" /></div>
+            </div>
+            <div class="col-md-4">
+                <div class="details-label">National ID</div>
+                <div class="details-value"><asp:Label ID="lblDetailNationalId" runat="server" /></div>
+            </div>
+            <div class="col-md-4">
+                <div class="details-label">Nationality</div>
+                <div class="details-value"><asp:Label ID="lblDetailNationality" runat="server" /></div>
+            </div>
+            <div class="col-md-4">
+                <div class="details-label">Previous Institution</div>
+                <div class="details-value"><asp:Label ID="lblDetailPreviousInstitution" runat="server" /></div>
+            </div>
+            <div class="col-md-4">
+                <div class="details-label">Highest Qualification</div>
+                <div class="details-value"><asp:Label ID="lblDetailHighestQualification" runat="server" /></div>
+            </div>
+            <div class="col-md-4">
+                <div class="details-label">Previous CGPA</div>
+                <div class="details-value"><asp:Label ID="lblDetailPreviousCGPA" runat="server" /></div>
+            </div>
+            <div class="col-md-4">
+                <div class="details-label">Programme</div>
+                <div class="details-value"><asp:Label ID="lblDetailProgramme" runat="server" /></div>
+            </div>
+            <div class="col-md-4">
+                <div class="details-label">Intake</div>
+                <div class="details-value"><asp:Label ID="lblDetailIntake" runat="server" /></div>
+            </div>
+            <div class="col-md-4">
+                <div class="details-label">Status</div>
+                <div class="details-value"><asp:Label ID="lblDetailStatus" runat="server" /></div>
+            </div>
+            <div class="col-md-4">
+                <div class="details-label">Requested At</div>
+                <div class="details-value"><asp:Label ID="lblDetailRequestedAt" runat="server" /></div>
+            </div>
+            <div class="col-md-4">
+                <div class="details-label">Rejection Reason</div>
+                <div class="details-value"><asp:Label ID="lblDetailRejectionReason" runat="server" /></div>
+            </div>
+        </div>
+    </asp:Panel>
 
     <div class="card-sims mb-4">
         <div class="card-header-sims">
@@ -87,6 +161,7 @@
                     <asp:TemplateField HeaderText="Actions">
                         <ItemTemplate>
                             <div class="action-btns">
+                                <asp:LinkButton ID="btnViewPending" runat="server" CommandName="ViewDetails" CommandArgument='<%# Eval("AdmissionId") %>' CssClass="btn btn-sm btn-info">View Details</asp:LinkButton>
                                 <asp:LinkButton ID="btnApprove" runat="server" CommandName="ApproveAdmission" CommandArgument='<%# Eval("AdmissionId") %>' CssClass="btn btn-sm btn-success" OnClientClick="return confirm('Admit this admission request?');">Admit</asp:LinkButton>
                                 <asp:LinkButton ID="btnReject" runat="server" CommandName="RejectAdmission" CommandArgument='<%# Eval("AdmissionId") %>' CssClass="btn btn-sm btn-danger" OnClientClick="return confirm('Reject this admission request?');">Reject</asp:LinkButton>
                             </div>
@@ -108,6 +183,7 @@
         <div class="card-body-sims">
             <div class="bulk-actions">
                 <asp:Button ID="btnArchiveSelectedApproved" runat="server" Text="Archive Selected" CssClass="btn btn-warning" OnClick="btnArchiveSelectedApproved_Click" OnClientClick="return confirm('Archive selected admitted admissions?');" />
+                <asp:Button ID="btnExportAdmitted" runat="server" Text="Export Admitted CSV" CssClass="btn btn-success ms-2" OnClick="btnExportAdmitted_Click" />
             </div>
             <asp:GridView ID="gvApproved" runat="server"
                 CssClass="table table-bordered table-hover"
@@ -138,7 +214,10 @@
                     <asp:BoundField DataField="LastActionBy" HeaderText="Admitted By" />
                     <asp:TemplateField HeaderText="Actions">
                         <ItemTemplate>
-                            <asp:LinkButton ID="btnArchiveApproved" runat="server" CommandName="ArchiveAdmission" CommandArgument='<%# Eval("AdmissionId") %>' CssClass="btn btn-sm btn-warning" OnClientClick="return confirm('Archive this admitted admission record?');">Archive</asp:LinkButton>
+                            <div class="action-btns">
+                                <asp:LinkButton ID="btnViewApproved" runat="server" CommandName="ViewDetails" CommandArgument='<%# Eval("AdmissionId") %>' CssClass="btn btn-sm btn-info">View Details</asp:LinkButton>
+                                <asp:LinkButton ID="btnArchiveApproved" runat="server" CommandName="ArchiveAdmission" CommandArgument='<%# Eval("AdmissionId") %>' CssClass="btn btn-sm btn-warning" OnClientClick="return confirm('Archive this admitted admission record?');">Archive</asp:LinkButton>
+                            </div>
                         </ItemTemplate>
                     </asp:TemplateField>
                 </Columns>
@@ -154,6 +233,7 @@
         <div class="card-body-sims">
             <div class="bulk-actions">
                 <asp:Button ID="btnDeleteSelectedRejected" runat="server" Text="Delete Selected" CssClass="btn btn-danger" OnClick="btnDeleteSelectedRejected_Click" OnClientClick="return confirm('Delete selected rejected admissions?');" />
+                <asp:Button ID="btnExportRejected" runat="server" Text="Export Rejected CSV" CssClass="btn btn-success ms-2" OnClick="btnExportRejected_Click" />
             </div>
             <asp:GridView ID="gvRejected" runat="server"
                 CssClass="table table-bordered table-hover"
@@ -184,7 +264,10 @@
                     <asp:BoundField DataField="LastActionBy" HeaderText="Rejected By" />
                     <asp:TemplateField HeaderText="Actions">
                         <ItemTemplate>
-                            <asp:LinkButton ID="btnDeleteRejected" runat="server" CommandName="DeleteAdmission" CommandArgument='<%# Eval("AdmissionId") %>' CssClass="btn btn-sm btn-danger" OnClientClick="return confirm('Delete this rejected admission record?');">Delete</asp:LinkButton>
+                            <div class="action-btns">
+                                <asp:LinkButton ID="btnViewRejected" runat="server" CommandName="ViewDetails" CommandArgument='<%# Eval("AdmissionId") %>' CssClass="btn btn-sm btn-info">View Details</asp:LinkButton>
+                                <asp:LinkButton ID="btnDeleteRejected" runat="server" CommandName="DeleteAdmission" CommandArgument='<%# Eval("AdmissionId") %>' CssClass="btn btn-sm btn-danger" OnClientClick="return confirm('Delete this rejected admission record?');">Delete</asp:LinkButton>
+                            </div>
                         </ItemTemplate>
                     </asp:TemplateField>
                 </Columns>

@@ -41,6 +41,13 @@ namespace SIMS.HeadOfProgramme
         /// </remarks>
         protected global::System.Web.UI.WebControls.Label lblMessage;
 
+        protected global::System.Web.UI.WebControls.FileUpload fuAdmissionCsv;
+        protected global::System.Web.UI.WebControls.Button btnPreviewAdmissionCsv;
+        protected global::System.Web.UI.WebControls.Button btnConfirmImportStudents;
+        protected global::System.Web.UI.WebControls.Button btnCancelImport;
+        protected global::System.Web.UI.WebControls.Panel pnlImportPreview;
+        protected global::System.Web.UI.WebControls.GridView gvImportPreview;
+
         /// <summary>
         /// hfStudentId control.
         /// </summary>
