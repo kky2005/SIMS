@@ -19,6 +19,43 @@
     <p class="page-subtitle">Create student user accounts and admission records.</p>
     <asp:Label ID="lblMessage" runat="server" CssClass="message-box d-block"></asp:Label>
 
+
+    <div class="card-sims mb-4">
+        <div class="card-header-sims"><h5>Import Admitted Admissions CSV</h5></div>
+        <div class="card-body-sims">
+            <p class="text-muted mb-2">Upload the admitted admissions CSV exported from Manage Admissions. The records will be previewed first before they are added as students.</p>
+            <div class="row g-3 align-items-end">
+                <div class="col-md-6">
+                    <label class="form-label">Admitted Admissions CSV</label>
+                    <asp:FileUpload ID="fuAdmissionCsv" runat="server" CssClass="form-control" />
+                </div>
+                <div class="col-md-6">
+                    <asp:Button ID="btnPreviewAdmissionCsv" runat="server" Text="Preview CSV" CssClass="btn btn-primary" OnClick="btnPreviewAdmissionCsv_Click" />
+                    <asp:Button ID="btnConfirmImportStudents" runat="server" Text="Confirm Add Students" CssClass="btn btn-success ms-2" OnClick="btnConfirmImportStudents_Click" Visible="false" />
+                    <asp:Button ID="btnCancelImport" runat="server" Text="Cancel Preview" CssClass="btn btn-secondary ms-2" OnClick="btnCancelImport_Click" Visible="false" CausesValidation="false" />
+                </div>
+            </div>
+
+            <asp:Panel ID="pnlImportPreview" runat="server" Visible="false" CssClass="mt-3">
+                <h6>CSV Preview</h6>
+                <asp:GridView ID="gvImportPreview" runat="server" CssClass="table table-bordered table-hover" AutoGenerateColumns="False">
+                    <Columns>
+                        <asp:BoundField DataField="AdmissionId" HeaderText="Admission ID" />
+                        <asp:BoundField DataField="StudentNo" HeaderText="Student No" />
+                        <asp:BoundField DataField="StudentName" HeaderText="Name" />
+                        <asp:BoundField DataField="ApplicantEmail" HeaderText="Email" />
+                        <asp:BoundField DataField="PhoneNumber" HeaderText="Phone" />
+                        <asp:BoundField DataField="ProgrammeName" HeaderText="Programme" />
+                        <asp:BoundField DataField="IntakeYear" HeaderText="Year" />
+                        <asp:BoundField DataField="IntakeSemester" HeaderText="Sem" />
+                        <asp:BoundField DataField="Status" HeaderText="Status" />
+                        <asp:BoundField DataField="ImportRemark" HeaderText="Remark" />
+                    </Columns>
+                </asp:GridView>
+            </asp:Panel>
+        </div>
+    </div>
+
     <div class="card-sims mb-4"><div class="card-header-sims"><h5>Student Form</h5></div><div class="card-body-sims">
         <asp:HiddenField ID="hfStudentId" runat="server" /><asp:HiddenField ID="hfUserId" runat="server" />
         <div class="row g-3">

@@ -12,6 +12,23 @@ namespace SIMS.HeadOfProgramme
     public partial class HOPManageAdmissions
     {
         protected global::System.Web.UI.WebControls.Label lblMessage;
+        protected global::System.Web.UI.WebControls.Panel pnlApplicantDetails;
+        protected global::System.Web.UI.WebControls.Button btnCloseDetails;
+        protected global::System.Web.UI.WebControls.Label lblDetailFullName;
+        protected global::System.Web.UI.WebControls.Label lblDetailEmail;
+        protected global::System.Web.UI.WebControls.Label lblDetailPhone;
+        protected global::System.Web.UI.WebControls.Label lblDetailDOB;
+        protected global::System.Web.UI.WebControls.Label lblDetailGender;
+        protected global::System.Web.UI.WebControls.Label lblDetailNationalId;
+        protected global::System.Web.UI.WebControls.Label lblDetailNationality;
+        protected global::System.Web.UI.WebControls.Label lblDetailPreviousInstitution;
+        protected global::System.Web.UI.WebControls.Label lblDetailHighestQualification;
+        protected global::System.Web.UI.WebControls.Label lblDetailPreviousCGPA;
+        protected global::System.Web.UI.WebControls.Label lblDetailProgramme;
+        protected global::System.Web.UI.WebControls.Label lblDetailIntake;
+        protected global::System.Web.UI.WebControls.Label lblDetailStatus;
+        protected global::System.Web.UI.WebControls.Label lblDetailRequestedAt;
+        protected global::System.Web.UI.WebControls.Label lblDetailRejectionReason;
         protected global::System.Web.UI.WebControls.TextBox txtSearchStudent;
         protected global::System.Web.UI.WebControls.DropDownList ddlFilterProgramme;
         protected global::System.Web.UI.WebControls.TextBox txtFromDate;
@@ -22,7 +39,9 @@ namespace SIMS.HeadOfProgramme
         protected global::System.Web.UI.WebControls.GridView gvPending;
         protected global::System.Web.UI.WebControls.Label lblApprovedCount;
         protected global::System.Web.UI.WebControls.Button btnArchiveSelectedApproved;
+        protected global::System.Web.UI.WebControls.Button btnExportAdmitted;
         protected global::System.Web.UI.WebControls.Button btnDeleteSelectedRejected;
+        protected global::System.Web.UI.WebControls.Button btnExportRejected;
         protected global::System.Web.UI.WebControls.GridView gvApproved;
         protected global::System.Web.UI.WebControls.Label lblRejectedCount;
         protected global::System.Web.UI.WebControls.GridView gvRejected;

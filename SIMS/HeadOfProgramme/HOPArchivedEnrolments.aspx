@@ -71,10 +71,16 @@
     <div class="card-sims">
         <div class="card-header-sims d-flex justify-content-between align-items-center">
             <h5>Archived Enrolments <asp:Label ID="lblArchivedCount" runat="server" CssClass="section-count"></asp:Label></h5>
-            <asp:Button ID="btnRestoreSelected" runat="server"
-                Text="Restore Selected"
-                CssClass="btn btn-success btn-sm"
-                OnClick="btnRestoreSelected_Click" />
+            <div>
+                <asp:Button ID="btnExportArchived" runat="server"
+                    Text="Export CSV"
+                    CssClass="btn btn-outline-primary btn-sm me-2"
+                    OnClick="btnExportArchived_Click" />
+                <asp:Button ID="btnRestoreSelected" runat="server"
+                    Text="Restore Selected"
+                    CssClass="btn btn-success btn-sm"
+                    OnClick="btnRestoreSelected_Click" />
+            </div>
         </div>
         <div class="card-body-sims">
             <asp:GridView ID="gvArchived" runat="server"

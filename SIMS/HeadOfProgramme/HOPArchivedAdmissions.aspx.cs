@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
+using System.Text;
+using System.Web;
 using System.Data.SqlClient;
 using System.Web.UI.WebControls;
 
@@ -44,6 +46,14 @@ namespace SIMS.HeadOfProgramme
         }
 
         private void LoadArchivedAdmissions()
+        {
+            DataTable dt = GetArchivedAdmissionsData();
+            gvArchived.DataSource = dt;
+            gvArchived.DataBind();
+            lblArchivedCount.Text = "(" + dt.Rows.Count + ")";
+        }
+
+        private DataTable GetArchivedAdmissionsData()
         {
             using (SqlConnection conn = new SqlConnection(connStr))
             {
@@ -105,10 +115,7 @@ namespace SIMS.HeadOfProgramme
                 SqlDataAdapter da = new SqlDataAdapter(cmd);
                 DataTable dt = new DataTable();
                 da.Fill(dt);
-
-                gvArchived.DataSource = dt;
-                gvArchived.DataBind();
-                lblArchivedCount.Text = "(" + dt.Rows.Count + ")";
+                return dt;
             }
         }
 
@@ -164,6 +171,69 @@ namespace SIMS.HeadOfProgramme
             txtFromDate.Text = "";
             txtToDate.Text = "";
             LoadArchivedAdmissions();
+        }
+
+        protected void btnExportCsv_Click(object sender, EventArgs e)
+        {
+            ExportArchivedAdmissionsCsv();
+        }
+
+        private void ExportArchivedAdmissionsCsv()
+        {
+            DataTable dt = GetArchivedAdmissionsData();
+
+            if (dt.Rows.Count == 0)
+            {
+                ShowMessage("No archived admission records found to export.", false);
+                return;
+            }
+
+            string fileName = "Archived_Admissions_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".csv";
+
+            string[] exportColumns = new string[]
+            {
+                "AdmissionId", "StudentNo", "StudentName", "ApplicantEmail", "NationalId",
+                "Nationality", "PhoneNumber", "PreviousInstitution", "HighestQualification",
+                "PreviousCGPA", "ProgrammeName", "IntakeYear", "IntakeSemester",
+                "Status", "RequestedAt", "AdmittedAt", "RejectedAt", "LastAction", "LastActionBy", "LastActionDate"
+            };
+
+            StringBuilder csv = new StringBuilder();
+            csv.AppendLine(string.Join(",", exportColumns));
+
+            foreach (DataRow row in dt.Rows)
+            {
+                List<string> values = new List<string>();
+
+                foreach (string column in exportColumns)
+                {
+                    object value = dt.Columns.Contains(column) ? row[column] : "";
+                    values.Add(ToCsvValue(value));
+                }
+
+                csv.AppendLine(string.Join(",", values));
+            }
+
+            Response.Clear();
+            Response.Buffer = true;
+            Response.ClearContent();
+            Response.ClearHeaders();
+            Response.ContentType = "text/csv";
+            Response.ContentEncoding = Encoding.UTF8;
+            Response.AddHeader("Content-Disposition", "attachment; filename=" + fileName);
+            Response.Write("\uFEFF");
+            Response.Write(csv.ToString());
+            Response.End();
+        }
+
+        private string ToCsvValue(object value)
+        {
+            if (value == null || value == DBNull.Value)
+                return "\"\"";
+
+            string text = Convert.ToString(value);
+            text = text.Replace("\"", "\"\"");
+            return "\"" + text + "\"";
         }
 
         protected void gvArchived_RowCommand(object sender, GridViewCommandEventArgs e)

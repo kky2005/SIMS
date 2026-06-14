@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
+using System.Text;
+using System.Web;
 using System.Web.UI.WebControls;
 
 namespace SIMS.HeadOfProgramme
@@ -44,6 +46,14 @@ namespace SIMS.HeadOfProgramme
         }
 
         private void LoadArchivedEnrolments()
+        {
+            DataTable dt = GetArchivedEnrolmentsData();
+            gvArchived.DataSource = dt;
+            gvArchived.DataBind();
+            lblArchivedCount.Text = "(" + dt.Rows.Count + ")";
+        }
+
+        private DataTable GetArchivedEnrolmentsData()
         {
             using (SqlConnection conn = new SqlConnection(connStr))
             {
@@ -89,10 +99,7 @@ namespace SIMS.HeadOfProgramme
                 SqlDataAdapter da = new SqlDataAdapter(cmd);
                 DataTable dt = new DataTable();
                 da.Fill(dt);
-
-                gvArchived.DataSource = dt;
-                gvArchived.DataBind();
-                lblArchivedCount.Text = "(" + dt.Rows.Count + ")";
+                return dt;
             }
         }
 
@@ -181,6 +188,69 @@ namespace SIMS.HeadOfProgramme
 
             LoadArchivedEnrolments();
             ShowMessage(restoredCount + " archived enrolment(s) restored successfully.", true);
+        }
+
+
+        protected void btnExportArchived_Click(object sender, EventArgs e)
+        {
+            ExportArchivedEnrolments();
+        }
+
+        private void ExportArchivedEnrolments()
+        {
+            DataTable dt = GetArchivedEnrolmentsData();
+
+            if (dt.Rows.Count == 0)
+            {
+                ShowMessage("No archived enrolment records found to export.", false);
+                return;
+            }
+
+            string fileName = "Archived_Enrolments_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".csv";
+
+            StringBuilder csv = new StringBuilder();
+            string[] exportColumns = new string[]
+            {
+                "EnrolmentId", "StudentNo", "StudentName", "CourseCode", "CourseName",
+                "AcademicYear", "Semester", "Status", "RequestedAt", "EnrolledAt",
+                "DroppedAt", "LastAction", "LastActionBy", "LastActionDate"
+            };
+
+            csv.AppendLine(string.Join(",", exportColumns));
+
+            foreach (DataRow row in dt.Rows)
+            {
+                List<string> values = new List<string>();
+
+                foreach (string column in exportColumns)
+                {
+                    object value = dt.Columns.Contains(column) ? row[column] : "";
+                    values.Add(ToCsvValue(value));
+                }
+
+                csv.AppendLine(string.Join(",", values));
+            }
+
+            Response.Clear();
+            Response.Buffer = true;
+            Response.ClearContent();
+            Response.ClearHeaders();
+            Response.ContentType = "text/csv";
+            Response.ContentEncoding = Encoding.UTF8;
+            Response.AddHeader("Content-Disposition", "attachment; filename=" + fileName);
+            Response.Write("\uFEFF");
+            Response.Write(csv.ToString());
+            Response.End();
+        }
+
+        private string ToCsvValue(object value)
+        {
+            if (value == null || value == DBNull.Value)
+                return "\"\"";
+
+            string text = Convert.ToString(value);
+            text = text.Replace("\"", "\"\"");
+            return "\"" + text + "\"";
         }
 
         private List<int> GetSelectedIds(GridView grid, string checkboxId)
