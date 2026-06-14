@@ -40,7 +40,7 @@ namespace SIMS.HeadOfProgramme
                 FROM Lecturers l
                 INNER JOIN Users u ON u.UserId = l.UserId
                 WHERE ISNULL(u.IsActive, 1) = 1
-                  AND ISNULL(l.EmploymentStatus, 'Active') = 'Active'
+                  AND UPPER(LTRIM(RTRIM(ISNULL(l.EmploymentStatus, 'Active')))) = 'ACTIVE'
                 ORDER BY u.FullName");
 
             lbLecturers.DataTextField = "LecturerDisplay";
@@ -184,6 +184,7 @@ namespace SIMS.HeadOfProgramme
                         }
 
                         tx.Commit();
+                        BindLecturers();
                         ClearForm();
                         BindGrid();
                         ShowMessage(lblMessage, "Course saved successfully.", true);

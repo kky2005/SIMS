@@ -62,11 +62,31 @@ namespace SIMS.HeadOfProgramme
                         {
                             lecturerId = Convert.ToInt32(hfLecturerId.Value); userId = Convert.ToInt32(hfUserId.Value);
                             string oldValue = GetLecturerAuditValue(con, tx, lecturerId);
-                            string userSql = string.IsNullOrWhiteSpace(txtPassword.Text) ? @"UPDATE Users SET FullName=@Name,Email=@Email,Phone=@Phone WHERE UserId=@UserId" : @"UPDATE Users SET FullName=@Name,Email=@Email,Phone=@Phone,PasswordHash=@Pass WHERE UserId=@UserId";
-                            SqlCommand u = new SqlCommand(userSql, con, tx); u.Parameters.AddWithValue("@Name", txtFullName.Text.Trim()); u.Parameters.AddWithValue("@Email", txtEmail.Text.Trim()); u.Parameters.AddWithValue("@Phone", txtPhone.Text.Trim()); u.Parameters.AddWithValue("@UserId", userId); if (!string.IsNullOrWhiteSpace(txtPassword.Text)) u.Parameters.AddWithValue("@Pass", HashPassword(txtPassword.Text)); u.ExecuteNonQuery();
-                            SqlCommand l = new SqlCommand(@"UPDATE Lecturers SET StaffNo=@Staff,Department=@Dept,Specialisation=@Spec,EmploymentStatus=@Status WHERE LecturerId=@Id", con, tx);
-                            l.Parameters.AddWithValue("@Staff", txtStaffNo.Text.Trim()); l.Parameters.AddWithValue("@Dept", txtDepartment.Text.Trim()); l.Parameters.AddWithValue("@Spec", txtSpecialisation.Text.Trim()); l.Parameters.AddWithValue("@Status", ddlEmploymentStatus.SelectedValue); l.Parameters.AddWithValue("@Id", lecturerId); l.ExecuteNonQuery();
-                            InsertAuditLog(con, tx, "Updated lecturer", "Lecturers", lecturerId, oldValue, newValue + "; UserId=" + userId);
+                            int isActive = ddlEmploymentStatus.SelectedValue == "Active" ? 1 : 0;
+
+                            string userSql = string.IsNullOrWhiteSpace(txtPassword.Text)
+                                ? @"UPDATE Users SET FullName=@Name, Email=@Email, Phone=@Phone, IsActive=@IsActive WHERE UserId=@UserId"
+                                : @"UPDATE Users SET FullName=@Name, Email=@Email, Phone=@Phone, PasswordHash=@Pass, IsActive=@IsActive WHERE UserId=@UserId";
+
+                            SqlCommand u = new SqlCommand(userSql, con, tx);
+                            u.Parameters.AddWithValue("@Name", txtFullName.Text.Trim());
+                            u.Parameters.AddWithValue("@Email", txtEmail.Text.Trim());
+                            u.Parameters.AddWithValue("@Phone", txtPhone.Text.Trim());
+                            u.Parameters.AddWithValue("@IsActive", isActive);
+                            u.Parameters.AddWithValue("@UserId", userId);
+                            if (!string.IsNullOrWhiteSpace(txtPassword.Text))
+                                u.Parameters.AddWithValue("@Pass", HashPassword(txtPassword.Text));
+                            u.ExecuteNonQuery();
+
+                            SqlCommand l = new SqlCommand(@"UPDATE Lecturers SET StaffNo=@Staff, Department=@Dept, Specialisation=@Spec, EmploymentStatus=@Status WHERE LecturerId=@Id", con, tx);
+                            l.Parameters.AddWithValue("@Staff", txtStaffNo.Text.Trim());
+                            l.Parameters.AddWithValue("@Dept", txtDepartment.Text.Trim());
+                            l.Parameters.AddWithValue("@Spec", txtSpecialisation.Text.Trim());
+                            l.Parameters.AddWithValue("@Status", ddlEmploymentStatus.SelectedValue);
+                            l.Parameters.AddWithValue("@Id", lecturerId);
+                            l.ExecuteNonQuery();
+
+                            InsertAuditLog(con, tx, "Updated lecturer", "Lecturers", lecturerId, oldValue, newValue + "; UserId=" + userId + "; User IsActive=" + isActive);
                         }
                         tx.Commit(); ClearForm(); BindGrid(); ShowMessage(lblMessage, "Lecturer saved successfully.", true);
                     }
