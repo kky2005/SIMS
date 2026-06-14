@@ -41,7 +41,16 @@
         </div>
     </div>
 
-    <div class="card-sims"><div class="card-header-sims"><h5>Lecturer List</h5></div><div class="card-body-sims">
+        <div class="card-sims mb-4"><div class="card-header-sims"><h5>Filter Lecturers</h5></div><div class="card-body-sims">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4"><label class="form-label">Search Lecturer</label><asp:TextBox ID="txtFilterLecturer" runat="server" CssClass="form-control" placeholder="Search name, email or staff no"></asp:TextBox></div>
+            <div class="col-md-3"><label class="form-label">Department</label><asp:TextBox ID="txtFilterDepartment" runat="server" CssClass="form-control" placeholder="Department"></asp:TextBox></div>
+            <div class="col-md-2"><label class="form-label">Status</label><asp:DropDownList ID="ddlFilterEmploymentStatus" runat="server" CssClass="form-select"><asp:ListItem Value="">All</asp:ListItem><asp:ListItem>Active</asp:ListItem><asp:ListItem>Inactive</asp:ListItem></asp:DropDownList></div>
+            <div class="col-md-3"><asp:Button ID="btnFilter" runat="server" Text="Filter" CssClass="btn btn-primary" OnClick="btnFilter_Click" /><asp:Button ID="btnResetFilter" runat="server" Text="Reset" CssClass="btn btn-secondary ms-2" OnClick="btnResetFilter_Click" CausesValidation="false" /></div>
+        </div>
+    </div></div>
+
+<div class="card-sims"><div class="card-header-sims"><h5>Lecturer List</h5></div><div class="card-body-sims">
         <asp:GridView ID="gvLecturers" runat="server" CssClass="table table-bordered table-hover" AutoGenerateColumns="False" DataKeyNames="LecturerId" OnRowCommand="gvLecturers_RowCommand">
             <Columns>
                 <asp:BoundField DataField="FullName" HeaderText="Name" />
@@ -52,7 +61,7 @@
                 <asp:BoundField DataField="EmploymentStatus" HeaderText="Status" />
                 <asp:TemplateField HeaderText="Actions"><ItemTemplate><div class="action-btns">
                     <asp:LinkButton runat="server" CommandName="EditLecturer" CommandArgument='<%# Eval("LecturerId") %>' CssClass="btn btn-sm btn-warning">Edit</asp:LinkButton>
-                    <asp:LinkButton runat="server" CommandName="DeleteLecturer" CommandArgument='<%# Eval("LecturerId") %>' CssClass="btn btn-sm btn-danger" OnClientClick="return confirm('Delete this lecturer?');">Delete</asp:LinkButton>
+                    <asp:LinkButton runat="server" CommandName="DeleteLecturer" CommandArgument='<%# Eval("LecturerId") %>' CssClass="btn btn-sm btn-warning" OnClientClick="return confirm('Deactivate this lecturer?');">Deactivate</asp:LinkButton>
                 </div></ItemTemplate></asp:TemplateField>
             </Columns>
         </asp:GridView>

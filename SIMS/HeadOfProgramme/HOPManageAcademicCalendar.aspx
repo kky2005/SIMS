@@ -126,7 +126,19 @@
         <asp:Button ID="btnClear" runat="server" Text="Clear" CssClass="btn-clear" OnClick="btnClear_Click" />
     </div>
 
-    <div class="card-sims">
+        <div class="card-sims mb-4">
+        <div class="card-header-sims"><h5>Filter Calendar Events</h5></div>
+        <div class="card-body-sims">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4"><label class="form-label">Search Event</label><asp:TextBox ID="txtFilterEvent" runat="server" CssClass="form-control" placeholder="Search event name or description"></asp:TextBox></div>
+                <div class="col-md-3"><label class="form-label">Event Type</label><asp:DropDownList ID="ddlFilterEventType" runat="server" CssClass="form-select"><asp:ListItem Value="">All</asp:ListItem><asp:ListItem>Semester Start</asp:ListItem><asp:ListItem>Semester End</asp:ListItem><asp:ListItem>Exam</asp:ListItem><asp:ListItem>Holiday</asp:ListItem><asp:ListItem>Event</asp:ListItem></asp:DropDownList></div>
+                <div class="col-md-2"><label class="form-label">Academic Year</label><asp:TextBox ID="txtFilterAcademicYear" runat="server" CssClass="form-control" placeholder="2026"></asp:TextBox></div>
+                <div class="col-md-3"><asp:Button ID="btnFilter" runat="server" Text="Filter" CssClass="btn btn-primary" OnClick="btnFilter_Click" /><asp:Button ID="btnResetFilter" runat="server" Text="Reset" CssClass="btn btn-secondary ms-2" OnClick="btnResetFilter_Click" CausesValidation="false" /></div>
+            </div>
+        </div>
+    </div>
+
+<div class="card-sims">
         <div class="card-header-sims">
             <h5>Academic Calendar List</h5>
         </div>

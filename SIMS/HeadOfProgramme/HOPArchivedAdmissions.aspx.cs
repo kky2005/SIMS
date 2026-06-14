@@ -51,11 +51,19 @@ namespace SIMS.HeadOfProgramme
                     SELECT
                         a.AdmissionId,
                         ISNULL(s.StudentNo, '-') AS StudentNo,
-                        u.FullName AS StudentName,
+                        a.FullName AS StudentName,
+                        a.FullName,
+                        a.NationalId,
+                        a.Nationality,
+                        a.PhoneNumber,
+                        a.PreviousInstitution,
+                        a.HighestQualification,
+                        a.PreviousCGPA,
+                        ap.Email AS ApplicantEmail,
                         p.ProgrammeName,
                         a.IntakeYear,
                         a.IntakeSemester,
-                        a.Status,
+                        'Archived' AS Status,
                         a.RequestedAt,
                         a.AdmittedAt,
                         a.RejectedAt,
@@ -63,8 +71,8 @@ namespace SIMS.HeadOfProgramme
                         ISNULL(adminUser.FullName, '-') AS LastActionBy,
                         lastLog.ActionDate AS LastActionDate
                     FROM Admissions a
-                    INNER JOIN Students s ON s.StudentId = a.StudentId
-                    INNER JOIN Users u ON u.UserId = s.UserId
+                    LEFT JOIN Applicants ap ON ap.UserId = a.UserId
+                    LEFT JOIN Students s ON s.StudentId = a.StudentId
                     INNER JOIN Programmes p ON p.ProgrammeId = a.ProgrammeId
                     OUTER APPLY
                     (
@@ -74,14 +82,24 @@ namespace SIMS.HeadOfProgramme
                           AND al.RecordId = a.AdmissionId
                         ORDER BY al.ActionDate DESC
                     ) lastLog
+                    OUTER APPLY
+                    (
+                        SELECT TOP 1 al.Action, al.ActionDate
+                        FROM AuditLogs al
+                        WHERE al.TableAffected = 'Admissions'
+                          AND al.RecordId = a.AdmissionId
+                          AND al.Action IN ('Archived admission record', 'Restored archived admission record')
+                        ORDER BY al.ActionDate DESC
+                    ) archiveLog
                     LEFT JOIN Users adminUser ON adminUser.UserId = lastLog.UserId
-                    WHERE a.Status = 'Archived'";
+                    WHERE a.Status = 'Admitted'
+                      AND archiveLog.Action = 'Archived admission record'";
 
                 SqlCommand cmd = new SqlCommand();
                 cmd.Connection = conn;
 
                 AddCommonFilters(ref sql, cmd);
-                sql += " ORDER BY lastLog.ActionDate DESC, a.AdmittedAt DESC, a.RequestedAt DESC";
+                sql += " ORDER BY archiveLog.ActionDate DESC, a.AdmittedAt DESC, a.RequestedAt DESC";
                 cmd.CommandText = sql;
 
                 SqlDataAdapter da = new SqlDataAdapter(cmd);
@@ -100,7 +118,9 @@ namespace SIMS.HeadOfProgramme
             {
                 sql += @" AND (
                             ISNULL(s.StudentNo, '') LIKE @StudentSearch
-                            OR ISNULL(u.FullName, '') LIKE @StudentSearch
+                            OR ISNULL(a.FullName, '') LIKE @StudentSearch
+                            OR ISNULL(a.NationalId, '') LIKE @StudentSearch
+                            OR ISNULL(ap.Email, '') LIKE @StudentSearch
                           )";
                 cmd.Parameters.AddWithValue("@StudentSearch", "%" + txtSearchStudent.Text.Trim() + "%");
             }
@@ -211,23 +231,8 @@ namespace SIMS.HeadOfProgramme
                     if (info == null)
                         throw new Exception("Admission record not found.");
 
-                    if (info.Status != "Archived")
-                        throw new Exception("Only archived admissions can be restored.");
-
-                    string updateSql = @"
-                        UPDATE Admissions
-                        SET Status = 'Approved'
-                        WHERE AdmissionId = @AdmissionId
-                          AND Status = 'Archived'";
-
-                    using (SqlCommand updateCmd = new SqlCommand(updateSql, conn, tran))
-                    {
-                        updateCmd.Parameters.AddWithValue("@AdmissionId", admissionId);
-                        int affected = updateCmd.ExecuteNonQuery();
-
-                        if (affected == 0)
-                            throw new Exception("Unable to restore. The admission may already have been updated.");
-                    }
+                    if (info.Status != "Admitted")
+                        throw new Exception("Only archived admitted admissions can be restored.");
 
                     InsertAuditLog(
                         conn,
@@ -235,8 +240,8 @@ namespace SIMS.HeadOfProgramme
                         CurrentUserId,
                         "Restored archived admission record",
                         admissionId,
-                        "Status=Archived; Student=" + info.StudentName + "; Programme=" + info.ProgrammeName,
-                        "Status=Approved; Record restored to approved admissions"
+                        "Archived=True; Applicant=" + info.StudentName + "; Programme=" + info.ProgrammeName,
+                        "Archived=False; Record restored to admitted admissions"
                     );
 
                     tran.Commit();
@@ -255,18 +260,28 @@ namespace SIMS.HeadOfProgramme
             string sql = @"
                 SELECT
                     a.AdmissionId,
+                    a.UserId,
                     a.StudentId,
                     a.ProgrammeId,
                     a.IntakeYear,
                     a.IntakeSemester,
                     a.Status,
-                    u.FullName AS StudentName,
+                    a.FullName AS StudentName,
                     p.ProgrammeName
                 FROM Admissions a
-                INNER JOIN Students s ON s.StudentId = a.StudentId
-                INNER JOIN Users u ON u.UserId = s.UserId
                 INNER JOIN Programmes p ON p.ProgrammeId = a.ProgrammeId
-                WHERE a.AdmissionId = @AdmissionId";
+                OUTER APPLY
+                (
+                    SELECT TOP 1 al.Action, al.ActionDate
+                    FROM AuditLogs al
+                    WHERE al.TableAffected = 'Admissions'
+                      AND al.RecordId = a.AdmissionId
+                      AND al.Action IN ('Archived admission record', 'Restored archived admission record')
+                    ORDER BY al.ActionDate DESC
+                ) archiveLog
+                WHERE a.AdmissionId = @AdmissionId
+                  AND a.Status = 'Admitted'
+                  AND archiveLog.Action = 'Archived admission record'";
 
             using (SqlCommand cmd = new SqlCommand(sql, conn, tran))
             {
@@ -280,7 +295,8 @@ namespace SIMS.HeadOfProgramme
                     return new AdmissionInfo
                     {
                         AdmissionId = Convert.ToInt32(reader["AdmissionId"]),
-                        StudentId = Convert.ToInt32(reader["StudentId"]),
+                        UserId = Convert.ToInt32(reader["UserId"]),
+                        StudentId = reader["StudentId"] == DBNull.Value ? (int?)null : Convert.ToInt32(reader["StudentId"]),
                         ProgrammeId = Convert.ToInt32(reader["ProgrammeId"]),
                         IntakeYear = Convert.ToInt16(reader["IntakeYear"]),
                         IntakeSemester = Convert.ToByte(reader["IntakeSemester"]),
@@ -350,7 +366,8 @@ namespace SIMS.HeadOfProgramme
         private class AdmissionInfo
         {
             public int AdmissionId { get; set; }
-            public int StudentId { get; set; }
+            public int UserId { get; set; }
+            public int? StudentId { get; set; }
             public int ProgrammeId { get; set; }
             public short IntakeYear { get; set; }
             public byte IntakeSemester { get; set; }

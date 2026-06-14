@@ -24,6 +24,11 @@ namespace SIMS.HeadOfProgramme
         protected global::System.Web.UI.WebControls.TextBox txtDescription;
         protected global::System.Web.UI.WebControls.Button btnSave;
         protected global::System.Web.UI.WebControls.Button btnClear;
+        protected global::System.Web.UI.WebControls.TextBox txtFilterEvent;
+        protected global::System.Web.UI.WebControls.DropDownList ddlFilterEventType;
+        protected global::System.Web.UI.WebControls.TextBox txtFilterAcademicYear;
+        protected global::System.Web.UI.WebControls.Button btnFilter;
+        protected global::System.Web.UI.WebControls.Button btnResetFilter;
         protected global::System.Web.UI.WebControls.GridView gvCalendar;
     }
 }

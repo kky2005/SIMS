@@ -16,7 +16,7 @@
 
 <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" runat="server">
     <h2 class="page-title">Manage Courses</h2>
-    <p class="page-subtitle">Add, edit, delete and manage course information.</p>
+    <p class="page-subtitle">Add, edit, delete and manage course information with lecturer assignments.</p>
     <asp:Label ID="lblMessage" runat="server" CssClass="message-box d-block"></asp:Label>
 
     <div class="card-sims mb-4">
@@ -45,6 +45,16 @@
                     <asp:TextBox ID="txtSemester" runat="server" CssClass="form-control" TextMode="Number"></asp:TextBox>
                 </div>
                 <div class="col-md-2">
+                    <label class="form-label">Academic Year</label>
+                    <asp:TextBox ID="txtAcademicYear" runat="server" CssClass="form-control" TextMode="Number"></asp:TextBox>
+                    <small class="text-muted">Used for lecturer assignment.</small>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Teaching Lecturer(s)</label>
+                    <asp:ListBox ID="lbLecturers" runat="server" CssClass="form-select" SelectionMode="Multiple" Rows="4"></asp:ListBox>
+                    <small class="text-muted">Saved into CourseAssignments. Hold Ctrl to select multiple lecturers.</small>
+                </div>
+                <div class="col-md-2">
                     <label class="form-label">Active</label>
                     <asp:DropDownList ID="ddlIsActive" runat="server" CssClass="form-select">
                         <asp:ListItem Value="1">Yes</asp:ListItem>
@@ -59,7 +69,19 @@
         </div>
     </div>
 
-    <div class="card-sims">
+        <div class="card-sims mb-4">
+        <div class="card-header-sims"><h5>Filter Courses</h5></div>
+        <div class="card-body-sims">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4"><label class="form-label">Search Course</label><asp:TextBox ID="txtFilterCourse" runat="server" CssClass="form-control" placeholder="Search code/name/lecturer"></asp:TextBox></div>
+                <div class="col-md-3"><label class="form-label">Programme</label><asp:DropDownList ID="ddlFilterProgramme" runat="server" CssClass="form-select"></asp:DropDownList></div>
+                <div class="col-md-2"><label class="form-label">Active</label><asp:DropDownList ID="ddlFilterActive" runat="server" CssClass="form-select"><asp:ListItem Value="">All</asp:ListItem><asp:ListItem Value="1">Active</asp:ListItem><asp:ListItem Value="0">Inactive</asp:ListItem></asp:DropDownList></div>
+                <div class="col-md-3"><asp:Button ID="btnFilter" runat="server" Text="Filter" CssClass="btn btn-primary" OnClick="btnFilter_Click" /><asp:Button ID="btnResetFilter" runat="server" Text="Reset" CssClass="btn btn-secondary ms-2" OnClick="btnResetFilter_Click" CausesValidation="false" /></div>
+            </div>
+        </div>
+    </div>
+
+<div class="card-sims">
         <div class="card-header-sims"><h5>Course List</h5></div>
         <div class="card-body-sims">
             <asp:GridView ID="gvCourses" runat="server" CssClass="table table-bordered table-hover"
@@ -68,6 +90,8 @@
                     <asp:BoundField DataField="CourseCode" HeaderText="Code" />
                     <asp:BoundField DataField="CourseName" HeaderText="Course Name" />
                     <asp:BoundField DataField="ProgrammeName" HeaderText="Programme" />
+                    <asp:BoundField DataField="LecturerNames" HeaderText="Teaching Lecturer(s)" />
+                    <asp:BoundField DataField="AssignmentYears" HeaderText="Assignment Year/Sem" />
                     <asp:BoundField DataField="CreditHours" HeaderText="Credits" />
                     <asp:BoundField DataField="Semester" HeaderText="Semester" />
                     <asp:BoundField DataField="IsActiveText" HeaderText="Active" />
@@ -75,7 +99,7 @@
                         <ItemTemplate>
                             <div class="action-btns">
                                 <asp:LinkButton runat="server" CommandName="EditCourse" CommandArgument='<%# Eval("CourseId") %>' CssClass="btn btn-sm btn-warning">Edit</asp:LinkButton>
-                                <asp:LinkButton runat="server" CommandName="DeleteCourse" CommandArgument='<%# Eval("CourseId") %>' CssClass="btn btn-sm btn-danger" OnClientClick="return confirm('Delete this course?');">Delete</asp:LinkButton>
+                                <asp:LinkButton runat="server" CommandName="DeleteCourse" CommandArgument='<%# Eval("CourseId") %>' CssClass="btn btn-sm btn-warning" OnClientClick="return confirm('Deactivate this course?');">Deactivate</asp:LinkButton>
                             </div>
                         </ItemTemplate>
                     </asp:TemplateField>
