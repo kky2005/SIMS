@@ -558,6 +558,17 @@
         body.dark-mode .announcement-header small {
             color: #cbd5e1 !important;
         }
+
+        body.dark-mode .details-box {
+            background: #1e293b !important;
+            background-color: #1e293b !important;
+            color: #e5e7eb !important;
+            border-color: #334155 !important;
+        }
+        
+        body.dark-mode .details-box * {
+            color: #e5e7eb !important;
+        }
     </style>
 
     <asp:ContentPlaceHolder ID="HeadContent" runat="server" />
