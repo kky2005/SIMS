@@ -6,6 +6,7 @@ using System.Linq;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using SIMS.BLL;
 
 namespace SIMS.Student
 {
@@ -15,15 +16,18 @@ namespace SIMS.Student
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (Session["UserId"] == null)
+            if (Session["UserId"] == null ||
+                Session["UserRole"] == null ||
+                Session["UserRole"].ToString().ToLower() != "student")
             {
-                Response.Redirect("../Login.aspx");
+                Response.Redirect("~/Login.aspx");
                 return;
             }
 
             if (!IsPostBack)
             {
                 LoadStudentProfile();
+                LoadUnreadNotificationCount();
             }
         }
 
@@ -136,6 +140,30 @@ namespace SIMS.Student
 
             LoadStudentProfile();
         }
+        private void LoadUnreadNotificationCount()
+        {
+            int userId = Convert.ToInt32(Session["UserId"]);
+
+            int unreadCount =
+                notificationBLL.GetUnreadNotificationCount(userId);
+
+            if (unreadCount > 0)
+            {
+                string badgeText =
+                    unreadCount > 99 ? "99+" : unreadCount.ToString();
+
+                lblDashboardUnreadBadge.Text = badgeText;
+                lblDashboardUnreadBadge.Visible = true;
+
+                lblSidebarUnreadBadge.Text = badgeText;
+                lblSidebarUnreadBadge.Visible = true;
+            }
+            else
+            {
+                lblDashboardUnreadBadge.Visible = false;
+                lblSidebarUnreadBadge.Visible = false;
+            }
+        }
         protected void btnLogout_Click(object sender, EventArgs e)
         {
             Session.Clear();
@@ -143,5 +171,8 @@ namespace SIMS.Student
 
             Response.Redirect("../Login.aspx");
         }
+
+        private StudentNotificationBLL notificationBLL =
+            new StudentNotificationBLL();
     }
 }
