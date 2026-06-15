@@ -428,29 +428,68 @@ CREATE TABLE LoginAttempts (
 GO
 
 CREATE TABLE [dbo].[Admissions] (
-    [AdmissionId]    INT           IDENTITY (1, 1) NOT NULL,
-    [StudentId]      INT           NOT NULL,
-    [ProgrammeId]    INT           NOT NULL,
-    [IntakeYear]     SMALLINT      NOT NULL,
-    [IntakeSemester] TINYINT       NOT NULL,
-    [Status]         NVARCHAR (20) CONSTRAINT [DF_Admissions_Status] DEFAULT ('Pending') NULL,
-    [RequestedAt]    DATETIME2 (7) CONSTRAINT [DF_Admissions_RequestedAt] DEFAULT (sysutcdatetime()) NOT NULL,
-    [AdmittedAt]     DATETIME2 (7) NULL,
-    [RejectedAt]     DATETIME2 (7) NULL,
+    [AdmissionId]       INT            IDENTITY (1, 1) NOT NULL,
+    [UserId]       	INT            NOT NULL,
+    [StudentId]         INT            NULL,
+    [ProgrammeId]       INT            NOT NULL,
+    [IntakeYear]        SMALLINT       NOT NULL,
+    [IntakeSemester]    TINYINT        NOT NULL,
+
+    -- Personal Info
+    [FullName]          NVARCHAR (100) NOT NULL,
+    [DateOfBirth]       DATE           NOT NULL,
+    [Gender]            NVARCHAR (10)  NOT NULL,               -- 'Male', 'Female', 'Other'
+    [NationalId]        NVARCHAR (20)  NOT NULL,               -- IC / Passport number
+    [Nationality]       NVARCHAR (50)  NOT NULL,
+    [PhoneNumber]       NVARCHAR (20)  NOT NULL,
+
+    -- Academic Background
+    [PreviousInstitution] NVARCHAR (150) NOT NULL,
+    [HighestQualification] NVARCHAR (50) NOT NULL,             -- 'SPM', 'STPM', 'Diploma', 'Degree', etc.
+    [PreviousCGPA]      DECIMAL (3, 2) NULL,                   -- e.g. 3.75, NULL if not applicable
+
+    -- Status & Timestamps
+    [Status]            NVARCHAR (20)  CONSTRAINT [DF_Admissions_Status]      DEFAULT ('Pending') NOT NULL,
+    [RequestedAt]       DATETIME2 (7)  CONSTRAINT [DF_Admissions_RequestedAt] DEFAULT (sysutcdatetime()) NOT NULL,
+    [AdmittedAt]        DATETIME2 (7)  NULL,
+    [RejectedAt]        DATETIME2 (7)  NULL,
+    [RejectionReason]   NVARCHAR (255) NULL,                   -- HoD fills this on rejection
+
     PRIMARY KEY CLUSTERED ([AdmissionId] ASC),
-    CONSTRAINT [FK_Admissions_Students] FOREIGN KEY ([StudentId]) REFERENCES [dbo].[Students] ([StudentId]),
-    CONSTRAINT [FK_Admissions_Programmes] FOREIGN KEY ([ProgrammeId]) REFERENCES [dbo].[Programmes] ([ProgrammeId])
+
+    CONSTRAINT [FK_Admissions_Applicants]  FOREIGN KEY ([ApplicantId]) REFERENCES [dbo].[Applicants] ([UserId]),
+    CONSTRAINT [FK_Admissions_Students]    FOREIGN KEY ([StudentId])   REFERENCES [dbo].[Students] ([StudentId]),
+    CONSTRAINT [FK_Admissions_Programmes]  FOREIGN KEY ([ProgrammeId]) REFERENCES [dbo].[Programmes] ([ProgrammeId]),
+
+    CONSTRAINT [CK_Admissions_CGPA]   CHECK ([PreviousCGPA] BETWEEN 0.00 AND 4.00),
+    CONSTRAINT [CK_Admissions_Gender] CHECK ([Gender] IN ('Male', 'Female', 'Other')),
+    CONSTRAINT [CK_Admissions_Status] CHECK ([Status] IN ('Pending', 'Admitted', 'Rejected'))
 );
-
-
 GO
+
 CREATE NONCLUSTERED INDEX [IX_Admissions_Status_RequestedAt]
     ON [dbo].[Admissions]([Status] ASC, [RequestedAt] DESC);
-
-
 GO
-CREATE NONCLUSTERED INDEX [IX_Admissions_Student_Programme_Intake]
-    ON [dbo].[Admissions]([StudentId] ASC, [ProgrammeId] ASC, [IntakeYear] ASC, [IntakeSemester] ASC);
+
+CREATE NONCLUSTERED INDEX [IX_Admissions_Applicant_Programme_Intake]
+    ON [dbo].[Admissions]([ApplicantId] ASC, [ProgrammeId] ASC, [IntakeYear] ASC, [IntakeSemester] ASC);
+GO
+
+
+
+CREATE TABLE [dbo].[Applicants] (
+    [UserId]       INT            IDENTITY (1, 1) NOT NULL,
+    [Email]        NVARCHAR (256) NOT NULL,
+    [PasswordHash] NVARCHAR (256) NOT NULL,
+    [AdmissionId]  INT            NULL,                        -- filled after they submit the form
+    [IsActive]     BIT            CONSTRAINT [DF_Applicants_IsActive]  DEFAULT ((1)) NOT NULL,
+    [CreatedAt]    DATETIME2 (7)  CONSTRAINT [DF_Applicants_CreatedAt] DEFAULT (sysutcdatetime()) NOT NULL,
+
+    PRIMARY KEY CLUSTERED ([UserId] ASC),
+
+    CONSTRAINT [FK_Applicants_Admissions] FOREIGN KEY ([AdmissionId]) REFERENCES [dbo].[Admissions] ([AdmissionId])
+);
+GO
 
 CREATE TABLE CourseRegistrationRequests (
     RequestId INT IDENTITY(1,1) PRIMARY KEY,
