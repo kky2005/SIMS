@@ -28,6 +28,10 @@
             margin: 0;
         }
 
+        /* =========================
+           SIDEBAR
+           ========================= */
+
         .sidebar {
             position: fixed;
             top: 0;
@@ -117,6 +121,26 @@
             font-size: 15px;
         }
 
+        /* Sidebar notification badge */
+
+        .notification-sidebar-link {
+            position: relative;
+        }
+
+        .sidebar-notification-badge {
+            margin-left: auto;
+            min-width: 20px;
+            height: 20px;
+            padding: 0 6px;
+            border-radius: 999px;
+            background: #dc2626;
+            color: #fff;
+            font-size: 11px;
+            font-weight: bold;
+            line-height: 20px;
+            text-align: center;
+        }
+
         .sidebar-footer {
             padding: 16px 20px;
             border-top: 1px solid #334155;
@@ -125,6 +149,7 @@
         .btn-logout {
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
             width: 100%;
             padding: 9px 14px;
@@ -135,13 +160,16 @@
             font-size: 14px;
             cursor: pointer;
             text-decoration: none;
-            justify-content: center;
         }
 
         .btn-logout:hover {
             background: #b91c1c;
             color: #fff;
         }
+
+        /* =========================
+           MAIN LAYOUT
+           ========================= */
 
         .main-wrapper {
             margin-left: var(--sidebar-width);
@@ -176,36 +204,50 @@
             gap: 14px;
         }
 
+        /* Top-right notification bell */
+
+        .profile-notification-bell {
+            position: relative;
+            display: inline-block;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            color: #64748b;
+            font-size: 20px;
+            text-decoration: none;
+        }
+
+        .profile-notification-bell:hover {
+            color: #0d6efd;
+        }
+
+        .profile-notification-badge {
+            position: absolute;
+            top: -8px;
+            right: -10px;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 5px;
+            border-radius: 999px;
+            background: #dc2626;
+            color: #fff;
+            font-size: 11px;
+            font-weight: bold;
+            line-height: 18px;
+            text-align: center;
+            border: 2px solid #fff;
+            z-index: 10;
+        }
+
         .page-content {
             padding: 28px;
             flex: 1;
         }
 
-        .card-sims {
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-            border: 1px solid #e2e8f0;
-        }
-
-        .card-header-sims {
-            padding: 18px 24px;
-            border-bottom: 1px solid #e2e8f0;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .card-header-sims h5 {
-            font-size: 16px;
-            font-weight: bold;
-            color: #1e293b;
-            margin: 0;
-        }
-
-        .card-body-sims {
-            padding: 24px;
-        }
+        /* =========================
+           PROFILE
+           ========================= */
 
         .profile-hero {
             background: #fff;
@@ -245,6 +287,46 @@
             margin-top: 4px;
         }
 
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 999px;
+            background: #dcfce7;
+            color: #166534;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        /* =========================
+           CARDS
+           ========================= */
+
+        .card-sims {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            border: 1px solid #e2e8f0;
+        }
+
+        .card-header-sims {
+            padding: 18px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-header-sims h5 {
+            font-size: 16px;
+            font-weight: bold;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .card-body-sims {
+            padding: 24px;
+        }
+
         .info-row {
             padding: 14px 0;
             border-bottom: 1px solid #e2e8f0;
@@ -266,14 +348,19 @@
             font-weight: 600;
         }
 
-        .status-badge {
-            display: inline-block;
-            padding: 5px 12px;
-            border-radius: 999px;
-            background: #dcfce7;
-            color: #166534;
-            font-size: 13px;
-            font-weight: bold;
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 210px;
+            }
+
+            .main-wrapper {
+                margin-left: 210px;
+            }
+
+            .profile-hero {
+                align-items: flex-start;
+                flex-direction: column;
+            }
         }
     </style>
 </head>
@@ -281,7 +368,9 @@
 <body>
     <form id="form1" runat="server">
 
-        <!-- Sidebar -->
+        <!-- =========================
+             SIDEBAR
+             ========================= -->
         <div class="sidebar">
 
             <div class="sidebar-brand">
@@ -291,10 +380,13 @@
 
             <div class="sidebar-user">
                 <p class="user-name">
-                    Welcome, <asp:Label ID="lblSideName" runat="server"></asp:Label>
+                    Welcome,
+                    <asp:Label ID="lblSideName" runat="server"></asp:Label>
                 </p>
+
                 <span class="user-role">
-                    Student No: <asp:Label ID="lblSideStudentNo" runat="server"></asp:Label>
+                    Student No:
+                    <asp:Label ID="lblSideStudentNo" runat="server"></asp:Label>
                 </span>
             </div>
 
@@ -303,71 +395,110 @@
                 <div class="nav-label">Main</div>
 
                 <a href="Dashboard.aspx">
-                    <i class="fa fa-gauge"></i> Dashboard
+                    <i class="fa fa-gauge"></i>
+                    <span>Dashboard</span>
                 </a>
 
                 <a href="Profile.aspx" class="active">
-                    <i class="fa fa-user"></i> My Profile
+                    <i class="fa fa-user"></i>
+                    <span>My Profile</span>
                 </a>
 
                 <div class="nav-label">Academic</div>
 
                 <a href="EnrolledCourses.aspx">
-                    <i class="fa fa-book"></i> Enrolled Courses
+                    <i class="fa fa-book"></i>
+                    <span>Enrolled Courses</span>
                 </a>
 
                 <a href="CourseRegistration.aspx">
-                    <i class="fa fa-pen-to-square"></i> Course Registration
+                    <i class="fa fa-pen-to-square"></i>
+                    <span>Course Registration</span>
+                </a>
+
+                <a href="StudentPayment.aspx">
+                    <i class="fa fa-money-bill"></i>
+                    <span>Payments</span>
                 </a>
 
                 <a href="AttendanceRecord.aspx">
-                    <i class="fa fa-calendar-check"></i> Attendance Record
+                    <i class="fa fa-calendar-check"></i>
+                    <span>Attendance Record</span>
                 </a>
 
                 <a href="AcademicResults.aspx">
-                    <i class="fa fa-square-poll-vertical"></i> Academic Results
+                    <i class="fa fa-square-poll-vertical"></i>
+                    <span>Academic Results</span>
                 </a>
 
                 <div class="nav-label">Updates</div>
 
-                <a href="Notifications.aspx">
-                    <i class="fa fa-bell"></i> Notifications
+                <a href="Notifications.aspx" class="notification-sidebar-link">
+                    <i class="fa fa-bell"></i>
+
+                    <span>Notifications</span>
+
+                    <asp:Label
+                        ID="lblSidebarUnreadBadge"
+                        runat="server"
+                        CssClass="sidebar-notification-badge"
+                        Visible="false">
+                    </asp:Label>
                 </a>
 
             </div>
 
             <div class="sidebar-footer">
-                 <asp:LinkButton 
-                    ID="btnLogout" 
-                    runat="server" 
-                    CssClass="btn-logout" 
+                <asp:LinkButton
+                    ID="btnLogout"
+                    runat="server"
+                    CssClass="btn-logout"
                     OnClick="btnLogout_Click">
-                    <i class="fa fa-right-from-bracket"></i> Logout
+
+                    <i class="fa fa-right-from-bracket"></i>
+                    Logout
+
                 </asp:LinkButton>
             </div>
 
         </div>
 
-        <!-- Main wrapper -->
+        <!-- =========================
+             MAIN WRAPPER
+             ========================= -->
         <div class="main-wrapper">
 
-            <!-- Topbar -->
+            <!-- Top bar -->
             <div class="topbar">
+
                 <p class="topbar-title">My Profile</p>
 
                 <div class="topbar-right">
-                    <a href="Notifications.aspx" style="color:#64748b; font-size:20px;">
+
+                    <a href="Notifications.aspx" class="profile-notification-bell">
                         <i class="fa fa-bell"></i>
+
+                        <asp:Label
+                            ID="lblDashboardUnreadBadge"
+                            runat="server"
+                            CssClass="profile-notification-badge"
+                            Visible="false">
+                        </asp:Label>
                     </a>
-                    <span style="color:#64748b; font-size:14px;">Student</span>
+
+                    <span style="color:#64748b; font-size:14px;">
+                        Student
+                    </span>
+
                 </div>
             </div>
 
             <!-- Page content -->
             <div class="page-content">
 
-                <!-- Profile Hero -->
+                <!-- Profile hero -->
                 <div class="profile-hero">
+
                     <div class="profile-avatar">
                         <i class="fa fa-user-graduate"></i>
                     </div>
@@ -379,7 +510,9 @@
 
                         <div class="profile-sub">
                             <asp:Label ID="lblStudentNo" runat="server"></asp:Label>
-                            ·
+
+                            <span> · </span>
+
                             <asp:Label ID="lblProgrammeCode" runat="server"></asp:Label>
                         </div>
 
@@ -389,13 +522,15 @@
                             </span>
                         </div>
                     </div>
+
                 </div>
 
                 <div class="row g-3">
 
-                    <!-- Personal Information -->
+                    <!-- Personal information -->
                     <div class="col-md-6">
                         <div class="card-sims h-100">
+
                             <div class="card-header-sims">
                                 <h5>
                                     <i class="fa fa-id-card me-2" style="color:#0d6efd;"></i>
@@ -407,15 +542,23 @@
 
                                 <div class="info-row">
                                     <div class="info-label">Full Name</div>
+
                                     <div class="info-value">
-                                        <asp:Label ID="lblPersonalName" runat="server"></asp:Label>
+                                        <asp:Label
+                                            ID="lblPersonalName"
+                                            runat="server">
+                                        </asp:Label>
                                     </div>
                                 </div>
 
                                 <div class="info-row">
                                     <div class="info-label">Email Address</div>
+
                                     <div class="info-value">
-                                        <asp:Label ID="lblEmail" runat="server"></asp:Label>
+                                        <asp:Label
+                                            ID="lblEmail"
+                                            runat="server">
+                                        </asp:Label>
                                     </div>
                                 </div>
 
@@ -423,24 +566,26 @@
                                     <div class="info-label">Phone Number</div>
 
                                     <div class="input-group mt-2">
-                                        <asp:TextBox 
-                                            ID="txtPhone" 
-                                            runat="server" 
-                                            CssClass="form-control" 
+
+                                        <asp:TextBox
+                                            ID="txtPhone"
+                                            runat="server"
+                                            CssClass="form-control"
                                             MaxLength="20">
                                         </asp:TextBox>
 
-                                        <asp:Button 
-                                            ID="btnUpdatePhone" 
-                                            runat="server" 
-                                            Text="Update" 
-                                            CssClass="btn btn-primary" 
+                                        <asp:Button
+                                            ID="btnUpdatePhone"
+                                            runat="server"
+                                            Text="Update"
+                                            CssClass="btn btn-primary"
                                             OnClick="btnUpdatePhone_Click" />
+
                                     </div>
 
-                                    <asp:Label 
-                                        ID="lblPhoneMessage" 
-                                        runat="server" 
+                                    <asp:Label
+                                        ID="lblPhoneMessage"
+                                        runat="server"
                                         CssClass="d-block mt-2">
                                     </asp:Label>
                                 </div>
@@ -449,12 +594,19 @@
                                     <div class="info-label">Student Number</div>
 
                                     <div class="info-value">
-                                        <asp:Label ID="lblPersonalStudentNo" runat="server"></asp:Label>
+                                        <asp:Label
+                                            ID="lblPersonalStudentNo"
+                                            runat="server">
+                                        </asp:Label>
                                     </div>
 
                                     <div class="mt-2">
-                                        <a href="ChangePassword.aspx" class="btn btn-primary btn-sm">
-                                            <i class="fa fa-lock"></i> Change Password
+                                        <a href="ChangePassword.aspx"
+                                            class="btn btn-primary btn-sm">
+
+                                            <i class="fa fa-lock"></i>
+                                            Change Password
+
                                         </a>
                                     </div>
                                 </div>
@@ -463,12 +615,15 @@
                         </div>
                     </div>
 
-                    <!-- Academic Information -->
+                    <!-- Academic information -->
                     <div class="col-md-6">
                         <div class="card-sims h-100">
+
                             <div class="card-header-sims">
                                 <h5>
-                                    <i class="fa fa-graduation-cap me-2" style="color:#f59e0b;"></i>
+                                    <i class="fa fa-graduation-cap me-2"
+                                        style="color:#f59e0b;"></i>
+
                                     Academic Information
                                 </h5>
                             </div>
@@ -477,36 +632,56 @@
 
                                 <div class="info-row">
                                     <div class="info-label">Programme</div>
+
                                     <div class="info-value">
-                                        <asp:Label ID="lblProgrammeName" runat="server"></asp:Label>
+                                        <asp:Label
+                                            ID="lblProgrammeName"
+                                            runat="server">
+                                        </asp:Label>
                                     </div>
                                 </div>
 
                                 <div class="info-row">
                                     <div class="info-label">Intake Year</div>
+
                                     <div class="info-value">
-                                        <asp:Label ID="lblIntakeYear" runat="server"></asp:Label>
+                                        <asp:Label
+                                            ID="lblIntakeYear"
+                                            runat="server">
+                                        </asp:Label>
                                     </div>
                                 </div>
 
                                 <div class="info-row">
                                     <div class="info-label">Intake Semester</div>
+
                                     <div class="info-value">
-                                        <asp:Label ID="lblIntakeSemester" runat="server"></asp:Label>
+                                        <asp:Label
+                                            ID="lblIntakeSemester"
+                                            runat="server">
+                                        </asp:Label>
                                     </div>
                                 </div>
 
                                 <div class="info-row">
                                     <div class="info-label">Current Semester</div>
+
                                     <div class="info-value">
-                                        <asp:Label ID="lblCurrentSemester" runat="server"></asp:Label>
+                                        <asp:Label
+                                            ID="lblCurrentSemester"
+                                            runat="server">
+                                        </asp:Label>
                                     </div>
                                 </div>
 
                                 <div class="info-row">
                                     <div class="info-label">Admission Date</div>
+
                                     <div class="info-value">
-                                        <asp:Label ID="lblAdmissionDate" runat="server"></asp:Label>
+                                        <asp:Label
+                                            ID="lblAdmissionDate"
+                                            runat="server">
+                                        </asp:Label>
                                     </div>
                                 </div>
 
@@ -516,7 +691,7 @@
 
                 </div>
 
-                <!-- Back Button -->
+                <!-- Back button -->
                 <div class="mt-4">
                     <a href="Dashboard.aspx" class="btn btn-primary">
                         <i class="fa fa-arrow-left me-2"></i>

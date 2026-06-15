@@ -42,6 +42,15 @@ namespace SIMS.Student
         protected global::System.Web.UI.WebControls.Label lblSideStudentNo;
 
         /// <summary>
+        /// lblSidebarUnreadBadge control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblSidebarUnreadBadge;
+
+        /// <summary>
         /// btnLogout control.
         /// </summary>
         /// <remarks>
@@ -49,6 +58,15 @@ namespace SIMS.Student
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.LinkButton btnLogout;
+
+        /// <summary>
+        /// lblDashboardUnreadBadge control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblDashboardUnreadBadge;
 
         /// <summary>
         /// lblFullName control.

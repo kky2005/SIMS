@@ -7,8 +7,14 @@ namespace SIMS.Student
 {
     public partial class Dashboard : System.Web.UI.Page
     {
-        private string connStr = ConfigurationManager.ConnectionStrings["SIMS_DB"].ConnectionString;
-        private StudentResultBLL resultBLL = new StudentResultBLL();
+        private string connStr =
+            ConfigurationManager.ConnectionStrings["SIMS_DB"].ConnectionString;
+
+        private StudentResultBLL resultBLL =
+            new StudentResultBLL();
+
+        private StudentNotificationBLL notificationBLL =
+            new StudentNotificationBLL();
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -22,10 +28,14 @@ namespace SIMS.Student
 
             if (!IsPostBack)
             {
-                lblWelcome.Text = "Welcome, " + Session["FullName"].ToString();
-                lblStudentNo.Text = "Student No: " + Session["StudentNo"].ToString();
+                lblWelcome.Text =
+                    "Welcome, " + Session["FullName"].ToString();
+
+                lblStudentNo.Text =
+                    "Student No: " + Session["StudentNo"].ToString();
 
                 LoadDashboardSummary();
+                LoadUnreadNotificationCount();
             }
         }
 
@@ -39,10 +49,10 @@ namespace SIMS.Student
 
         private void LoadDashboardSummary()
         {
-            int studentId = Convert.ToInt32(Session["StudentId"]);
-            int userId = Convert.ToInt32(Session["UserId"]);
+            int studentId =
+                Convert.ToInt32(Session["StudentId"]);
 
-            // Recalculate GPA/CGPA before showing dashboard value
+            // Recalculate GPA and CGPA before displaying dashboard values
             resultBLL.RecalculateGPARecords(studentId);
 
             using (SqlConnection conn = new SqlConnection(connStr))
@@ -50,21 +60,30 @@ namespace SIMS.Student
                 conn.Open();
 
                 // =========================
-                // Current Semester
+                // CURRENT SEMESTER
                 // =========================
+
                 string semesterQuery = @"
                     SELECT CurrentSemester
                     FROM Students
                     WHERE StudentId = @StudentId";
 
-                SqlCommand semesterCmd = new SqlCommand(semesterQuery, conn);
-                semesterCmd.Parameters.AddWithValue("@StudentId", studentId);
+                SqlCommand semesterCmd =
+                    new SqlCommand(semesterQuery, conn);
 
-                object semesterResult = semesterCmd.ExecuteScalar();
+                semesterCmd.Parameters.AddWithValue(
+                    "@StudentId",
+                    studentId
+                );
 
-                if (semesterResult != null && semesterResult != DBNull.Value)
+                object semesterResult =
+                    semesterCmd.ExecuteScalar();
+
+                if (semesterResult != null &&
+                    semesterResult != DBNull.Value)
                 {
-                    lblCurrentSemester.Text = semesterResult.ToString();
+                    lblCurrentSemester.Text =
+                        semesterResult.ToString();
                 }
                 else
                 {
@@ -72,59 +91,107 @@ namespace SIMS.Student
                 }
 
                 // =========================
-                // Current Enrolled Courses
+                // CURRENT ENROLLED COURSES
                 // =========================
+
                 string enrolledQuery = @"
                     SELECT COUNT(*)
                     FROM Enrolments e
-                    INNER JOIN Students s 
+                    INNER JOIN Students s
                         ON e.StudentId = s.StudentId
                     WHERE e.StudentId = @StudentId
                       AND e.Semester = s.CurrentSemester
                       AND e.Status = 'Active'";
 
-                SqlCommand enrolledCmd = new SqlCommand(enrolledQuery, conn);
-                enrolledCmd.Parameters.AddWithValue("@StudentId", studentId);
+                SqlCommand enrolledCmd =
+                    new SqlCommand(enrolledQuery, conn);
 
-                object enrolledResult = enrolledCmd.ExecuteScalar();
-                lblEnrolledCourses.Text = enrolledResult != null ? enrolledResult.ToString() : "0";
+                enrolledCmd.Parameters.AddWithValue(
+                    "@StudentId",
+                    studentId
+                );
+
+                object enrolledResult =
+                    enrolledCmd.ExecuteScalar();
+
+                if (enrolledResult != null &&
+                    enrolledResult != DBNull.Value)
+                {
+                    lblEnrolledCourses.Text =
+                        enrolledResult.ToString();
+                }
+                else
+                {
+                    lblEnrolledCourses.Text = "0";
+                }
 
                 // =========================
-                // Latest CGPA
+                // LATEST CGPA
                 // =========================
+
                 string cgpaQuery = @"
                     SELECT TOP 1 CGPA
                     FROM GPARecords
                     WHERE StudentId = @StudentId
-                    ORDER BY AcademicYear DESC, Semester DESC, CalculatedAt DESC";
+                    ORDER BY
+                        AcademicYear DESC,
+                        Semester DESC,
+                        CalculatedAt DESC";
 
-                SqlCommand cgpaCmd = new SqlCommand(cgpaQuery, conn);
-                cgpaCmd.Parameters.AddWithValue("@StudentId", studentId);
+                SqlCommand cgpaCmd =
+                    new SqlCommand(cgpaQuery, conn);
 
-                object cgpaResult = cgpaCmd.ExecuteScalar();
+                cgpaCmd.Parameters.AddWithValue(
+                    "@StudentId",
+                    studentId
+                );
 
-                if (cgpaResult != null && cgpaResult != DBNull.Value)
+                object cgpaResult =
+                    cgpaCmd.ExecuteScalar();
+
+                if (cgpaResult != null &&
+                    cgpaResult != DBNull.Value)
                 {
-                    lblCGPA.Text = Convert.ToDecimal(cgpaResult).ToString("0.00");
+                    lblCGPA.Text =
+                        Convert.ToDecimal(cgpaResult).ToString("0.00");
                 }
                 else
                 {
                     lblCGPA.Text = "-";
                 }
+            }
+        }
 
-                // =========================
-                // Notifications Count
-                // =========================
-                string notificationQuery = @"
-                    SELECT COUNT(*)
-                    FROM Notifications
-                    WHERE UserId = @UserId";
+        private void LoadUnreadNotificationCount()
+        {
+            int userId =
+                Convert.ToInt32(Session["UserId"]);
 
-                SqlCommand notificationCmd = new SqlCommand(notificationQuery, conn);
-                notificationCmd.Parameters.AddWithValue("@UserId", userId);
+            int unreadCount =
+                notificationBLL.GetUnreadNotificationCount(userId);
 
-                object notificationResult = notificationCmd.ExecuteScalar();
-                lblNotifications.Text = notificationResult != null ? notificationResult.ToString() : "0";
+            string badgeText =
+                unreadCount > 99
+                    ? "99+"
+                    : unreadCount.ToString();
+
+            // Dashboard notification summary card
+            lblNotifications.Text = unreadCount.ToString();
+
+            if (unreadCount > 0)
+            {
+                // Top-right bell badge
+                lblDashboardUnreadBadge.Text = badgeText;
+                lblDashboardUnreadBadge.Visible = true;
+
+                // Sidebar notification badge
+                lblSidebarUnreadBadge.Text = badgeText;
+                lblSidebarUnreadBadge.Visible = true;
+            }
+            else
+            {
+                lblDashboardUnreadBadge.Visible = false;
+                lblSidebarUnreadBadge.Visible = false;
             }
         }
     }

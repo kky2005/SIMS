@@ -8,7 +8,6 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <!-- Bootstrap + Font Awesome -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
 
@@ -117,6 +116,24 @@
             font-size: 15px;
         }
 
+        .notification-sidebar-link {
+            position: relative;
+        }
+
+        .sidebar-notification-badge {
+            margin-left: auto;
+            min-width: 20px;
+            height: 20px;
+            padding: 0 6px;
+            border-radius: 999px;
+            background: #dc2626;
+            color: #fff;
+            font-size: 11px;
+            font-weight: bold;
+            line-height: 20px;
+            text-align: center;
+        }
+
         .sidebar-footer {
             padding: 16px 20px;
             border-top: 1px solid #334155;
@@ -174,6 +191,35 @@
             display: flex;
             align-items: center;
             gap: 14px;
+        }
+
+        .notification-bell {
+            position: relative;
+            display: inline-block;
+            color: #64748b;
+            font-size: 20px;
+            text-decoration: none;
+        }
+
+        .notification-bell:hover {
+            color: #0d6efd;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -8px;
+            right: -10px;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 5px;
+            border-radius: 999px;
+            background: #dc2626;
+            color: #fff;
+            font-size: 11px;
+            font-weight: bold;
+            line-height: 18px;
+            text-align: center;
+            border: 2px solid #fff;
         }
 
         .page-content {
@@ -264,6 +310,22 @@
             gap: 10px;
             font-size: 14px;
         }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 210px;
+            }
+
+            .main-wrapper {
+                margin-left: 210px;
+            }
+
+            .welcome-card {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 14px;
+            }
+        }
     </style>
 </head>
 
@@ -282,6 +344,7 @@
                 <p class="user-name">
                     <asp:Label ID="lblWelcome" runat="server"></asp:Label>
                 </p>
+
                 <span class="user-role">
                     <asp:Label ID="lblStudentNo" runat="server"></asp:Label>
                 </span>
@@ -292,50 +355,69 @@
                 <div class="nav-label">Main</div>
 
                 <a href="Dashboard.aspx" class="active">
-                    <i class="fa fa-gauge"></i> Dashboard
+                    <i class="fa fa-gauge"></i>
+                    <span>Dashboard</span>
                 </a>
 
                 <a href="Profile.aspx">
-                    <i class="fa fa-user"></i> My Profile
+                    <i class="fa fa-user"></i>
+                    <span>My Profile</span>
                 </a>
 
                 <div class="nav-label">Academic</div>
 
                 <a href="EnrolledCourses.aspx">
-                    <i class="fa fa-book"></i> Enrolled Courses
+                    <i class="fa fa-book"></i>
+                    <span>Enrolled Courses</span>
                 </a>
 
                 <a href="CourseRegistration.aspx">
-                    <i class="fa fa-pen-to-square"></i> Course Registration
+                    <i class="fa fa-pen-to-square"></i>
+                    <span>Course Registration</span>
                 </a>
 
                 <a href="StudentPayment.aspx">
-                    <i class="fa fa-money-bill"></i> Payments
+                    <i class="fa fa-money-bill"></i>
+                    <span>Payments</span>
                 </a>
 
                 <a href="AttendanceRecord.aspx">
-                    <i class="fa fa-calendar-check"></i> Attendance Record
+                    <i class="fa fa-calendar-check"></i>
+                    <span>Attendance Record</span>
                 </a>
 
                 <a href="AcademicResults.aspx">
-                    <i class="fa fa-square-poll-vertical"></i> Academic Results
+                    <i class="fa fa-square-poll-vertical"></i>
+                    <span>Academic Results</span>
                 </a>
 
                 <div class="nav-label">Updates</div>
 
-                <a href="Notifications.aspx">
-                    <i class="fa fa-bell"></i> Notifications
+                <a href="Notifications.aspx" class="notification-sidebar-link">
+                    <i class="fa fa-bell"></i>
+
+                    <span>Notifications</span>
+
+                    <asp:Label
+                        ID="lblSidebarUnreadBadge"
+                        runat="server"
+                        CssClass="sidebar-notification-badge"
+                        Visible="false">
+                    </asp:Label>
                 </a>
 
             </div>
 
             <div class="sidebar-footer">
-                <asp:LinkButton 
-                    ID="btnLogout" 
-                    runat="server" 
-                    CssClass="btn-logout" 
+                <asp:LinkButton
+                    ID="btnLogout"
+                    runat="server"
+                    CssClass="btn-logout"
                     OnClick="btnLogout_Click">
-                    <i class="fa fa-right-from-bracket"></i> Logout
+
+                    <i class="fa fa-right-from-bracket"></i>
+                    Logout
+
                 </asp:LinkButton>
             </div>
 
@@ -344,15 +426,28 @@
         <!-- Main wrapper -->
         <div class="main-wrapper">
 
-            <!-- Topbar -->
+            <!-- Top bar -->
             <div class="topbar">
+
                 <p class="topbar-title">Student Portal</p>
 
                 <div class="topbar-right">
-                    <a href="Notifications.aspx" style="color:#64748b; font-size:20px;">
+
+                    <a href="Notifications.aspx" class="notification-bell">
                         <i class="fa fa-bell"></i>
+
+                        <asp:Label
+                            ID="lblDashboardUnreadBadge"
+                            runat="server"
+                            CssClass="notification-badge"
+                            Visible="false">
+                        </asp:Label>
                     </a>
-                    <span style="color:#64748b; font-size:14px;">Student</span>
+
+                    <span style="color:#64748b; font-size:14px;">
+                        Student
+                    </span>
+
                 </div>
             </div>
 
@@ -361,10 +456,12 @@
 
                 <!-- Welcome banner -->
                 <div class="welcome-card">
+
                     <div>
                         <h4 style="margin:0; color:#1e293b; font-weight:bold;">
                             Welcome to your dashboard 👋
                         </h4>
+
                         <p style="margin:4px 0 0; color:#64748b; font-size:14px;">
                             View your courses, attendance, results, and academic updates here.
                         </p>
@@ -374,68 +471,101 @@
                         <i class="fa fa-calendar"></i>
                         <%= DateTime.Now.ToString("dddd, dd MMMM yyyy") %>
                     </div>
+
                 </div>
 
-                <!-- Stat cards -->
+                <!-- Statistics -->
                 <div class="row g-3 mb-4">
 
-                    <!-- Current Semester -->
+                    <!-- Current semester -->
                     <div class="col-md-3">
                         <div class="stat-card">
+
                             <div class="stat-icon" style="background:#dbeafe;">
                                 <i class="fa fa-layer-group" style="color:#1d4ed8;"></i>
                             </div>
+
                             <div>
                                 <p class="stat-label">Current Semester</p>
+
                                 <div class="stat-value">
-                                    <asp:Label ID="lblCurrentSemester" runat="server" Text="-"></asp:Label>
+                                    <asp:Label
+                                        ID="lblCurrentSemester"
+                                        runat="server"
+                                        Text="-">
+                                    </asp:Label>
                                 </div>
                             </div>
+
                         </div>
                     </div>
 
-                    <!-- Enrolled Courses -->
+                    <!-- Enrolled courses -->
                     <div class="col-md-3">
                         <div class="stat-card">
+
                             <div class="stat-icon" style="background:#dcfce7;">
                                 <i class="fa fa-book" style="color:#166534;"></i>
                             </div>
+
                             <div>
                                 <p class="stat-label">Enrolled Courses</p>
+
                                 <div class="stat-value">
-                                    <asp:Label ID="lblEnrolledCourses" runat="server" Text="0"></asp:Label>
+                                    <asp:Label
+                                        ID="lblEnrolledCourses"
+                                        runat="server"
+                                        Text="0">
+                                    </asp:Label>
                                 </div>
                             </div>
+
                         </div>
                     </div>
 
                     <!-- CGPA -->
                     <div class="col-md-3">
                         <div class="stat-card">
+
                             <div class="stat-icon" style="background:#fef3c7;">
                                 <i class="fa fa-graduation-cap" style="color:#b45309;"></i>
                             </div>
+
                             <div>
                                 <p class="stat-label">CGPA</p>
+
                                 <div class="stat-value">
-                                    <asp:Label ID="lblCGPA" runat="server" Text="0.00"></asp:Label>
+                                    <asp:Label
+                                        ID="lblCGPA"
+                                        runat="server"
+                                        Text="0.00">
+                                    </asp:Label>
                                 </div>
                             </div>
+
                         </div>
                     </div>
 
-                    <!-- Notifications -->
+                    <!-- Unread notifications -->
                     <div class="col-md-3">
                         <div class="stat-card">
+
                             <div class="stat-icon" style="background:#ede9fe;">
                                 <i class="fa fa-bell" style="color:#6d28d9;"></i>
                             </div>
+
                             <div>
-                                <p class="stat-label">Notifications</p>
+                                <p class="stat-label">Unread Notifications</p>
+
                                 <div class="stat-value">
-                                    <asp:Label ID="lblNotifications" runat="server" Text="0"></asp:Label>
+                                    <asp:Label
+                                        ID="lblNotifications"
+                                        runat="server"
+                                        Text="0">
+                                    </asp:Label>
                                 </div>
                             </div>
+
                         </div>
                     </div>
 
@@ -446,6 +576,7 @@
                     <!-- Student overview -->
                     <div class="col-md-8">
                         <div class="card-sims">
+
                             <div class="card-header-sims">
                                 <h5>
                                     <i class="fa fa-id-card me-2" style="color:#0d6efd;"></i>
@@ -454,11 +585,13 @@
                             </div>
 
                             <div class="card-body-sims">
+
                                 <p style="color:#64748b; margin-bottom:18px;">
                                     Use the dashboard shortcuts to access your academic information quickly.
                                 </p>
 
                                 <div class="row g-3">
+
                                     <div class="col-md-6">
                                         <a href="Profile.aspx" class="quick-link bg-light text-dark border">
                                             <i class="fa fa-user text-primary"></i>
@@ -486,14 +619,17 @@
                                             View Academic Results
                                         </a>
                                     </div>
+
                                 </div>
                             </div>
+
                         </div>
                     </div>
 
                     <!-- Quick actions -->
                     <div class="col-md-4">
                         <div class="card-sims h-100">
+
                             <div class="card-header-sims">
                                 <h5>
                                     <i class="fa fa-bolt me-2" style="color:#f59e0b;"></i>
@@ -502,24 +638,32 @@
                             </div>
 
                             <div class="card-body-sims">
+
                                 <div class="d-grid gap-2">
+
                                     <a href="CourseRegistration.aspx" class="btn btn-outline-primary text-start">
-                                        <i class="fa fa-pen-to-square me-2"></i> Register Course
+                                        <i class="fa fa-pen-to-square me-2"></i>
+                                        Register Course
                                     </a>
 
                                     <a href="EnrolledCourses.aspx" class="btn btn-outline-success text-start">
-                                        <i class="fa fa-book me-2"></i> My Enrolled Courses
+                                        <i class="fa fa-book me-2"></i>
+                                        My Enrolled Courses
                                     </a>
 
                                     <a href="AcademicResults.aspx" class="btn btn-outline-warning text-start">
-                                        <i class="fa fa-graduation-cap me-2"></i> Check Results
+                                        <i class="fa fa-graduation-cap me-2"></i>
+                                        Check Results
                                     </a>
 
                                     <a href="Notifications.aspx" class="btn btn-outline-secondary text-start">
-                                        <i class="fa fa-bell me-2"></i> View Notifications
+                                        <i class="fa fa-bell me-2"></i>
+                                        View Notifications
                                     </a>
+
                                 </div>
                             </div>
+
                         </div>
                     </div>
 

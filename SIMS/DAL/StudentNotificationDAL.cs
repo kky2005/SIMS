@@ -7,8 +7,10 @@ namespace SIMS.DAL
 {
     public class StudentNotificationDAL
     {
-        private string connStr = ConfigurationManager.ConnectionStrings["SIMS_DB"].ConnectionString;
+        private string connStr =
+            ConfigurationManager.ConnectionStrings["SIMS_DB"].ConnectionString;
 
+        // GET ALL NOTIFICATIONS FOR THE LOGGED-IN USER
         public DataTable GetStudentNotifications(int userId)
         {
             using (SqlConnection conn = new SqlConnection(connStr))
@@ -22,7 +24,7 @@ namespace SIMS.DAL
                         IsRead,
                         CreatedAt,
                         LinkUrl,
-                        CASE 
+                        CASE
                             WHEN IsRead = 1 THEN 'Read'
                             ELSE 'Unread'
                         END AS ReadStatus
@@ -35,12 +37,14 @@ namespace SIMS.DAL
 
                 SqlDataAdapter da = new SqlDataAdapter(cmd);
                 DataTable dt = new DataTable();
+
                 da.Fill(dt);
 
                 return dt;
             }
         }
 
+        // GET NUMBER OF UNREAD NOTIFICATIONS
         public int GetUnreadNotificationCount(int userId)
         {
             using (SqlConnection conn = new SqlConnection(connStr))
@@ -49,16 +53,25 @@ namespace SIMS.DAL
                     SELECT COUNT(*)
                     FROM Notifications
                     WHERE UserId = @UserId
-                    AND IsRead = 0";
+                      AND IsRead = 0";
 
                 SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@UserId", userId);
 
                 conn.Open();
-                return Convert.ToInt32(cmd.ExecuteScalar());
+
+                object result = cmd.ExecuteScalar();
+
+                if (result != null && result != DBNull.Value)
+                {
+                    return Convert.ToInt32(result);
+                }
+
+                return 0;
             }
         }
 
+        // MARK ONE NOTIFICATION AS READ
         public bool MarkNotificationAsRead(int notificationId, int userId)
         {
             using (SqlConnection conn = new SqlConnection(connStr))
@@ -67,19 +80,21 @@ namespace SIMS.DAL
                     UPDATE Notifications
                     SET IsRead = 1
                     WHERE NotificationId = @NotificationId
-                    AND UserId = @UserId";
+                      AND UserId = @UserId";
 
                 SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@NotificationId", notificationId);
                 cmd.Parameters.AddWithValue("@UserId", userId);
 
                 conn.Open();
+
                 int rowsAffected = cmd.ExecuteNonQuery();
 
                 return rowsAffected > 0;
             }
         }
 
+        // MARK ALL USER NOTIFICATIONS AS READ
         public bool MarkAllNotificationsAsRead(int userId)
         {
             using (SqlConnection conn = new SqlConnection(connStr))
@@ -88,18 +103,20 @@ namespace SIMS.DAL
                     UPDATE Notifications
                     SET IsRead = 1
                     WHERE UserId = @UserId
-                    AND IsRead = 0";
+                      AND IsRead = 0";
 
                 SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@UserId", userId);
 
                 conn.Open();
+
                 int rowsAffected = cmd.ExecuteNonQuery();
 
                 return rowsAffected > 0;
             }
         }
 
+        // GET THE PAGE LINK STORED FOR A NOTIFICATION
         public string GetNotificationLinkUrl(int notificationId, int userId)
         {
             using (SqlConnection conn = new SqlConnection(connStr))
@@ -108,13 +125,14 @@ namespace SIMS.DAL
                     SELECT LinkUrl
                     FROM Notifications
                     WHERE NotificationId = @NotificationId
-                    AND UserId = @UserId";
+                      AND UserId = @UserId";
 
                 SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@NotificationId", notificationId);
                 cmd.Parameters.AddWithValue("@UserId", userId);
 
                 conn.Open();
+
                 object result = cmd.ExecuteScalar();
 
                 if (result != null && result != DBNull.Value)
@@ -125,21 +143,23 @@ namespace SIMS.DAL
                 return "";
             }
         }
-        
+
+        // DELETE ONE NOTIFICATION
         public bool DeleteNotification(int notificationId, int userId)
         {
             using (SqlConnection conn = new SqlConnection(connStr))
             {
                 string query = @"
-            DELETE FROM Notifications
-            WHERE NotificationId = @NotificationId
-            AND UserId = @UserId";
+                    DELETE FROM Notifications
+                    WHERE NotificationId = @NotificationId
+                      AND UserId = @UserId";
 
                 SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@NotificationId", notificationId);
                 cmd.Parameters.AddWithValue("@UserId", userId);
 
                 conn.Open();
+
                 int rowsAffected = cmd.ExecuteNonQuery();
 
                 return rowsAffected > 0;
