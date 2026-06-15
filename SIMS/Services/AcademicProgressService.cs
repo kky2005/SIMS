@@ -58,10 +58,6 @@ namespace SIMS.Services
                         ISNULL(agg.AverageMarks, 0.0) AS AverageMarks,
                         ISNULL(agg.MaxMarks, 0.0) AS MaxMarks,
 
-                        -- Submission Metrics
-                        ISNULL(sub.SubmittedAssignments, 0) AS SubmittedAssignments,
-                        ISNULL(sub.LateSubmissions, 0) AS LateSubmissions,
-
                         -- Dynamic GPA Calculation (Aligned with Dashboard performance logic)
                         ISNULL((
                             SELECT TOP 1 gs.GradePoint 
@@ -117,19 +113,7 @@ namespace SIMS.Services
                           AND a.Semester = @Semester
                         GROUP BY sm.StudentId
                     ) agg ON agg.StudentId = s.StudentId
-                    LEFT JOIN (
-                        SELECT 
-                            asub.StudentId,
-                            COUNT(*) AS SubmittedAssignments,
-                            SUM(CASE WHEN DATEDIFF(day, a.DueDate, asub.SubmittedAt) > 0 THEN 1 ELSE 0 END) AS LateSubmissions
-                        FROM AssessmentSubmissions asub
-                        INNER JOIN Assessments a ON a.AssessmentId = asub.AssessmentId
-                        WHERE a.CourseId = @CourseId 
-                          AND a.AcademicYear = @AcademicYear
-                          AND a.Semester = @Semester
-                          AND asub.IsLatest = 1
-                        GROUP BY asub.StudentId
-                    ) sub ON sub.StudentId = s.StudentId
+                    
                     LEFT JOIN (
                         SELECT StudentId, CGPA, CalculatedAt,
                                ROW_NUMBER() OVER (PARTITION BY StudentId ORDER BY CalculatedAt DESC) as rn
@@ -167,9 +151,6 @@ namespace SIMS.Services
                             metrics.CompletedAssessments = Convert.ToInt32(reader["CompletedAssessments"]);
                             metrics.AverageMarks = Convert.ToDouble(reader["AverageMarks"]);
                             metrics.MaxMarks = Convert.ToDouble(reader["MaxMarks"]);
-
-                            metrics.SubmittedAssignments = Convert.ToInt32(reader["SubmittedAssignments"]);
-                            metrics.LateSubmissions = Convert.ToInt32(reader["LateSubmissions"]);
 
                             metrics.CurrentGPA = Convert.ToDouble(reader["CurrentGPA"]);
                             metrics.CGPA = Convert.ToDouble(reader["CGPA"]);
@@ -261,8 +242,6 @@ namespace SIMS.Services
                             ELSE 'Low'
                         END AS RiskLevel,
 
-                        ISNULL(sub.SubmittedAssignments, 0) AS SubmittedAssignments,
-                        ISNULL(sub.LateSubmissions, 0) AS LateSubmissions
                     FROM Enrolments e
                     INNER JOIN Students s ON s.StudentId = e.StudentId
                     INNER JOIN Users u ON u.UserId = s.UserId
@@ -290,19 +269,7 @@ namespace SIMS.Services
                                ROW_NUMBER() OVER (PARTITION BY StudentId ORDER BY CalculatedAt DESC) as rn
                         FROM GPARecords
                     ) gpa ON gpa.StudentId = s.StudentId AND gpa.rn = 1
-                    LEFT JOIN (
-                        SELECT 
-                            asub.StudentId,
-                            COUNT(*) AS SubmittedAssignments,
-                            SUM(CASE WHEN DATEDIFF(day, a.DueDate, asub.SubmittedAt) > 0 THEN 1 ELSE 0 END) AS LateSubmissions
-                        FROM AssessmentSubmissions asub
-                        INNER JOIN Assessments a ON a.AssessmentId = asub.AssessmentId
-                        WHERE a.CourseId = @CourseId 
-                          AND a.AcademicYear = @AcademicYear
-                          AND a.Semester = @Semester
-                          AND asub.IsLatest = 1
-                        GROUP BY asub.StudentId
-                    ) sub ON sub.StudentId = s.StudentId
+                    
                     WHERE e.CourseId = @CourseId
                       AND e.AcademicYear = @AcademicYear
                       AND e.Semester = @Semester
@@ -365,9 +332,6 @@ namespace SIMS.Services
                 riskScore += 12;
             else if (metrics.CurrentGPA < 2.5)
                 riskScore += 5;
-
-            if (metrics.SubmittedAssignments > 0 && metrics.LateSubmissions > metrics.SubmittedAssignments * 0.5)
-                riskScore += 10;
 
             if (riskScore >= 70)
                 return RiskLevel.High;
@@ -691,10 +655,6 @@ namespace SIMS.Services
         public int CompletedAssessments { get; set; }
         public double AverageMarks { get; set; }
         public double MaxMarks { get; set; }
-
-        public int SubmittedAssignments { get; set; }
-        public int LateSubmissions { get; set; }
-
         public double CurrentGPA { get; set; }
         public double CGPA { get; set; }
         public DateTime? LastGPAUpdate { get; set; }
