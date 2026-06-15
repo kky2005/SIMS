@@ -394,7 +394,6 @@
                                             <th>Student No</th>
                                             <th>Student Name</th>
                                             <th>Email</th>
-                                            <th style="width: 120px;">Submission</th>
                                             <th style="width: 100px;">Mark</th>
                                             <th style="width: 80px;">Grade</th>
                                         </tr>
@@ -406,22 +405,7 @@
                                                     <td><%# Eval("StudentNo") %></td>
                                                     <td class="student-name"><%# Eval("FullName") %></td>
                                                     <td><%# Eval("Email") %></td>
-                                                    <td>
-                                                        <asp:Panel ID="pnlSubmission" runat="server">
-                                                            <asp:Panel ID="pnlHasSubmission" runat="server" Visible="false">
-                                                                <button type="button" class="btn btn-sm btn-info" 
-                                                                        onclick="openSubmissionModal('<%# Eval("FullName") %>', '<%# Eval("FileName") %>', '<%# Eval("SubmittedAt") %>', '<%# Eval("SubmissionStatus") %>', '<%# Eval("FileUrl") %>');"
-                                                                        style="width: 100%; padding: 6px 8px; font-size: 12px;">
-                                                                    <i class="fa fa-file-o"></i> View
-                                                                </button>
-                                                            </asp:Panel>
-                                                            <asp:Panel ID="pnlNoSubmission" runat="server" Visible="false">
-                                                                <span style="color: #94a3b8; font-size: 12px; display: block; padding: 6px 8px; text-align: center; background: #f1f5f9; border-radius: 4px;">
-                                                                    <i class="fa fa-times-circle"></i> Not Submitted
-                                                                </span>
-                                                            </asp:Panel>
-                                                        </asp:Panel>
-                                                    </td>
+                                                    
                                                     <td>
                                                         <input type="number" 
                                                             id="mark_<%# Eval("StudentId") %>"
@@ -475,46 +459,6 @@
 
     <asp:HiddenField ID="hidCourseId" runat="server" />
 
-    <div id="submissionModal" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
-        <div style="background: white; border-radius: 8px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
-            <div style="padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
-                <h4 style="margin: 0; color: #1e293b;">Student Submission Details</h4>
-                <button type="button" onclick="closeSubmissionModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #64748b;">&times;</button>
-            </div>
-            
-            <div style="padding: 20px;">
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; font-weight: bold; color: #1e293b; margin-bottom: 5px;">Student Name:</label>
-                    <p id="submissionStudentName" style="margin: 0; color: #475569;"></p>
-                </div>
-                
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; font-weight: bold; color: #1e293b; margin-bottom: 5px;">File Name:</label>
-                    <p id="submissionFileName" style="margin: 0; color: #475569;"></p>
-                </div>
-                
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; font-weight: bold; color: #1e293b; margin-bottom: 5px;">Submitted At:</label>
-                    <p id="submissionDate" style="margin: 0; color: #475569;"></p>
-                </div>
-                
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; font-weight: bold; color: #1e293b; margin-bottom: 5px;">Status:</label>
-                    <p id="submissionStatus" style="margin: 0; color: #475569;"></p>
-                </div>
-                
-                <div id="submissionPreview" style="margin-bottom: 20px; padding: 15px; background: #f1f5f9; border-radius: 6px; display: none;">
-                    <label style="display: block; font-weight: bold; color: #1e293b; margin-bottom: 10px;">Preview:</label>
-                    <iframe id="submissionFrame" style="width: 100%; height: 300px; border: none; border-radius: 4px;" title="Submission Preview"></iframe>
-                </div>
-            </div>
-            
-            <div style="padding: 20px; border-top: 1px solid #e2e8f0; background: #f8fafc; display: flex; gap: 10px; justify-content: flex-end;">
-                <button type="button" onclick="downloadSubmission()" class="btn btn-success" style="margin: 0;">
-                    <i class="fa fa-download"></i> Download File
-                </button>
-                <button type="button" onclick="closeSubmissionModal()" class="btn btn-outline-secondary" style="margin: 0;">Close</button>
-            </div>
         </div>
     </div>
 
@@ -544,46 +488,7 @@
             setTimeout(function () { errorPanel.style.display = 'none'; }, 5000);
         }
 
-        var currentSubmissionUrl = '';
-        var currentFileName = '';
-        function openSubmissionModal(studentName, fileName, submittedAt, status, fileUrl) {
-            currentSubmissionUrl = fileUrl;
-            currentFileName = fileName;
-
-            document.getElementById('submissionStudentName').innerText = studentName;
-            document.getElementById('submissionFileName').innerText = fileName;
-            document.getElementById('submissionDate').innerText = new Date(submittedAt).toLocaleString();
-            document.getElementById('submissionStatus').innerText = status;
-
-            // Show preview for PDF and image files
-            var ext = fileName.split('.').pop().toLowerCase();
-            if (['pdf', 'jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
-                document.getElementById('submissionPreview').style.display = 'block';
-                document.getElementById('submissionFrame').src = fileUrl;
-            } else {
-                document.getElementById('submissionPreview').style.display = 'none';
-            }
-
-            document.getElementById('submissionModal').style.display = 'flex';
-        }
-
-        function closeSubmissionModal() {
-            document.getElementById('submissionModal').style.display = 'none';
-            document.getElementById('submissionFrame').src = '';
-        }
-
-        function downloadSubmission() {
-            if (currentSubmissionUrl) {
-                window.open(currentSubmissionUrl, '_blank');
-            }
-        }
-
-        // Close modal when clicking outside
-        document.getElementById('submissionModal').addEventListener('click', function (e) {
-            if (e.target === this) {
-                closeSubmissionModal();
-            }
-        });
+        
     </script>
 
 </asp:Content>
