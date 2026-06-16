@@ -18,7 +18,7 @@ namespace SIMS
             if (userId == 0 || string.IsNullOrEmpty(email))
             {
                 // Not an authenticated applicant — send to admission login
-                Response.Redirect("~/AdmissionLogin.aspx");
+                Response.Redirect("AdmissionLogin.aspx");
                 return;
             }
 
@@ -34,7 +34,7 @@ namespace SIMS
             Session.Remove(AuthenticationHelper.SESSION_USER_ID);
             Session.Remove(AuthenticationHelper.SESSION_EMAIL);
             Session.Abandon();
-            Response.Redirect("~/AdmissionLogin.aspx");
+            Response.Redirect("AdmissionLogin.aspx");
         }
     }
 }
