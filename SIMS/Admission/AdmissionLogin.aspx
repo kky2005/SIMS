@@ -94,7 +94,7 @@
 
                 <!-- Registration Link -->
                 <div class="lnkResgister" runat="server">
-                    <asp:HyperLink ID="lnkRegister" runat="server" NavigateUrl="~/AdmissionRegister.aspx" CssClass="text-sm text-blue-600 hover:underline">
+                    <asp:HyperLink ID="lnkRegister" runat="server" NavigateUrl="AdmissionRegister.aspx" CssClass="text-sm text-blue-600 hover:underline">
                     Don't have an account? Register </asp:HyperLink>
                 </div>
             </form>
