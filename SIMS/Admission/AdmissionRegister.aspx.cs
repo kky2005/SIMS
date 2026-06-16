@@ -74,7 +74,7 @@ namespace SIMS
                 }
 
                 // Redirect to login after successful registration
-                Response.Redirect("~/AdmissionLogin.aspx?registered=1", false);
+                Response.Redirect("AdmissionLogin.aspx?registered=1", false);
             }
             catch (SqlException sqlEx)
             {
