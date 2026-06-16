@@ -19,7 +19,7 @@ namespace SIMS
             // Require authenticated admission users to access the form
             if (!AuthenticationHelper.IsAuthenticated())
             {
-                Response.Redirect("~/AdmissionLogin.aspx");
+                Response.Redirect("AdmissionLogin.aspx");
                 return;
             }
             if (!IsPostBack)
@@ -42,11 +42,11 @@ namespace SIMS
 
             if (userId != 0 && !string.IsNullOrEmpty(email))
             {
-                Response.Redirect("~/AdmissionDashboard.aspx");
+                Response.Redirect("AdmissionDashboard.aspx");
             }
             else
             {
-                Response.Redirect("~/AdmissionLogin.aspx");
+                Response.Redirect("AdmissionLogin.aspx");
             }
         }
 
