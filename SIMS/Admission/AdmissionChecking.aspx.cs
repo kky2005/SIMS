@@ -25,7 +25,7 @@ namespace SIMS
             int userId = AuthenticationHelper.GetCurrentUserId();
             if (userId == 0)
             {
-                Response.Redirect("~/AdmissionLogin.aspx");
+                Response.Redirect("AdmissionLogin.aspx");
                 return;
             }
 
@@ -87,12 +87,12 @@ namespace SIMS
         }
         protected void btnBack_Click(object sender, EventArgs e)
         {
-            Response.Redirect("~/AdmissionDashboard.aspx");
+            Response.Redirect("AdmissionDashboard.aspx");
         }
 
         protected void btnApplyNow_Click(object sender, EventArgs e)
         {
-            Response.Redirect("~/AdmissionForm.aspx");
+            Response.Redirect("AdmissionForm.aspx");
         }
     }
 }
