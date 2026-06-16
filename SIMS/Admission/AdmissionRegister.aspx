@@ -103,7 +103,7 @@
 
                 <!-- Login Link -->
                 <div class="lnkResgister" runat="server">
-                    <asp:HyperLink ID="lnkLogin" runat="server" NavigateUrl="~/AdmissionLogin.aspx" CssClass="text-sm text-blue-600 hover:underline">Have an account? Login</asp:HyperLink>
+                    <asp:HyperLink ID="lnkLogin" runat="server" NavigateUrl="AdmissionLogin.aspx" CssClass="text-sm text-blue-600 hover:underline">Have an account? Login</asp:HyperLink>
                 </div>
             </form>
         </div>
