@@ -263,20 +263,11 @@ namespace SIMS
         {
             switch (role.ToLower())
             {
-                case "headofprogramme":
-                    Response.Redirect("~/HeadOfProgramme/HOPDashboard.aspx");
-                    break;
-                case "lecturer":
-                    Response.Redirect("~/Lecturer/LecturerDashboard.aspx");
-                    break;
-                case "student":
-                    Response.Redirect("~/Student/Dashboard.aspx");
-                    break;
                 case "admission":
-                    Response.Redirect("~/AdmissionDashboard.aspx");
+                    Response.Redirect("AdmissionDashboard.aspx");
                     break;
                 default:
-                    Response.Redirect("~/Login.aspx");
+                    Response.Redirect("AdmissionLogin.aspx");
                     break;
             }
         }
