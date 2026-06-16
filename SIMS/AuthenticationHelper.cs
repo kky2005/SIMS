@@ -26,12 +26,15 @@ namespace SIMS
         // Head of Programme-specific
         public const string SESSION_HOP_ID = "HeadOfProgrammeId";
 
+        // Admission-specific
+        public const string SESSION_ADMISSION_ID = "AdmissionId";
+
         /// <summary>
         /// Checks if user is authenticated.
         /// </summary>
         public static bool IsAuthenticated()
         {
-            return HttpContext.Current.Session != null && 
+            return HttpContext.Current.Session != null &&
                    HttpContext.Current.Session[SESSION_USER_ID] != null;
         }
 
@@ -58,6 +61,14 @@ namespace SIMS
         public static string GetCurrentUserFullName()
         {
             return HttpContext.Current.Session?[SESSION_FULL_NAME]?.ToString() ?? "User";
+        }
+
+        /// <summary>
+        /// Gets the current user's email.
+        /// </summary>
+        public static string GetCurrentUserEmail()
+        {
+            return HttpContext.Current.Session?[SESSION_EMAIL]?.ToString() ?? string.Empty;
         }
 
         /// <summary>
@@ -100,6 +111,15 @@ namespace SIMS
         {
             object studentId = HttpContext.Current.Session?[SESSION_STUDENT_ID];
             return (studentId != null && int.TryParse(studentId.ToString(), out int id)) ? id : 0;
+        }
+
+        /// <summary>
+        /// Gets the Admission ID (if user is an admission/applicant).
+        /// </summary>
+        public static int GetCurrentAdmissionId()
+        {
+            object admissionId = HttpContext.Current.Session?[SESSION_ADMISSION_ID];
+            return (admissionId != null && int.TryParse(admissionId.ToString(), out int id)) ? id : 0;
         }
     }
 }
