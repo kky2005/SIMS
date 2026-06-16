@@ -9,135 +9,41 @@
 
 namespace SIMS.HeadOfProgramme
 {
-
-
     public partial class HOPManageAdmissions
     {
-
-        /// <summary>
-        /// Content1 control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Content Content1;
-
-        /// <summary>
-        /// Content2 control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Content Content2;
-
-        /// <summary>
-        /// lblMessage control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
         protected global::System.Web.UI.WebControls.Label lblMessage;
-
-        /// <summary>
-        /// hfStudentId control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.HiddenField hfStudentId;
-
-        /// <summary>
-        /// txtStudent control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtStudent;
-
-        /// <summary>
-        /// ddlProgramme control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.DropDownList ddlProgramme;
-
-        /// <summary>
-        /// txtIntakeYear control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtIntakeYear;
-
-        /// <summary>
-        /// txtIntakeSemester control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtIntakeSemester;
-
-        /// <summary>
-        /// txtCurrentSemester control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtCurrentSemester;
-
-        /// <summary>
-        /// txtAdmissionDate control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtAdmissionDate;
-
-        /// <summary>
-        /// ddlStatus control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.DropDownList ddlStatus;
-
-        /// <summary>
-        /// btnSave control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnSave;
-
-        /// <summary>
-        /// btnClear control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnClear;
-
-        /// <summary>
-        /// gvAdmissions control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.GridView gvAdmissions;
+        protected global::System.Web.UI.WebControls.Panel pnlApplicantDetails;
+        protected global::System.Web.UI.WebControls.Button btnCloseDetails;
+        protected global::System.Web.UI.WebControls.Label lblDetailFullName;
+        protected global::System.Web.UI.WebControls.Label lblDetailEmail;
+        protected global::System.Web.UI.WebControls.Label lblDetailPhone;
+        protected global::System.Web.UI.WebControls.Label lblDetailDOB;
+        protected global::System.Web.UI.WebControls.Label lblDetailGender;
+        protected global::System.Web.UI.WebControls.Label lblDetailNationalId;
+        protected global::System.Web.UI.WebControls.Label lblDetailNationality;
+        protected global::System.Web.UI.WebControls.Label lblDetailPreviousInstitution;
+        protected global::System.Web.UI.WebControls.Label lblDetailHighestQualification;
+        protected global::System.Web.UI.WebControls.Label lblDetailPreviousCGPA;
+        protected global::System.Web.UI.WebControls.Label lblDetailProgramme;
+        protected global::System.Web.UI.WebControls.Label lblDetailIntake;
+        protected global::System.Web.UI.WebControls.Label lblDetailStatus;
+        protected global::System.Web.UI.WebControls.Label lblDetailRequestedAt;
+        protected global::System.Web.UI.WebControls.Label lblDetailRejectionReason;
+        protected global::System.Web.UI.WebControls.TextBox txtSearchStudent;
+        protected global::System.Web.UI.WebControls.DropDownList ddlFilterProgramme;
+        protected global::System.Web.UI.WebControls.TextBox txtFromDate;
+        protected global::System.Web.UI.WebControls.TextBox txtToDate;
+        protected global::System.Web.UI.WebControls.Button btnFilter;
+        protected global::System.Web.UI.WebControls.Button btnReset;
+        protected global::System.Web.UI.WebControls.Label lblPendingCount;
+        protected global::System.Web.UI.WebControls.GridView gvPending;
+        protected global::System.Web.UI.WebControls.Label lblApprovedCount;
+        protected global::System.Web.UI.WebControls.Button btnArchiveSelectedApproved;
+        protected global::System.Web.UI.WebControls.Button btnExportAdmitted;
+        protected global::System.Web.UI.WebControls.Button btnDeleteSelectedRejected;
+        protected global::System.Web.UI.WebControls.Button btnExportRejected;
+        protected global::System.Web.UI.WebControls.GridView gvApproved;
+        protected global::System.Web.UI.WebControls.Label lblRejectedCount;
+        protected global::System.Web.UI.WebControls.GridView gvRejected;
     }
 }

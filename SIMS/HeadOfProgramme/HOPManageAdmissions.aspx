@@ -1,4 +1,4 @@
-<%@ Page Title="Manage Admissions" Language="C#" MasterPageFile="~/HeadOfProgramme/HOPMaster.master"
+<%@ Page Title="Manage Admission Requests" Language="C#" MasterPageFile="~/HeadOfProgramme/HOPMaster.master"
     AutoEventWireup="true" CodeBehind="HOPManageAdmissions.aspx.cs"
     Inherits="SIMS.HeadOfProgramme.HOPManageAdmissions" %>
 
@@ -11,39 +11,288 @@
         .table td { vertical-align: middle; font-size: 14px; }
         .action-btns .btn { margin-right: 4px; margin-bottom: 4px; }
         .message-box { margin-bottom: 16px; }
+        .filter-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-bottom: 18px; }
+        .status-badge { padding: 5px 10px; border-radius: 999px; font-weight: 600; font-size: 12px; display: inline-block; }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-approved { background: #dcfce7; color: #166534; }
+        .status-rejected { background: #fee2e2; color: #991b1b; }
+        .status-archived { background: #e0e7ff; color: #3730a3; }
+        .bulk-actions { margin-bottom: 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .empty-box { padding: 24px; text-align: center; color: #64748b; border: 1px dashed #cbd5e1; border-radius: 10px; }
+        .section-count { font-size: 13px; color: #64748b; margin-left: 8px; }
+        .details-box { background: #ffffff; border: 1px solid #dbeafe; border-radius: 12px; padding: 18px; margin-bottom: 18px; box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06); }
+        .details-title { font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 12px; }
+        .details-label { font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 2px; }
+        .details-value { color: #0f172a; margin-bottom: 12px; word-break: break-word; }
+        .details-actions { text-align: right; margin-top: 4px; }
     </style>
+
 </asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" runat="server">
-    <h2 class="page-title">Manage Admissions</h2>
-    <p class="page-subtitle">Manage student admission programme, intake and academic status.</p>
-    <asp:Label ID="lblMessage" runat="server" CssClass="message-box d-block"></asp:Label>
-    <div class="card-sims mb-4"><div class="card-header-sims"><h5>Admission Record</h5></div><div class="card-body-sims">
-        <asp:HiddenField ID="hfStudentId" runat="server" />
-        <div class="row g-3">
-            <div class="col-md-4"><label class="form-label">Student</label><asp:TextBox ID="txtStudent" runat="server" CssClass="form-control" Enabled="false"></asp:TextBox></div>
-            <div class="col-md-3"><label class="form-label">Programme</label><asp:DropDownList ID="ddlProgramme" runat="server" CssClass="form-select"></asp:DropDownList></div>
-            <div class="col-md-2"><label class="form-label">Intake Year</label><asp:TextBox ID="txtIntakeYear" runat="server" CssClass="form-control" TextMode="Number"></asp:TextBox></div>
-            <div class="col-md-2"><label class="form-label">Intake Sem</label><asp:TextBox ID="txtIntakeSemester" runat="server" CssClass="form-control" TextMode="Number"></asp:TextBox></div>
-            <div class="col-md-2"><label class="form-label">Current Sem</label><asp:TextBox ID="txtCurrentSemester" runat="server" CssClass="form-control" TextMode="Number"></asp:TextBox></div>
-            <div class="col-md-3"><label class="form-label">Admission Date</label><asp:TextBox ID="txtAdmissionDate" runat="server" CssClass="form-control" TextMode="Date"></asp:TextBox></div>
-            <div class="col-md-3"><label class="form-label">Status</label><asp:DropDownList ID="ddlStatus" runat="server" CssClass="form-select"><asp:ListItem>Active</asp:ListItem><asp:ListItem>Inactive</asp:ListItem><asp:ListItem>Graduated</asp:ListItem><asp:ListItem>Suspended</asp:ListItem></asp:DropDownList></div>
-        </div>
-        <div class="mt-3"><asp:Button ID="btnSave" runat="server" Text="Update Admission" CssClass="btn btn-primary" OnClick="btnSave_Click" /><asp:Button ID="btnClear" runat="server" Text="Clear" CssClass="btn btn-secondary ms-2" OnClick="btnClear_Click" /></div>
-    </div></div>
+    <h2 class="page-title">Manage Admission Requests</h2>
+    <p class="page-subtitle">Applicants submit admission requests. HOP can admit or reject pending requests.</p>
 
-    <div class="card-sims"><div class="card-header-sims"><h5>Admission List</h5></div><div class="card-body-sims">
-        <asp:GridView ID="gvAdmissions" runat="server" CssClass="table table-bordered table-hover" AutoGenerateColumns="False" DataKeyNames="StudentId" OnRowCommand="gvAdmissions_RowCommand">
-            <Columns>
-                <asp:BoundField DataField="StudentNo" HeaderText="Student No" />
-                <asp:BoundField DataField="FullName" HeaderText="Name" />
-                <asp:BoundField DataField="ProgrammeName" HeaderText="Programme" />
-                <asp:BoundField DataField="IntakeYear" HeaderText="Year" />
-                <asp:BoundField DataField="IntakeSemester" HeaderText="Intake Sem" />
-                <asp:BoundField DataField="CurrentSemester" HeaderText="Current Sem" />
-                <asp:BoundField DataField="Status" HeaderText="Status" />
-                <asp:TemplateField HeaderText="Actions"><ItemTemplate><asp:LinkButton runat="server" CommandName="EditAdmission" CommandArgument='<%# Eval("StudentId") %>' CssClass="btn btn-sm btn-warning">Edit</asp:LinkButton></ItemTemplate></asp:TemplateField>
-            </Columns>
-        </asp:GridView>
-    </div></div>
+    <asp:Label ID="lblMessage" runat="server" CssClass="message-box d-block"></asp:Label>
+
+    <asp:Panel ID="pnlApplicantDetails" runat="server" CssClass="details-box" Visible="false">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+            <div class="details-title">Applicant Details</div>
+            <asp:Button ID="btnCloseDetails" runat="server" Text="Close" CssClass="btn btn-sm btn-outline-secondary" OnClick="btnCloseDetails_Click" />
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="details-label">Full Name</div>
+                <div class="details-value"><asp:Label ID="lblDetailFullName" runat="server" /></div>
+            </div>
+            <div class="col-md-4">
+                <div class="details-label">Email</div>
+                <div class="details-value"><asp:Label ID="lblDetailEmail" runat="server" /></div>
+            </div>
+            <div class="col-md-4">
+                <div class="details-label">Phone Number</div>
+                <div class="details-value"><asp:Label ID="lblDetailPhone" runat="server" /></div>
+            </div>
+            <div class="col-md-4">
+                <div class="details-label">Date of Birth</div>
+                <div class="details-value"><asp:Label ID="lblDetailDOB" runat="server" /></div>
+            </div>
+            <div class="col-md-4">
+                <div class="details-label">Gender</div>
+                <div class="details-value"><asp:Label ID="lblDetailGender" runat="server" /></div>
+            </div>
+            <div class="col-md-4">
+                <div class="details-label">National ID</div>
+                <div class="details-value"><asp:Label ID="lblDetailNationalId" runat="server" /></div>
+            </div>
+            <div class="col-md-4">
+                <div class="details-label">Nationality</div>
+                <div class="details-value"><asp:Label ID="lblDetailNationality" runat="server" /></div>
+            </div>
+            <div class="col-md-4">
+                <div class="details-label">Previous Institution</div>
+                <div class="details-value"><asp:Label ID="lblDetailPreviousInstitution" runat="server" /></div>
+            </div>
+            <div class="col-md-4">
+                <div class="details-label">Highest Qualification</div>
+                <div class="details-value"><asp:Label ID="lblDetailHighestQualification" runat="server" /></div>
+            </div>
+            <div class="col-md-4">
+                <div class="details-label">Previous CGPA</div>
+                <div class="details-value"><asp:Label ID="lblDetailPreviousCGPA" runat="server" /></div>
+            </div>
+            <div class="col-md-4">
+                <div class="details-label">Programme</div>
+                <div class="details-value"><asp:Label ID="lblDetailProgramme" runat="server" /></div>
+            </div>
+            <div class="col-md-4">
+                <div class="details-label">Intake</div>
+                <div class="details-value"><asp:Label ID="lblDetailIntake" runat="server" /></div>
+            </div>
+            <div class="col-md-4">
+                <div class="details-label">Status</div>
+                <div class="details-value"><asp:Label ID="lblDetailStatus" runat="server" /></div>
+            </div>
+            <div class="col-md-4">
+                <div class="details-label">Requested At</div>
+                <div class="details-value"><asp:Label ID="lblDetailRequestedAt" runat="server" /></div>
+            </div>
+            <div class="col-md-4">
+                <div class="details-label">Rejection Reason</div>
+                <div class="details-value"><asp:Label ID="lblDetailRejectionReason" runat="server" /></div>
+            </div>
+        </div>
+    </asp:Panel>
+
+    <div class="card-sims mb-4">
+        <div class="card-header-sims">
+            <h5>Filter Admissions</h5>
+        </div>
+        <div class="card-body-sims">
+            <div class="filter-box">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Applicant Name / No / Email</label>
+                        <asp:TextBox ID="txtSearchStudent" runat="server" CssClass="form-control" placeholder="Search applicant"></asp:TextBox>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Programme</label>
+                        <asp:DropDownList ID="ddlFilterProgramme" runat="server" CssClass="form-select"></asp:DropDownList>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Requested From</label>
+                        <asp:TextBox ID="txtFromDate" runat="server" CssClass="form-control" TextMode="Date"></asp:TextBox>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Requested To</label>
+                        <asp:TextBox ID="txtToDate" runat="server" CssClass="form-control" TextMode="Date"></asp:TextBox>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <asp:Button ID="btnFilter" runat="server" Text="Apply Filter" CssClass="btn btn-primary" OnClick="btnFilter_Click" />
+                    <asp:Button ID="btnReset" runat="server" Text="Reset" CssClass="btn btn-secondary ms-2" OnClick="btnReset_Click" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-sims mb-4">
+        <div class="card-header-sims">
+            <h5>Pending Requests <asp:Label ID="lblPendingCount" runat="server" CssClass="section-count"></asp:Label></h5>
+        </div>
+        <div class="card-body-sims">
+            <asp:GridView ID="gvPending" runat="server"
+                CssClass="table table-bordered table-hover"
+                AutoGenerateColumns="False"
+                DataKeyNames="AdmissionId"
+                OnRowCommand="gvPending_RowCommand"
+                OnRowDataBound="gvStatus_RowDataBound">
+                <Columns>
+                    <asp:BoundField DataField="AdmissionId" HeaderText="ID" />
+                    <asp:BoundField DataField="StudentNo" HeaderText="Student No" />
+                    <asp:BoundField DataField="StudentName" HeaderText="Applicant" />
+                    <asp:BoundField DataField="ProgrammeName" HeaderText="Programme" />
+                    <asp:BoundField DataField="IntakeYear" HeaderText="Intake Year" />
+                    <asp:BoundField DataField="IntakeSemester" HeaderText="Intake Sem" />
+                    <asp:BoundField DataField="RequestedAt" HeaderText="Requested Date" DataFormatString="{0:yyyy-MM-dd HH:mm}" NullDisplayText="-" />
+                    <asp:TemplateField HeaderText="Status">
+                        <ItemTemplate><asp:Label ID="lblStatus" runat="server" Text='<%# Eval("Status") %>'></asp:Label></ItemTemplate>
+                    </asp:TemplateField>
+                    <asp:TemplateField HeaderText="Actions">
+                        <ItemTemplate>
+                            <div class="action-btns">
+                                <asp:LinkButton ID="btnViewPending" runat="server" CommandName="ViewDetails" CommandArgument='<%# Eval("AdmissionId") %>' CssClass="btn btn-sm btn-info">View Details</asp:LinkButton>
+                                <asp:LinkButton ID="btnApprove" runat="server" CommandName="ApproveAdmission" CommandArgument='<%# Eval("AdmissionId") %>' CssClass="btn btn-sm btn-success" OnClientClick="return confirm('Admit this admission request?');">Admit</asp:LinkButton>
+                                <asp:LinkButton ID="btnReject" runat="server" CommandName="RejectAdmission" CommandArgument='<%# Eval("AdmissionId") %>' CssClass="btn btn-sm btn-danger" OnClientClick="return confirm('Reject this admission request?');">Reject</asp:LinkButton>
+                            </div>
+                        </ItemTemplate>
+                    </asp:TemplateField>
+                </Columns>
+                <EmptyDataTemplate><div class="empty-box">No pending admission requests found.</div></EmptyDataTemplate>
+            </asp:GridView>
+        </div>
+    </div>
+
+    <div class="card-sims mb-4">
+        <div class="card-header-sims">
+            <div class="d-flex justify-content-between align-items-center w-100">
+                <h5>Admitted Admissions <asp:Label ID="lblApprovedCount" runat="server" CssClass="section-count"></asp:Label></h5>
+                <a href="HOPArchivedAdmissions.aspx" class="btn btn-sm btn-outline-secondary">View Archived Admissions</a>
+            </div>
+        </div>
+        <div class="card-body-sims">
+            <div class="bulk-actions">
+                <asp:Button ID="btnArchiveSelectedApproved" runat="server" Text="Archive Selected" CssClass="btn btn-warning" OnClick="btnArchiveSelectedApproved_Click" OnClientClick="return confirm('Archive selected admitted admissions?');" />
+                <asp:Button ID="btnExportAdmitted" runat="server" Text="Export Admitted CSV" CssClass="btn btn-success ms-2" OnClick="btnExportAdmitted_Click" />
+            </div>
+            <asp:GridView ID="gvApproved" runat="server"
+                CssClass="table table-bordered table-hover"
+                AutoGenerateColumns="False"
+                DataKeyNames="AdmissionId"
+                OnRowCommand="gvProcessed_RowCommand"
+                OnRowDataBound="gvStatus_RowDataBound">
+                <Columns>
+                    <asp:TemplateField>
+                        <HeaderTemplate>
+                            <asp:CheckBox ID="chkSelectAllApproved" runat="server" onclick="toggleApprovedAdmissions(this);" />
+                        </HeaderTemplate>
+                        <ItemTemplate>
+                            <asp:CheckBox ID="chkSelectApproved" runat="server" />
+                        </ItemTemplate>
+                    </asp:TemplateField>
+                    <asp:BoundField DataField="AdmissionId" HeaderText="ID" />
+                    <asp:BoundField DataField="StudentNo" HeaderText="Student No" />
+                    <asp:BoundField DataField="StudentName" HeaderText="Applicant" />
+                    <asp:BoundField DataField="ProgrammeName" HeaderText="Programme" />
+                    <asp:BoundField DataField="IntakeYear" HeaderText="Intake Year" />
+                    <asp:BoundField DataField="IntakeSemester" HeaderText="Intake Sem" />
+                    <asp:BoundField DataField="RequestedAt" HeaderText="Requested Date" DataFormatString="{0:yyyy-MM-dd HH:mm}" NullDisplayText="-" />
+                    <asp:BoundField DataField="AdmittedAt" HeaderText="Admitted Date" DataFormatString="{0:yyyy-MM-dd HH:mm}" NullDisplayText="-" />
+                    <asp:TemplateField HeaderText="Status">
+                        <ItemTemplate><asp:Label ID="lblStatus" runat="server" Text='<%# Eval("Status") %>'></asp:Label></ItemTemplate>
+                    </asp:TemplateField>
+                    <asp:BoundField DataField="LastActionBy" HeaderText="Admitted By" />
+                    <asp:TemplateField HeaderText="Actions">
+                        <ItemTemplate>
+                            <div class="action-btns">
+                                <asp:LinkButton ID="btnViewApproved" runat="server" CommandName="ViewDetails" CommandArgument='<%# Eval("AdmissionId") %>' CssClass="btn btn-sm btn-info">View Details</asp:LinkButton>
+                                <asp:LinkButton ID="btnArchiveApproved" runat="server" CommandName="ArchiveAdmission" CommandArgument='<%# Eval("AdmissionId") %>' CssClass="btn btn-sm btn-warning" OnClientClick="return confirm('Archive this admitted admission record?');">Archive</asp:LinkButton>
+                            </div>
+                        </ItemTemplate>
+                    </asp:TemplateField>
+                </Columns>
+                <EmptyDataTemplate><div class="empty-box">No admitted admissions found.</div></EmptyDataTemplate>
+            </asp:GridView>
+        </div>
+    </div>
+
+    <div class="card-sims">
+        <div class="card-header-sims">
+            <h5>Rejected Admissions <asp:Label ID="lblRejectedCount" runat="server" CssClass="section-count"></asp:Label></h5>
+        </div>
+        <div class="card-body-sims">
+            <div class="bulk-actions">
+                <asp:Button ID="btnDeleteSelectedRejected" runat="server" Text="Delete Selected" CssClass="btn btn-danger" OnClick="btnDeleteSelectedRejected_Click" OnClientClick="return confirm('Delete selected rejected admissions?');" />
+                <asp:Button ID="btnExportRejected" runat="server" Text="Export Rejected CSV" CssClass="btn btn-success ms-2" OnClick="btnExportRejected_Click" />
+            </div>
+            <asp:GridView ID="gvRejected" runat="server"
+                CssClass="table table-bordered table-hover"
+                AutoGenerateColumns="False"
+                DataKeyNames="AdmissionId"
+                OnRowCommand="gvProcessed_RowCommand"
+                OnRowDataBound="gvStatus_RowDataBound">
+                <Columns>
+                    <asp:TemplateField>
+                        <HeaderTemplate>
+                            <asp:CheckBox ID="chkSelectAllRejected" runat="server" onclick="toggleRejectedAdmissions(this);" />
+                        </HeaderTemplate>
+                        <ItemTemplate>
+                            <asp:CheckBox ID="chkSelectRejected" runat="server" />
+                        </ItemTemplate>
+                    </asp:TemplateField>
+                    <asp:BoundField DataField="AdmissionId" HeaderText="ID" />
+                    <asp:BoundField DataField="StudentNo" HeaderText="Student No" />
+                    <asp:BoundField DataField="StudentName" HeaderText="Applicant" />
+                    <asp:BoundField DataField="ProgrammeName" HeaderText="Programme" />
+                    <asp:BoundField DataField="IntakeYear" HeaderText="Intake Year" />
+                    <asp:BoundField DataField="IntakeSemester" HeaderText="Intake Sem" />
+                    <asp:BoundField DataField="RequestedAt" HeaderText="Requested Date" DataFormatString="{0:yyyy-MM-dd HH:mm}" NullDisplayText="-" />
+                    <asp:BoundField DataField="RejectedAt" HeaderText="Rejected Date" DataFormatString="{0:yyyy-MM-dd HH:mm}" NullDisplayText="-" />
+                    <asp:TemplateField HeaderText="Status">
+                        <ItemTemplate><asp:Label ID="lblStatus" runat="server" Text='<%# Eval("Status") %>'></asp:Label></ItemTemplate>
+                    </asp:TemplateField>
+                    <asp:BoundField DataField="LastActionBy" HeaderText="Rejected By" />
+                    <asp:TemplateField HeaderText="Actions">
+                        <ItemTemplate>
+                            <div class="action-btns">
+                                <asp:LinkButton ID="btnViewRejected" runat="server" CommandName="ViewDetails" CommandArgument='<%# Eval("AdmissionId") %>' CssClass="btn btn-sm btn-info">View Details</asp:LinkButton>
+                                <asp:LinkButton ID="btnDeleteRejected" runat="server" CommandName="DeleteAdmission" CommandArgument='<%# Eval("AdmissionId") %>' CssClass="btn btn-sm btn-danger" OnClientClick="return confirm('Delete this rejected admission record?');">Delete</asp:LinkButton>
+                            </div>
+                        </ItemTemplate>
+                    </asp:TemplateField>
+                </Columns>
+                <EmptyDataTemplate><div class="empty-box">No rejected admissions found.</div></EmptyDataTemplate>
+            </asp:GridView>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        function toggleApprovedAdmissions(source) {
+            var table = document.getElementById('<%= gvApproved.ClientID %>');
+            if (!table) return;
+            var boxes = table.querySelectorAll("input[id*='chkSelectApproved']");
+            for (var i = 0; i < boxes.length; i++) {
+                boxes[i].checked = source.checked;
+            }
+        }
+
+        function toggleRejectedAdmissions(source) {
+            var table = document.getElementById('<%= gvRejected.ClientID %>');
+            if (!table) return;
+            var boxes = table.querySelectorAll("input[id*='chkSelectRejected']");
+            for (var i = 0; i < boxes.length; i++) {
+                boxes[i].checked = source.checked;
+            }
+        }
+    </script>
 </asp:Content>

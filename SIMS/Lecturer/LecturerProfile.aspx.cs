@@ -4,6 +4,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Web.UI;
 
 namespace SIMS.Lecturer
@@ -127,6 +128,26 @@ namespace SIMS.Lecturer
 
         protected void btnSave_Click(object sender, EventArgs e)
         {
+            string fullName = txtFullName.Text.Trim();
+            string phone = txtPhone.Text.Trim();
+
+            // 1. Name Validation: Alphabet letters and spaces only
+            if (!Regex.IsMatch(fullName, @"^[a-zA-Z\s]+$"))
+            {
+                ShowError("Full Name must only contain letters and spaces.");
+                MaintainEditMode();
+                return;
+            }
+
+            // 2. Phone Number Validation: Standard numeric (allowing optional + or dashes/spaces)
+            // This allows common formats like: +1234567890, 012-345-6789, or 0123456789
+            if (!string.IsNullOrEmpty(phone) && !Regex.IsMatch(phone, @"^[0-9\+\-\s]{7,15}$"))
+            {
+                ShowError("Please enter a valid phone number (digits only, 7-15 characters).");
+                MaintainEditMode();
+                return;
+            }
+
             if (string.IsNullOrWhiteSpace(txtFullName.Text))
             {
                 ShowError("Full name is required.");
@@ -220,7 +241,6 @@ namespace SIMS.Lecturer
                             currentDbPasswordHash = result != null ? result.ToString().Trim() : "";
                         }
 
-                        // FIXED: Convert user's plain text input to a hash string before testing equality
                         string inputCurrentPasswordHash = ComputeSha256Hash(txtCurrentPassword.Text);
 
                         if (!string.Equals(currentDbPasswordHash, inputCurrentPasswordHash, StringComparison.OrdinalIgnoreCase))
@@ -230,7 +250,6 @@ namespace SIMS.Lecturer
                             return;
                         }
 
-                        // FIXED: Encrypt the new password before running the update script
                         string encryptedNewPassword = ComputeSha256Hash(txtNewPassword.Text);
 
                         string updatePassSql = "UPDATE Users SET PasswordHash = @NewPassword WHERE UserId = @UserId";
@@ -239,6 +258,24 @@ namespace SIMS.Lecturer
                             updatePassCmd.Parameters.AddWithValue("@NewPassword", encryptedNewPassword);
                             updatePassCmd.Parameters.AddWithValue("@UserId", userId);
                             updatePassCmd.ExecuteNonQuery();
+                        }
+
+                        // AUDIT LOG IMPLEMENTATION: Records credential manipulation history safely
+                        string auditSql = @"
+                            INSERT INTO [dbo].[AuditLogs] 
+                                ([UserId], [Action], [TableAffected], [RecordId], [OldValue], [NewValue], [ActionDate])
+                            VALUES 
+                                (@UserId, @Action, @TableAffected, @RecordId, @OldValue, @NewValue, SYSUTCDATETIME())";
+
+                        using (SqlCommand auditCmd = new SqlCommand(auditSql, conn))
+                        {
+                            auditCmd.Parameters.AddWithValue("@UserId", userId);
+                            auditCmd.Parameters.AddWithValue("@Action", "Password Changed");
+                            auditCmd.Parameters.AddWithValue("@TableAffected", "Users");
+                            auditCmd.Parameters.AddWithValue("@RecordId", userId);
+                            auditCmd.Parameters.AddWithValue("@OldValue", "******");
+                            auditCmd.Parameters.AddWithValue("@NewValue", "******");
+                            auditCmd.ExecuteNonQuery();
                         }
                     }
 

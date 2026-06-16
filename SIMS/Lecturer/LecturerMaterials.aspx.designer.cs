@@ -60,6 +60,15 @@ namespace SIMS.Lecturer
         protected global::System.Web.UI.WebControls.Literal litMaterialErrorMsg;
 
         /// <summary>
+        /// litFormMode control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Literal litFormMode;
+
+        /// <summary>
         /// litCourseName control.
         /// </summary>
         /// <remarks>
@@ -105,6 +114,15 @@ namespace SIMS.Lecturer
         protected global::System.Web.UI.WebControls.TextBox txtDescription;
 
         /// <summary>
+        /// divFileUpload control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl divFileUpload;
+
+        /// <summary>
         /// fuMaterial control.
         /// </summary>
         /// <remarks>
@@ -112,6 +130,33 @@ namespace SIMS.Lecturer
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.FileUpload fuMaterial;
+
+        /// <summary>
+        /// divFileCurrent control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl divFileCurrent;
+
+        /// <summary>
+        /// litCurrentFile control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Literal litCurrentFile;
+
+        /// <summary>
+        /// fuMaterialReplace control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.FileUpload fuMaterialReplace;
 
         /// <summary>
         /// chkIsVisible control.
@@ -166,6 +211,15 @@ namespace SIMS.Lecturer
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.HiddenField hidSemester;
+
+        /// <summary>
+        /// hidEditingMaterialId control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HiddenField hidEditingMaterialId;
 
         /// <summary>
         /// rptMaterials control.

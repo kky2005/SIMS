@@ -278,6 +278,11 @@
             <asp:Button ID="btnSaveAttendance" runat="server" Text="Save Attendance" 
                 CssClass="btn btn-primary" OnClick="btnSaveAttendance_Click" />
         </div>
+        <div class="control-group">
+            <label>&nbsp;</label>
+            <asp:Button ID="btnExportCSV" runat="server" Text="Export Attendance (CSV)" 
+                        OnClick="btnExportCSV_Click" CssClass="btn-primary-action" />
+        </div>
     </div>
 
     <div class="attendance-table-wrapper">
@@ -296,8 +301,12 @@
                 <asp:Repeater ID="rptAttendance" runat="server">
                     <ItemTemplate>
                         <tr>
-                            <td><input type="checkbox" class="attendance-checkbox" 
-                                name="chkAttendance" value="<%# Eval("EnrolmentId") %>" /></td>
+                            <td>
+                                <input type="checkbox" class="attendance-checkbox" 
+                                       name="chkAttendance" 
+                                       value='<%# Eval("EnrolmentId") %>' 
+                                       <%# Eval("Status").ToString() == "Present" ? "checked='checked'" : "" %> />
+                            </td>
                             <td><%# Eval("StudentNo") %></td>
                             <td class="student-name"><%# Eval("FullName") %></td>
                             <td><%# Eval("Email") %></td>
@@ -329,6 +338,19 @@
             var chkSelectAll = document.getElementById('chkSelectAll');
             var chkboxes = document.querySelectorAll('.attendance-checkbox');
 
+            // Function to synchronize the master "Select All" state
+            function updateSelectAllState() {
+                if (!chkSelectAll || chkboxes.length === 0) return;
+                var allChecked = Array.from(chkboxes).every(c => c.checked);
+                var anyChecked = Array.from(chkboxes).some(c => c.checked);
+
+                chkSelectAll.checked = allChecked;
+                chkSelectAll.indeterminate = anyChecked && !allChecked;
+            }
+
+            // Run initially on page load to handle already ticked students
+            updateSelectAllState();
+
             if (chkSelectAll) {
                 chkSelectAll.addEventListener('change', function () {
                     chkboxes.forEach(function (cb) { cb.checked = chkSelectAll.checked; });
@@ -337,12 +359,7 @@
 
             chkboxes.forEach(function (cb) {
                 cb.addEventListener('change', function () {
-                    var allChecked = Array.from(chkboxes).every(c => c.checked);
-                    var anyChecked = Array.from(chkboxes).some(c => c.checked);
-                    if (chkSelectAll) {
-                        chkSelectAll.checked = allChecked;
-                        chkSelectAll.indeterminate = anyChecked && !allChecked;
-                    }
+                    updateSelectAllState();
                 });
             });
 

@@ -41,6 +41,13 @@ namespace SIMS.HeadOfProgramme
         /// </remarks>
         protected global::System.Web.UI.WebControls.Label lblMessage;
 
+        protected global::System.Web.UI.WebControls.FileUpload fuAdmissionCsv;
+        protected global::System.Web.UI.WebControls.Button btnPreviewAdmissionCsv;
+        protected global::System.Web.UI.WebControls.Button btnConfirmImportStudents;
+        protected global::System.Web.UI.WebControls.Button btnCancelImport;
+        protected global::System.Web.UI.WebControls.Panel pnlImportPreview;
+        protected global::System.Web.UI.WebControls.GridView gvImportPreview;
+
         /// <summary>
         /// hfStudentId control.
         /// </summary>
@@ -183,6 +190,11 @@ namespace SIMS.HeadOfProgramme
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox txtFilterStudent;
+        protected global::System.Web.UI.WebControls.DropDownList ddlFilterProgramme;
+        protected global::System.Web.UI.WebControls.DropDownList ddlFilterStatus;
+        protected global::System.Web.UI.WebControls.Button btnFilter;
+        protected global::System.Web.UI.WebControls.Button btnResetFilter;
         protected global::System.Web.UI.WebControls.GridView gvStudents;
     }
 }

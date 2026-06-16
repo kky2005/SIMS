@@ -1,4 +1,4 @@
-﻿<%@ Master Language="C#" AutoEventWireup="true"
+<%@ Master Language="C#" AutoEventWireup="true"
     CodeBehind="HOPMaster.master.cs"
     Inherits="SIMS.HeadOfProgramme.HOPMaster" %>
 
@@ -6,7 +6,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head runat="server">
     <meta charset="utf-8" />
-    <title>SIMS – Head Of Programme</title>
+    <title>SIMS - Head Of Programme</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
@@ -239,6 +239,336 @@
             color: #1e293b;
             line-height: 1;
         }
+
+        body.dark-mode {
+            --body-bg: #0f172a;
+        }
+        
+        body.dark-mode .topbar,
+        body.dark-mode .card-sims,
+        body.dark-mode .stat-card {
+            background: #1e293b;
+            color: #e5e7eb;
+            border-color: #334155;
+        }
+        
+        body.dark-mode .topbar-title,
+        body.dark-mode .card-header-sims h5,
+        body.dark-mode .stat-card .stat-value {
+            color: #f8fafc;
+        }
+        
+        body.dark-mode .stat-card .stat-label,
+        body.dark-mode .topbar-right,
+        body.dark-mode .announcement-btn {
+            color: #cbd5e1;
+        }
+        
+        body.dark-mode .page-content {
+            color: #e5e7eb;
+        }
+        
+        body.dark-mode table,
+        body.dark-mode .table {
+            color: #e5e7eb;
+        }
+        
+        body.dark-mode input,
+        body.dark-mode select,
+        body.dark-mode textarea {
+            background: #0f172a !important;
+            color: #e5e7eb !important;
+            border-color: #475569 !important;
+        }
+
+
+        body.dark-mode,
+        body.dark-mode * {
+            color: #e5e7eb;
+        }
+        
+        body.dark-mode .text-dark,
+        body.dark-mode .text-muted,
+        body.dark-mode label,
+        body.dark-mode h1,
+        body.dark-mode h2,
+        body.dark-mode h3,
+        body.dark-mode h4,
+        body.dark-mode h5,
+        body.dark-mode h6,
+        body.dark-mode p,
+        body.dark-mode span,
+        body.dark-mode td,
+        body.dark-mode th {
+            color: #e5e7eb !important;
+        }
+        
+        body.dark-mode .text-muted,
+        body.dark-mode small {
+            color: #cbd5e1 !important;
+        }
+        
+        body.dark-mode .card,
+        body.dark-mode .modal-content,
+        body.dark-mode .dropdown-menu,
+        body.dark-mode .list-group-item,
+        body.dark-mode .alert {
+            background-color: #1e293b !important;
+            color: #e5e7eb !important;
+            border-color: #334155 !important;
+        }
+
+        body.dark-mode .form-control,
+        body.dark-mode .form-select,
+        body.dark-mode input,
+        body.dark-mode select,
+        body.dark-mode textarea {
+            background-color: #0f172a !important;
+            color: #e5e7eb !important;
+            border-color: #475569 !important;
+        }
+        
+        body.dark-mode .form-control::placeholder {
+            color: #94a3b8 !important;
+        }
+        
+        body.dark-mode .table,
+        body.dark-mode table,
+        body.dark-mode .gridview {
+            background-color: #1e293b !important;
+            color: #e5e7eb !important;
+        }
+        
+        body.dark-mode .table th,
+        body.dark-mode .table td,
+        body.dark-mode table th,
+        body.dark-mode table td,
+        body.dark-mode .gridview th,
+        body.dark-mode .gridview td {
+            background-color: #1e293b !important;
+            color: #e5e7eb !important;
+            border-color: #334155 !important;
+        }
+        
+        body.dark-mode .table thead th,
+        body.dark-mode table thead th,
+        body.dark-mode .gridview th {
+            background-color: #0f172a !important;
+            color: #f8fafc !important;
+        }
+        
+        body.dark-mode .table-striped > tbody > tr:nth-of-type(odd) > * {
+            background-color: #162033 !important;
+            color: #e5e7eb !important;
+        }
+        
+        body.dark-mode .table-hover > tbody > tr:hover > * {
+            background-color: #334155 !important;
+            color: #ffffff !important;
+        }
+
+        /* Stronger dark mode fix for filters, announcements, white panels */
+        body.dark-mode div[style*="background:white"],
+        body.dark-mode div[style*="background: white"],
+        body.dark-mode div[style*="background-color:white"],
+        body.dark-mode div[style*="background-color: white"],
+        body.dark-mode .filter-card,
+        body.dark-mode .filter-box,
+        body.dark-mode .filter-panel,
+        body.dark-mode .filter-section,
+        body.dark-mode .search-card,
+        body.dark-mode .search-box,
+        body.dark-mode .search-panel,
+        body.dark-mode .announcement-card,
+        body.dark-mode .announcement-box,
+        body.dark-mode .announcement-item,
+        body.dark-mode .announcement-section,
+        body.dark-mode .bg-light,
+        body.dark-mode .bg-white,
+        body.dark-mode .border,
+        body.dark-mode .rounded,
+        body.dark-mode .shadow-sm {
+            background-color: #1e293b !important;
+            color: #e5e7eb !important;
+            border-color: #334155 !important;
+        }
+        
+        /* Inner content inside those boxes */
+        body.dark-mode .filter-card *,
+        body.dark-mode .filter-box *,
+        body.dark-mode .filter-panel *,
+        body.dark-mode .filter-section *,
+        body.dark-mode .announcement-card *,
+        body.dark-mode .announcement-box *,
+        body.dark-mode .announcement-item *,
+        body.dark-mode .announcement-section * {
+            color: #e5e7eb !important;
+        }
+        
+        /* Bootstrap input groups, common in filters */
+        body.dark-mode .input-group-text {
+            background-color: #334155 !important;
+            color: #e5e7eb !important;
+            border-color: #475569 !important;
+        }
+        
+        /* Date picker / dropdown style fixes */
+        body.dark-mode option {
+            background-color: #0f172a !important;
+            color: #e5e7eb !important;
+        }
+        
+        /* Fix Bootstrap light buttons inside dark mode */
+        body.dark-mode .btn-light,
+        body.dark-mode .btn-outline-secondary {
+            background-color: #334155 !important;
+            color: #e5e7eb !important;
+            border-color: #475569 !important;
+        }
+        
+        body.dark-mode .btn-light:hover,
+        body.dark-mode .btn-outline-secondary:hover {
+            background-color: #475569 !important;
+            color: #ffffff !important;
+        }
+
+        body.dark-mode .stat-pill,
+        body.dark-mode .announcement-card,
+        body.dark-mode .form-card,
+        body.dark-mode .create-announcement-form {
+            background: #1e293b !important;
+            color: #e5e7eb !important;
+            border: 1px solid #334155 !important;
+        }
+        
+        body.dark-mode .stat-pill *,
+        body.dark-mode .announcement-card *,
+        body.dark-mode .form-card *,
+        body.dark-mode .create-announcement-form * {
+            color: #e5e7eb !important;
+        }
+        
+        /* Pending */
+        body.dark-mode .status-badge.status-pending {
+            background: rgba(245, 158, 11, 0.25) !important;
+            color: #fbbf24 !important;
+            border: 1px solid #f59e0b !important;
+        }
+        
+        /* Admitted / Approved */
+        body.dark-mode .status-badge.status-admitted,
+        body.dark-mode .status-badge.status-approved {
+            background: rgba(34, 197, 94, 0.25) !important;
+            color: #4ade80 !important;
+            border: 1px solid #22c55e !important;
+        }
+        
+        /* Rejected */
+        body.dark-mode .status-badge.status-rejected {
+            background: rgba(239, 68, 68, 0.25) !important;
+            color: #f87171 !important;
+            border: 1px solid #ef4444 !important;
+        }
+        
+        /* Archived */
+        body.dark-mode .status-badge.status-archived {
+            background: rgba(100, 116, 139, 0.25) !important;
+            color: #cbd5e1 !important;
+            border: 1px solid #64748b !important;
+        }
+        
+        /* Generic badge fallback */
+        body.dark-mode .status-badge {
+            color: inherit !important;
+        }
+        
+        /* Form section backgrounds */
+        body.dark-mode .form-group,
+        body.dark-mode .filter-group,
+        body.dark-mode .filter-container,
+        body.dark-mode .announcement-container {
+            background: transparent !important;
+        }
+        /* FINAL DARK MODE OVERRIDE */
+        
+        body.dark-mode .announcement-card,
+        body.dark-mode .announcement-list,
+        body.dark-mode .report-card,
+        body.dark-mode .task-item,
+        body.dark-mode .report-message,
+        body.dark-mode .export-panel,
+        body.dark-mode .form-card,
+        body.dark-mode .create-announcement-form,
+        body.dark-mode .stat-pill,
+        body.dark-mode .badge-soft {
+            background: #1e293b !important;
+            background-color: #1e293b !important;
+            color: #e5e7eb !important;
+            border-color: #334155 !important;
+        }
+        
+        body.dark-mode .announcement-card *,
+        body.dark-mode .announcement-list *,
+        body.dark-mode .report-card *,
+        body.dark-mode .task-item *,
+        body.dark-mode .report-message *,
+        body.dark-mode .export-panel *,
+        body.dark-mode .form-card *,
+        body.dark-mode .create-announcement-form *,
+        body.dark-mode .stat-pill * {
+            color: #e5e7eb !important;
+        }
+
+        body.dark-mode .status-badge {
+            background: rgba(100, 116, 139, 0.25) !important;
+            color: #cbd5e1 !important;
+            border: 1px solid #64748b !important;
+        }
+
+        /* Dashboard task count links */
+        body.dark-mode .task-count,
+        body.dark-mode .task-count.text-decoration-none,
+        body.dark-mode a.task-count {
+            color: #93c5fd !important;
+            text-decoration: none !important;
+        }
+        
+        /* Announcement sections */
+        body.dark-mode .announcement-header,
+        body.dark-mode .announcement-footer {
+            background-color: #1e293b !important;
+            color: #e5e7eb !important;
+            border-color: #334155 !important;
+        }
+        
+        /* Everything inside announcement header/footer */
+        body.dark-mode .announcement-header *,
+        body.dark-mode .announcement-footer * {
+            color: #e5e7eb !important;
+        }
+        
+        /* Links inside announcement areas */
+        body.dark-mode .announcement-header a,
+        body.dark-mode .announcement-footer a {
+            color: #93c5fd !important;
+        }
+        
+        /* Small muted text */
+        body.dark-mode .announcement-footer small,
+        body.dark-mode .announcement-header small {
+            color: #cbd5e1 !important;
+        }
+
+        body.dark-mode .details-box {
+            background: #1e293b !important;
+            background-color: #1e293b !important;
+            color: #e5e7eb !important;
+            border-color: #334155 !important;
+        }
+        
+        body.dark-mode .details-box * {
+            color: #e5e7eb !important;
+        }
     </style>
 
     <asp:ContentPlaceHolder ID="HeadContent" runat="server" />
@@ -250,7 +580,7 @@
     <div class="sidebar">
 
         <div class="sidebar-brand">
-            <p class="brand-title">🎓 SIMS</p>
+            <p class="brand-title">SIMS</p>
             <span class="brand-sub">Student Information System</span>
         </div>
 
@@ -297,14 +627,24 @@
                 Assign User Roles
             </a>
 
+            <a href="HOPManageAcademicCalendar.aspx" class='<%= GetActiveClass("HOPManageAcademicCalendar") %>'>
+                <i class="fa fa-calendar-days"></i>
+                Academic Calendar
+            </a>
             <a href="HOPManageAdmissions.aspx" class='<%= GetActiveClass("HOPManageAdmissions") %>'>
                 <i class="fa fa-clipboard-check"></i>
                 Manage Admissions
             </a>
 
+
             <a href="HOPManageEnrolments.aspx" class='<%= GetActiveClass("HOPManageEnrolments") %>'>
                 <i class="fa fa-user-plus"></i>
                 Manage Enrolments
+            </a>
+
+            <a href="HOPAuditLogs.aspx" class='<%= GetActiveClass("HOPAuditLogs") %>'>
+                <i class="fa fa-clock-rotate-left"></i>
+                Audit Logs
             </a>
 
         </div>
@@ -326,11 +666,16 @@
         <div class="topbar">
             <h5 class="topbar-title">Head Of Programme Portal</h5>
 
-            <div class="topbar-right">
+           <div class="topbar-right">
+
+                <button type="button" id="btnDarkMode" class="btn btn-sm btn-outline-secondary">
+                    <i class="fa fa-moon"></i>
+                </button>
+            
                 <a href="HOPAnnouncements.aspx" class="announcement-btn" title="Announcements">
                     <i class="fa fa-bell"></i>
                 </a>
-
+            
                 <span>
                     <asp:Literal ID="litTopbarName" runat="server" />
                 </span>
@@ -344,5 +689,34 @@
     </div>
 
 </form>
+    <script>
+    const btnDarkMode = document.getElementById("btnDarkMode");
+
+    function updateDarkModeButton() {
+        if (document.body.classList.contains("dark-mode")) {
+            btnDarkMode.innerHTML = '<i class="fa fa-sun"></i>';
+        } else {
+            btnDarkMode.innerHTML = '<i class="fa fa-moon"></i>';
+        }
+    }
+
+    if (localStorage.getItem("darkMode") === "enabled") {
+        document.body.classList.add("dark-mode");
+    }
+
+    updateDarkModeButton();
+
+    btnDarkMode.addEventListener("click", function () {
+        document.body.classList.toggle("dark-mode");
+
+        if (document.body.classList.contains("dark-mode")) {
+            localStorage.setItem("darkMode", "enabled");
+        } else {
+            localStorage.setItem("darkMode", "disabled");
+        }
+
+        updateDarkModeButton();
+    });
+</script>
 </body>
 </html>

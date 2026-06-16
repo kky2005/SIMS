@@ -28,7 +28,16 @@
         <div class="mt-3"><asp:Button ID="btnSave" runat="server" Text="Update Role" CssClass="btn btn-primary" OnClick="btnSave_Click" /><asp:Button ID="btnClear" runat="server" Text="Clear" CssClass="btn btn-secondary ms-2" OnClick="btnClear_Click" /></div>
     </div></div>
 
-    <div class="card-sims"><div class="card-header-sims"><h5>User List</h5></div><div class="card-body-sims">
+        <div class="card-sims mb-4"><div class="card-header-sims"><h5>Filter Users</h5></div><div class="card-body-sims">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4"><label class="form-label">Search User</label><asp:TextBox ID="txtFilterUser" runat="server" CssClass="form-control" placeholder="Search name or email"></asp:TextBox></div>
+            <div class="col-md-3"><label class="form-label">Role</label><asp:DropDownList ID="ddlFilterRole" runat="server" CssClass="form-select"></asp:DropDownList></div>
+            <div class="col-md-2"><label class="form-label">Active</label><asp:DropDownList ID="ddlFilterUserActive" runat="server" CssClass="form-select"><asp:ListItem Value="">All</asp:ListItem><asp:ListItem Value="1">Yes</asp:ListItem><asp:ListItem Value="0">No</asp:ListItem></asp:DropDownList></div>
+            <div class="col-md-3"><asp:Button ID="btnFilter" runat="server" Text="Filter" CssClass="btn btn-primary" OnClick="btnFilter_Click" /><asp:Button ID="btnResetFilter" runat="server" Text="Reset" CssClass="btn btn-secondary ms-2" OnClick="btnResetFilter_Click" CausesValidation="false" /></div>
+        </div>
+    </div></div>
+
+<div class="card-sims"><div class="card-header-sims"><h5>User List</h5></div><div class="card-body-sims">
         <asp:GridView ID="gvUsers" runat="server" CssClass="table table-bordered table-hover" AutoGenerateColumns="False" DataKeyNames="UserId" OnRowCommand="gvUsers_RowCommand">
             <Columns>
                 <asp:BoundField DataField="FullName" HeaderText="Name" />
