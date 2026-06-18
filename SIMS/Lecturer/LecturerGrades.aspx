@@ -318,12 +318,32 @@
             font-weight: normal;
             text-transform: none;
         }
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: white;
+            text-decoration: none;
+            font-size: 13px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 6px 12px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            transition: background 0.2s ease;
+        }
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+        }
     </style>
 </asp:Content>
 
 <asp:Content ID="Main" ContentPlaceHolderID="MainContent" runat="server">
 
     <div class="grades-header">
+        <a href="LecturerCourses.aspx" class="back-btn">
+            <i class="fa fa-arrow-left"></i> Back to Courses
+        </a>
         <h3><i class="fa fa-star" style="margin-right: 10px;"></i>Manage Grades & Assessment</h3>
         <p>Course: <strong><asp:Literal ID="litCourseName" runat="server" /></strong></p>
     </div>

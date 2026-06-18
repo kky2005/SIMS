@@ -212,6 +212,24 @@
         text-align: right;
     }
 
+    .back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: white;
+        text-decoration: none;
+        font-size: 13px;
+        background: rgba(255, 255, 255, 0.15);
+        padding: 6px 12px;
+        border-radius: 6px;
+        margin-bottom: 12px;
+        transition: background 0.2s ease;
+    }
+    .back-btn:hover {
+        background: rgba(255, 255, 255, 0.25);
+        color: white;
+    }
+
     @media (max-width: 768px) {
         .form-row {
             grid-template-columns: 1fr;
@@ -264,6 +282,9 @@
 <asp:Content ID="Main" ContentPlaceHolderID="MainContent" runat="server">
 
     <div class="announcements-header">
+        <a href="LecturerCourses.aspx" class="back-btn">
+            <i class="fa fa-arrow-left"></i> Back to Courses
+        </a>
         <h3><i class="fa fa-bullhorn" style="margin-right:10px;"></i>Announcements</h3>
         <p style="margin:0;"><asp:Literal ID="litCourseHeader" runat="server" Text="Loading..." /></p>
     </div>
