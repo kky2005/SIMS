@@ -186,6 +186,12 @@ namespace SIMS.HeadOfProgramme
                 cmd.Parameters.AddWithValue("@CourseId", ddlFilterCourse.SelectedValue);
             }
 
+            if (!string.IsNullOrEmpty(ddlFilterRequestType.SelectedValue))
+            {
+                sql += " AND r.RequestType = @RequestType";
+                cmd.Parameters.AddWithValue("@RequestType", ddlFilterRequestType.SelectedValue);
+            }
+
             AddDateFilters(ref sql, cmd, "r.RequestedAt");
         }
 
@@ -241,6 +247,7 @@ namespace SIMS.HeadOfProgramme
         {
             txtSearchStudent.Text = "";
             ddlFilterCourse.SelectedIndex = 0;
+            ddlFilterRequestType.SelectedIndex = 0;
             txtFromDate.Text = "";
             txtToDate.Text = "";
             LoadAllTables();
@@ -394,7 +401,7 @@ namespace SIMS.HeadOfProgramme
         private void ApproveAddRequest(SqlConnection conn, SqlTransaction tran, CourseRequestInfo request)
         {
             if (HasActiveEnrolment(conn, tran, request.StudentId, request.CourseId))
-                throw new Exception("This student already has an approved enrolment for this course.");
+                throw new Exception("This student already has an approved or archived enrolment for this course.");
 
             string insertSql = @"
                 INSERT INTO Enrolments
@@ -449,14 +456,14 @@ namespace SIMS.HeadOfProgramme
             EnrolmentInfo enrolment = GetApprovedEnrolment(conn, tran, request.StudentId, request.CourseId);
 
             if (enrolment == null)
-                throw new Exception("This student does not have an approved enrolment for this course to drop.");
+                throw new Exception("This student does not have an approved or archived enrolment for this course to drop.");
 
             string updateSql = @"
                 UPDATE Enrolments
                 SET Status = 'Dropped',
                     DroppedAt = SYSUTCDATETIME()
                 WHERE EnrolmentId = @EnrolmentId
-                  AND Status = 'Approved'";
+                  AND Status IN ('Approved', 'Archived')";
 
             using (SqlCommand cmd = new SqlCommand(updateSql, conn, tran))
             {
@@ -474,7 +481,7 @@ namespace SIMS.HeadOfProgramme
                 "Approved drop course request",
                 "Enrolments",
                 enrolment.EnrolmentId,
-                "Status=Approved; CourseRegistrationRequests.RequestId=" + request.RequestId,
+                "Status=" + enrolment.Status + "; CourseRegistrationRequests.RequestId=" + request.RequestId,
                 "Status=Dropped; Student=" + request.StudentName + "; Course=" + request.CourseCode
             );
         }
@@ -764,8 +771,11 @@ namespace SIMS.HeadOfProgramme
                 INNER JOIN Courses c ON c.CourseId = e.CourseId
                 WHERE e.StudentId = @StudentId
                   AND e.CourseId = @CourseId
-                  AND e.Status = 'Approved'
-                ORDER BY e.EnrolledAt DESC, e.EnrolmentId DESC";
+                  AND e.Status IN ('Approved', 'Archived')
+                ORDER BY
+                    CASE WHEN e.Status = 'Approved' THEN 0 ELSE 1 END,
+                    e.EnrolledAt DESC,
+                    e.EnrolmentId DESC";
 
             using (SqlCommand cmd = new SqlCommand(sql, conn, tran))
             {
@@ -800,7 +810,7 @@ namespace SIMS.HeadOfProgramme
                 FROM Enrolments
                 WHERE StudentId = @StudentId
                   AND CourseId = @CourseId
-                  AND Status = 'Approved'";
+                  AND Status IN ('Approved', 'Archived')";
 
             using (SqlCommand cmd = new SqlCommand(sql, conn, tran))
             {

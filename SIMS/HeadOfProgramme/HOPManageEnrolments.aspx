@@ -45,11 +45,19 @@
                         <label class="form-label">Course</label>
                         <asp:DropDownList ID="ddlFilterCourse" runat="server" CssClass="form-select"></asp:DropDownList>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
+                        <label class="form-label">Request Type</label>
+                        <asp:DropDownList ID="ddlFilterRequestType" runat="server" CssClass="form-select">
+                            <asp:ListItem Text="All Types" Value=""></asp:ListItem>
+                            <asp:ListItem Text="Add" Value="Add"></asp:ListItem>
+                            <asp:ListItem Text="Drop" Value="Drop"></asp:ListItem>
+                        </asp:DropDownList>
+                    </div>
+                    <div class="col-md-2">
                         <label class="form-label">Requested From</label>
                         <asp:TextBox ID="txtFromDate" runat="server" CssClass="form-control" TextMode="Date"></asp:TextBox>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label">Requested To</label>
                         <asp:TextBox ID="txtToDate" runat="server" CssClass="form-control" TextMode="Date"></asp:TextBox>
                     </div>
