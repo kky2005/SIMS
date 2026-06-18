@@ -46,35 +46,75 @@ namespace SIMS.HeadOfProgramme
         private void LoadAllTables()
         {
             LoadPendingRequests();
-            LoadApprovedRequests();
-            LoadRejectedRequests();
+            LoadApprovedEnrolments();
+            LoadDroppedEnrolments();
         }
 
         private void LoadPendingRequests()
         {
-            DataTable dt = LoadRequestsByStatus("Pending");
+            DataTable dt = LoadPendingCourseRequests();
             gvPending.DataSource = dt;
             gvPending.DataBind();
             lblPendingCount.Text = "(" + dt.Rows.Count + ")";
         }
 
-        private void LoadApprovedRequests()
+        private void LoadApprovedEnrolments()
         {
-            DataTable dt = LoadRequestsByStatus("Approved");
+            DataTable dt = LoadEnrolmentsByStatus("Approved");
             gvApproved.DataSource = dt;
             gvApproved.DataBind();
             lblApprovedCount.Text = "(" + dt.Rows.Count + ")";
         }
 
-        private void LoadRejectedRequests()
+        private void LoadDroppedEnrolments()
         {
-            DataTable dt = LoadRequestsByStatus("Rejected");
+            DataTable dt = LoadEnrolmentsByStatus("Dropped");
             gvRejected.DataSource = dt;
             gvRejected.DataBind();
             lblRejectedCount.Text = "(" + dt.Rows.Count + ")";
         }
 
-        private DataTable LoadRequestsByStatus(string status)
+        private DataTable LoadPendingCourseRequests()
+        {
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                string sql = @"
+                    SELECT
+                        r.RequestId,
+                        r.RequestType,
+                        ISNULL(s.StudentNo, '-') AS StudentNo,
+                        u.FullName AS StudentName,
+                        c.CourseCode,
+                        c.CourseName,
+                        COALESCE(s.IntakeYear, YEAR(GETDATE())) AS AcademicYear,
+                        COALESCE(s.CurrentSemester, 1) AS Semester,
+                        r.Status,
+                        r.RequestedAt,
+                        CAST(NULL AS DATETIME2) AS EnrolledAt,
+                        CAST(NULL AS DATETIME2) AS DroppedAt,
+                        '-' AS LastAction,
+                        '-' AS LastActionBy,
+                        CAST(NULL AS DATETIME2) AS LastActionDate
+                    FROM CourseRegistrationRequests r
+                    INNER JOIN Students s ON s.StudentId = r.StudentId
+                    INNER JOIN Users u ON u.UserId = s.UserId
+                    INNER JOIN Courses c ON c.CourseId = r.CourseId
+                    WHERE r.Status = 'Pending'";
+
+                SqlCommand cmd = new SqlCommand();
+                cmd.Connection = conn;
+                AddRequestFilters(ref sql, cmd);
+                sql += " ORDER BY r.RequestedAt DESC";
+                cmd.CommandText = sql;
+
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
+                DataTable dt = new DataTable();
+                da.Fill(dt);
+                return dt;
+            }
+        }
+
+        private DataTable LoadEnrolmentsByStatus(string status)
         {
             using (SqlConnection conn = new SqlConnection(connStr))
             {
@@ -107,26 +147,15 @@ namespace SIMS.HeadOfProgramme
                         ORDER BY al.ActionDate DESC
                     ) lastLog
                     LEFT JOIN Users adminUser ON adminUser.UserId = lastLog.UserId
-                    WHERE 1 = 1";
+                    WHERE e.Status = @Status";
 
                 SqlCommand cmd = new SqlCommand();
                 cmd.Connection = conn;
+                cmd.Parameters.AddWithValue("@Status", status);
 
-                if (status == "Rejected")
-                {
-                    sql += " AND e.Status IN ('Rejected', 'Dropped')";
-                }
-                else
-                {
-                    sql += " AND e.Status = @Status";
-                    cmd.Parameters.AddWithValue("@Status", status);
-                }
+                AddEnrolmentFilters(ref sql, cmd);
 
-                AddCommonFilters(ref sql, cmd);
-
-                if (status == "Pending")
-                    sql += " ORDER BY e.RequestedAt DESC";
-                else if (status == "Approved")
+                if (status == "Approved")
                     sql += " ORDER BY e.EnrolledAt DESC, e.RequestedAt DESC";
                 else
                     sql += " ORDER BY e.DroppedAt DESC, e.RequestedAt DESC";
@@ -140,7 +169,27 @@ namespace SIMS.HeadOfProgramme
             }
         }
 
-        private void AddCommonFilters(ref string sql, SqlCommand cmd)
+        private void AddRequestFilters(ref string sql, SqlCommand cmd)
+        {
+            if (!string.IsNullOrWhiteSpace(txtSearchStudent.Text))
+            {
+                sql += @" AND (
+                            ISNULL(s.StudentNo, '') LIKE @StudentSearch
+                            OR ISNULL(u.FullName, '') LIKE @StudentSearch
+                          )";
+                cmd.Parameters.AddWithValue("@StudentSearch", "%" + txtSearchStudent.Text.Trim() + "%");
+            }
+
+            if (!string.IsNullOrEmpty(ddlFilterCourse.SelectedValue))
+            {
+                sql += " AND r.CourseId = @CourseId";
+                cmd.Parameters.AddWithValue("@CourseId", ddlFilterCourse.SelectedValue);
+            }
+
+            AddDateFilters(ref sql, cmd, "r.RequestedAt");
+        }
+
+        private void AddEnrolmentFilters(ref string sql, SqlCommand cmd)
         {
             if (!string.IsNullOrWhiteSpace(txtSearchStudent.Text))
             {
@@ -157,12 +206,17 @@ namespace SIMS.HeadOfProgramme
                 cmd.Parameters.AddWithValue("@CourseId", ddlFilterCourse.SelectedValue);
             }
 
+            AddDateFilters(ref sql, cmd, "e.RequestedAt");
+        }
+
+        private void AddDateFilters(ref string sql, SqlCommand cmd, string dateColumn)
+        {
             if (!string.IsNullOrWhiteSpace(txtFromDate.Text))
             {
                 DateTime fromDate;
                 if (DateTime.TryParse(txtFromDate.Text, out fromDate))
                 {
-                    sql += " AND CAST(e.RequestedAt AS date) >= @FromDate";
+                    sql += " AND CAST(" + dateColumn + " AS date) >= @FromDate";
                     cmd.Parameters.AddWithValue("@FromDate", fromDate.Date);
                 }
             }
@@ -172,7 +226,7 @@ namespace SIMS.HeadOfProgramme
                 DateTime toDate;
                 if (DateTime.TryParse(txtToDate.Text, out toDate))
                 {
-                    sql += " AND CAST(e.RequestedAt AS date) <= @ToDate";
+                    sql += " AND CAST(" + dateColumn + " AS date) <= @ToDate";
                     cmd.Parameters.AddWithValue("@ToDate", toDate.Date);
                 }
             }
@@ -246,7 +300,7 @@ namespace SIMS.HeadOfProgramme
 
             if (selectedIds.Count == 0)
             {
-                ShowMessage("Please select at least one rejected/dropped enrolment to delete.", false);
+                ShowMessage("Please select at least one dropped enrolment to delete.", false);
                 return;
             }
 
@@ -265,21 +319,21 @@ namespace SIMS.HeadOfProgramme
             LoadAllTables();
 
             if (errors.Count == 0)
-                ShowMessage(successCount + " selected enrolment(s) deleted successfully.", true);
+                ShowMessage(successCount + " selected dropped enrolment(s) deleted successfully.", true);
             else
                 ShowMessage(successCount + " deleted. Some records failed: " + string.Join(" | ", errors), false);
         }
 
         protected void gvPending_RowCommand(object sender, GridViewCommandEventArgs e)
         {
-            int enrolmentId;
-            if (!int.TryParse(Convert.ToString(e.CommandArgument), out enrolmentId))
+            int requestId;
+            if (!int.TryParse(Convert.ToString(e.CommandArgument), out requestId))
                 return;
 
-            if (e.CommandName == "ApproveEnrolment")
-                ApproveEnrolment(enrolmentId);
-            else if (e.CommandName == "RejectEnrolment")
-                RejectEnrolment(enrolmentId);
+            if (e.CommandName == "ApproveRequest")
+                ApproveCourseRequest(requestId);
+            else if (e.CommandName == "RejectRequest")
+                RejectCourseRequest(requestId);
             else
                 return;
 
@@ -302,7 +356,7 @@ namespace SIMS.HeadOfProgramme
             LoadAllTables();
         }
 
-        private void ApproveEnrolment(int enrolmentId)
+        private void ApproveCourseRequest(int requestId)
         {
             using (SqlConnection conn = new SqlConnection(connStr))
             {
@@ -311,56 +365,121 @@ namespace SIMS.HeadOfProgramme
 
                 try
                 {
-                    EnrolmentInfo info = GetEnrolmentInfo(conn, tran, enrolmentId);
+                    CourseRequestInfo request = GetCourseRequestInfo(conn, tran, requestId);
 
-                    if (info == null)
-                        throw new Exception("Enrolment request not found.");
+                    if (request == null)
+                        throw new Exception("Pending course request not found.");
 
-                    if (info.Status != "Pending")
-                        throw new Exception("Only pending enrolment requests can be approved.");
+                    if (request.Status != "Pending")
+                        throw new Exception("Only pending course requests can be approved.");
 
-                    if (HasApprovedDuplicate(conn, tran, info))
-                        throw new Exception("This student is already approved for this course in the same academic year and semester.");
+                    if (string.Equals(request.RequestType, "Drop", StringComparison.OrdinalIgnoreCase))
+                        ApproveDropRequest(conn, tran, request);
+                    else
+                        ApproveAddRequest(conn, tran, request);
 
-                    string updateSql = @"
-                        UPDATE Enrolments
-                        SET Status = 'Approved',
-                            EnrolledAt = SYSUTCDATETIME(),
-                            DroppedAt = NULL
-                        WHERE EnrolmentId = @EnrolmentId
-                          AND Status = 'Pending'";
-
-                    using (SqlCommand updateCmd = new SqlCommand(updateSql, conn, tran))
-                    {
-                        updateCmd.Parameters.AddWithValue("@EnrolmentId", enrolmentId);
-                        int affected = updateCmd.ExecuteNonQuery();
-
-                        if (affected == 0)
-                            throw new Exception("Unable to approve. The request may already have been processed.");
-                    }
-
-                    InsertAuditLog(
-                        conn,
-                        tran,
-                        CurrentUserId,
-                        "Approved enrolment request",
-                        enrolmentId,
-                        "Status=Pending; EnrolledAt=NULL; DroppedAt=NULL",
-                        "Status=Approved; Student=" + info.StudentName + "; Course=" + info.CourseCode
-                    );
+                    DeleteCourseRequest(conn, tran, requestId);
 
                     tran.Commit();
-                    ShowMessage("Enrolment request approved successfully.", true);
+                    ShowMessage("Course request approved successfully.", true);
                 }
                 catch (Exception ex)
                 {
                     tran.Rollback();
-                    ShowMessage("Error approving enrolment: " + ex.Message, false);
+                    ShowMessage("Error approving course request: " + ex.Message, false);
                 }
             }
         }
 
-        private void RejectEnrolment(int enrolmentId)
+        private void ApproveAddRequest(SqlConnection conn, SqlTransaction tran, CourseRequestInfo request)
+        {
+            if (HasActiveEnrolment(conn, tran, request.StudentId, request.CourseId))
+                throw new Exception("This student already has an approved enrolment for this course.");
+
+            string insertSql = @"
+                INSERT INTO Enrolments
+                (
+                    StudentId,
+                    CourseId,
+                    AcademicYear,
+                    Semester,
+                    Status,
+                    EnrolledAt,
+                    DroppedAt,
+                    RequestedAt
+                )
+                VALUES
+                (
+                    @StudentId,
+                    @CourseId,
+                    @AcademicYear,
+                    @Semester,
+                    'Approved',
+                    SYSUTCDATETIME(),
+                    NULL,
+                    @RequestedAt
+                );
+                SELECT CAST(SCOPE_IDENTITY() AS INT);";
+
+            int enrolmentId;
+            using (SqlCommand cmd = new SqlCommand(insertSql, conn, tran))
+            {
+                cmd.Parameters.AddWithValue("@StudentId", request.StudentId);
+                cmd.Parameters.AddWithValue("@CourseId", request.CourseId);
+                cmd.Parameters.AddWithValue("@AcademicYear", request.AcademicYear);
+                cmd.Parameters.AddWithValue("@Semester", request.Semester);
+                cmd.Parameters.AddWithValue("@RequestedAt", (object)request.RequestedAt ?? DBNull.Value);
+                enrolmentId = Convert.ToInt32(cmd.ExecuteScalar());
+            }
+
+            InsertAuditLog(
+                conn,
+                tran,
+                CurrentUserId,
+                "Approved add course request",
+                "Enrolments",
+                enrolmentId,
+                "CourseRegistrationRequests.RequestId=" + request.RequestId + "; Status=Pending; Type=Add",
+                "Status=Approved; Student=" + request.StudentName + "; Course=" + request.CourseCode
+            );
+        }
+
+        private void ApproveDropRequest(SqlConnection conn, SqlTransaction tran, CourseRequestInfo request)
+        {
+            EnrolmentInfo enrolment = GetApprovedEnrolment(conn, tran, request.StudentId, request.CourseId);
+
+            if (enrolment == null)
+                throw new Exception("This student does not have an approved enrolment for this course to drop.");
+
+            string updateSql = @"
+                UPDATE Enrolments
+                SET Status = 'Dropped',
+                    DroppedAt = SYSUTCDATETIME()
+                WHERE EnrolmentId = @EnrolmentId
+                  AND Status = 'Approved'";
+
+            using (SqlCommand cmd = new SqlCommand(updateSql, conn, tran))
+            {
+                cmd.Parameters.AddWithValue("@EnrolmentId", enrolment.EnrolmentId);
+                int affected = cmd.ExecuteNonQuery();
+
+                if (affected == 0)
+                    throw new Exception("Unable to drop. The enrolment may already have been updated.");
+            }
+
+            InsertAuditLog(
+                conn,
+                tran,
+                CurrentUserId,
+                "Approved drop course request",
+                "Enrolments",
+                enrolment.EnrolmentId,
+                "Status=Approved; CourseRegistrationRequests.RequestId=" + request.RequestId,
+                "Status=Dropped; Student=" + request.StudentName + "; Course=" + request.CourseCode
+            );
+        }
+
+        private void RejectCourseRequest(int requestId)
         {
             using (SqlConnection conn = new SqlConnection(connStr))
             {
@@ -369,48 +488,34 @@ namespace SIMS.HeadOfProgramme
 
                 try
                 {
-                    EnrolmentInfo info = GetEnrolmentInfo(conn, tran, enrolmentId);
+                    CourseRequestInfo request = GetCourseRequestInfo(conn, tran, requestId);
 
-                    if (info == null)
-                        throw new Exception("Enrolment request not found.");
+                    if (request == null)
+                        throw new Exception("Pending course request not found.");
 
-                    if (info.Status != "Pending")
-                        throw new Exception("Only pending enrolment requests can be rejected.");
-
-                    string updateSql = @"
-                        UPDATE Enrolments
-                        SET Status = 'Rejected',
-                            EnrolledAt = NULL,
-                            DroppedAt = SYSUTCDATETIME()
-                        WHERE EnrolmentId = @EnrolmentId
-                          AND Status = 'Pending'";
-
-                    using (SqlCommand updateCmd = new SqlCommand(updateSql, conn, tran))
-                    {
-                        updateCmd.Parameters.AddWithValue("@EnrolmentId", enrolmentId);
-                        int affected = updateCmd.ExecuteNonQuery();
-
-                        if (affected == 0)
-                            throw new Exception("Unable to reject. The request may already have been processed.");
-                    }
+                    if (request.Status != "Pending")
+                        throw new Exception("Only pending course requests can be rejected.");
 
                     InsertAuditLog(
                         conn,
                         tran,
                         CurrentUserId,
-                        "Rejected enrolment request",
-                        enrolmentId,
-                        "Status=Pending; EnrolledAt=NULL; DroppedAt=NULL",
-                        "Status=Rejected; Student=" + info.StudentName + "; Course=" + info.CourseCode
+                        "Rejected course request",
+                        "CourseRegistrationRequests",
+                        request.RequestId,
+                        "Status=Pending; Type=" + request.RequestType + "; Student=" + request.StudentName + "; Course=" + request.CourseCode,
+                        "Request deleted; no enrolment record created/changed"
                     );
 
+                    DeleteCourseRequest(conn, tran, requestId);
+
                     tran.Commit();
-                    ShowMessage("Enrolment request rejected successfully.", true);
+                    ShowMessage("Course request rejected and removed successfully.", true);
                 }
                 catch (Exception ex)
                 {
                     tran.Rollback();
-                    ShowMessage("Error rejecting enrolment: " + ex.Message, false);
+                    ShowMessage("Error rejecting course request: " + ex.Message, false);
                 }
             }
         }
@@ -463,6 +568,7 @@ namespace SIMS.HeadOfProgramme
                         tran,
                         CurrentUserId,
                         "Archived enrolment record",
+                        "Enrolments",
                         enrolmentId,
                         "Status=Approved; Student=" + info.StudentName + "; Course=" + info.CourseCode,
                         "Status=Archived; Record moved to archived enrolments"
@@ -484,7 +590,7 @@ namespace SIMS.HeadOfProgramme
         {
             string error;
             if (TryDeleteEnrolment(enrolmentId, out error))
-                ShowMessage("Enrolment record deleted successfully.", true);
+                ShowMessage("Dropped enrolment record deleted successfully.", true);
             else
                 ShowMessage("Error deleting enrolment: " + error, false);
         }
@@ -505,11 +611,8 @@ namespace SIMS.HeadOfProgramme
                     if (info == null)
                         throw new Exception("Enrolment record not found.");
 
-                    if (info.Status == "Pending")
-                        throw new Exception("Pending requests cannot be deleted here. Approve or reject them first.");
-
-                    if (info.Status != "Rejected" && info.Status != "Dropped")
-                        throw new Exception("Only rejected or dropped enrolments can be deleted from this section.");
+                    if (info.Status != "Dropped")
+                        throw new Exception("Only dropped enrolments can be deleted from this section.");
 
                     string checkSql = "SELECT COUNT(*) FROM Attendance WHERE EnrolmentId = @EnrolmentId";
                     using (SqlCommand checkCmd = new SqlCommand(checkSql, conn, tran))
@@ -525,12 +628,12 @@ namespace SIMS.HeadOfProgramme
                         conn,
                         tran,
                         CurrentUserId,
-                        "Deleted enrolment record",
+                        "Deleted dropped enrolment record",
+                        "Enrolments",
                         enrolmentId,
                         "Status=" + info.Status + "; Student=" + info.StudentName + "; Course=" + info.CourseCode,
                         "Record deleted from Enrolments"
                     );
-
 
                     using (SqlCommand deleteCmd = new SqlCommand("DELETE FROM Enrolments WHERE EnrolmentId = @EnrolmentId", conn, tran))
                     {
@@ -546,6 +649,54 @@ namespace SIMS.HeadOfProgramme
                     tran.Rollback();
                     error = ex.Message;
                     return false;
+                }
+            }
+        }
+
+        private CourseRequestInfo GetCourseRequestInfo(SqlConnection conn, SqlTransaction tran, int requestId)
+        {
+            string sql = @"
+                SELECT
+                    r.RequestId,
+                    r.StudentId,
+                    r.CourseId,
+                    r.RequestType,
+                    r.Status,
+                    r.RequestedAt,
+                    COALESCE(s.IntakeYear, YEAR(GETDATE())) AS AcademicYear,
+                    COALESCE(s.CurrentSemester, 1) AS Semester,
+                    u.FullName AS StudentName,
+                    c.CourseCode,
+                    c.CourseName
+                FROM CourseRegistrationRequests r
+                INNER JOIN Students s ON s.StudentId = r.StudentId
+                INNER JOIN Users u ON u.UserId = s.UserId
+                INNER JOIN Courses c ON c.CourseId = r.CourseId
+                WHERE r.RequestId = @RequestId";
+
+            using (SqlCommand cmd = new SqlCommand(sql, conn, tran))
+            {
+                cmd.Parameters.AddWithValue("@RequestId", requestId);
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (!reader.Read())
+                        return null;
+
+                    return new CourseRequestInfo
+                    {
+                        RequestId = Convert.ToInt32(reader["RequestId"]),
+                        StudentId = Convert.ToInt32(reader["StudentId"]),
+                        CourseId = Convert.ToInt32(reader["CourseId"]),
+                        RequestType = reader["RequestType"].ToString(),
+                        Status = reader["Status"].ToString(),
+                        RequestedAt = reader["RequestedAt"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(reader["RequestedAt"]),
+                        AcademicYear = Convert.ToInt16(reader["AcademicYear"]),
+                        Semester = Convert.ToByte(reader["Semester"]),
+                        StudentName = reader["StudentName"].ToString(),
+                        CourseCode = reader["CourseCode"].ToString(),
+                        CourseName = reader["CourseName"].ToString()
+                    };
                 }
             }
         }
@@ -594,32 +745,83 @@ namespace SIMS.HeadOfProgramme
             }
         }
 
-        private bool HasApprovedDuplicate(SqlConnection conn, SqlTransaction tran, EnrolmentInfo info)
+        private EnrolmentInfo GetApprovedEnrolment(SqlConnection conn, SqlTransaction tran, int studentId, int courseId)
+        {
+            string sql = @"
+                SELECT TOP 1
+                    e.EnrolmentId,
+                    e.StudentId,
+                    e.CourseId,
+                    e.AcademicYear,
+                    e.Semester,
+                    e.Status,
+                    u.FullName AS StudentName,
+                    c.CourseCode,
+                    c.CourseName
+                FROM Enrolments e
+                INNER JOIN Students s ON s.StudentId = e.StudentId
+                INNER JOIN Users u ON u.UserId = s.UserId
+                INNER JOIN Courses c ON c.CourseId = e.CourseId
+                WHERE e.StudentId = @StudentId
+                  AND e.CourseId = @CourseId
+                  AND e.Status = 'Approved'
+                ORDER BY e.EnrolledAt DESC, e.EnrolmentId DESC";
+
+            using (SqlCommand cmd = new SqlCommand(sql, conn, tran))
+            {
+                cmd.Parameters.AddWithValue("@StudentId", studentId);
+                cmd.Parameters.AddWithValue("@CourseId", courseId);
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (!reader.Read())
+                        return null;
+
+                    return new EnrolmentInfo
+                    {
+                        EnrolmentId = Convert.ToInt32(reader["EnrolmentId"]),
+                        StudentId = Convert.ToInt32(reader["StudentId"]),
+                        CourseId = Convert.ToInt32(reader["CourseId"]),
+                        AcademicYear = Convert.ToInt16(reader["AcademicYear"]),
+                        Semester = Convert.ToByte(reader["Semester"]),
+                        Status = reader["Status"].ToString(),
+                        StudentName = reader["StudentName"].ToString(),
+                        CourseCode = reader["CourseCode"].ToString(),
+                        CourseName = reader["CourseName"].ToString()
+                    };
+                }
+            }
+        }
+
+        private bool HasActiveEnrolment(SqlConnection conn, SqlTransaction tran, int studentId, int courseId)
         {
             string sql = @"
                 SELECT COUNT(*)
                 FROM Enrolments
                 WHERE StudentId = @StudentId
                   AND CourseId = @CourseId
-                  AND AcademicYear = @AcademicYear
-                  AND Semester = @Semester
-                  AND Status = 'Approved'
-                  AND EnrolmentId <> @EnrolmentId";
+                  AND Status = 'Approved'";
 
             using (SqlCommand cmd = new SqlCommand(sql, conn, tran))
             {
-                cmd.Parameters.AddWithValue("@StudentId", info.StudentId);
-                cmd.Parameters.AddWithValue("@CourseId", info.CourseId);
-                cmd.Parameters.AddWithValue("@AcademicYear", info.AcademicYear);
-                cmd.Parameters.AddWithValue("@Semester", info.Semester);
-                cmd.Parameters.AddWithValue("@EnrolmentId", info.EnrolmentId);
+                cmd.Parameters.AddWithValue("@StudentId", studentId);
+                cmd.Parameters.AddWithValue("@CourseId", courseId);
 
                 int count = Convert.ToInt32(cmd.ExecuteScalar());
                 return count > 0;
             }
         }
 
-        private void InsertAuditLog(SqlConnection conn, SqlTransaction tran, int userId, string action, int enrolmentId, string oldValue, string newValue)
+        private void DeleteCourseRequest(SqlConnection conn, SqlTransaction tran, int requestId)
+        {
+            using (SqlCommand cmd = new SqlCommand("DELETE FROM CourseRegistrationRequests WHERE RequestId = @RequestId", conn, tran))
+            {
+                cmd.Parameters.AddWithValue("@RequestId", requestId);
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        private void InsertAuditLog(SqlConnection conn, SqlTransaction tran, int userId, string action, string tableAffected, int recordId, string oldValue, string newValue)
         {
             string sql = @"
                 INSERT INTO AuditLogs
@@ -636,7 +838,7 @@ namespace SIMS.HeadOfProgramme
                 (
                     @UserId,
                     @Action,
-                    'Enrolments',
+                    @TableAffected,
                     @RecordId,
                     @OldValue,
                     @NewValue,
@@ -647,7 +849,8 @@ namespace SIMS.HeadOfProgramme
             {
                 cmd.Parameters.AddWithValue("@UserId", userId);
                 cmd.Parameters.AddWithValue("@Action", action);
-                cmd.Parameters.AddWithValue("@RecordId", enrolmentId);
+                cmd.Parameters.AddWithValue("@TableAffected", tableAffected);
+                cmd.Parameters.AddWithValue("@RecordId", recordId);
                 cmd.Parameters.AddWithValue("@OldValue", oldValue);
                 cmd.Parameters.AddWithValue("@NewValue", newValue);
                 cmd.ExecuteNonQuery();
@@ -682,6 +885,21 @@ namespace SIMS.HeadOfProgramme
             lblMessage.CssClass = success
                 ? "alert alert-success d-block message-box"
                 : "alert alert-danger d-block message-box";
+        }
+
+        private class CourseRequestInfo
+        {
+            public int RequestId { get; set; }
+            public int StudentId { get; set; }
+            public int CourseId { get; set; }
+            public string RequestType { get; set; }
+            public string Status { get; set; }
+            public DateTime? RequestedAt { get; set; }
+            public short AcademicYear { get; set; }
+            public byte Semester { get; set; }
+            public string StudentName { get; set; }
+            public string CourseCode { get; set; }
+            public string CourseName { get; set; }
         }
 
         private class EnrolmentInfo
