@@ -14,6 +14,7 @@ namespace SIMS.HeadOfProgramme
         protected global::System.Web.UI.WebControls.Label lblMessage;
         protected global::System.Web.UI.WebControls.TextBox txtSearchStudent;
         protected global::System.Web.UI.WebControls.DropDownList ddlFilterCourse;
+        protected global::System.Web.UI.WebControls.DropDownList ddlFilterRequestType;
         protected global::System.Web.UI.WebControls.TextBox txtFromDate;
         protected global::System.Web.UI.WebControls.TextBox txtToDate;
         protected global::System.Web.UI.WebControls.Button btnFilter;
