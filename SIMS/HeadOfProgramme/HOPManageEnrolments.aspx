@@ -1,4 +1,4 @@
-<%@ Page Title="Manage Enrolment Requests" Language="C#" MasterPageFile="~/HeadOfProgramme/HOPMaster.master"
+<%@ Page Title="Manage Course Registration Requests" Language="C#" MasterPageFile="~/HeadOfProgramme/HOPMaster.master"
     AutoEventWireup="true" CodeBehind="HOPManageEnrolments.aspx.cs"
     Inherits="SIMS.HeadOfProgramme.HOPManageEnrolments" %>
 
@@ -25,14 +25,14 @@
 </asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" runat="server">
-    <h2 class="page-title">Manage Enrolment Requests</h2>
-    <p class="page-subtitle">Students submit enrolment requests. HOP can approve or reject pending requests.</p>
+    <h2 class="page-title">Manage Course Registration Requests</h2>
+    <p class="page-subtitle">Students submit Add or Drop course requests. Pending requests are stored separately from final enrolment records.</p>
 
     <asp:Label ID="lblMessage" runat="server" CssClass="message-box d-block"></asp:Label>
 
     <div class="card-sims mb-4">
         <div class="card-header-sims">
-            <h5>Filter Enrolments</h5>
+            <h5>Filter Requests / Enrolments</h5>
         </div>
         <div class="card-body-sims">
             <div class="filter-box">
@@ -64,17 +64,18 @@
 
     <div class="card-sims mb-4">
         <div class="card-header-sims">
-            <h5>Pending Requests <asp:Label ID="lblPendingCount" runat="server" CssClass="section-count"></asp:Label></h5>
+            <h5>Pending Course Requests <asp:Label ID="lblPendingCount" runat="server" CssClass="section-count"></asp:Label></h5>
         </div>
         <div class="card-body-sims">
             <asp:GridView ID="gvPending" runat="server"
                 CssClass="table table-bordered table-hover"
                 AutoGenerateColumns="False"
-                DataKeyNames="EnrolmentId"
+                DataKeyNames="RequestId"
                 OnRowCommand="gvPending_RowCommand"
                 OnRowDataBound="gvStatus_RowDataBound">
                 <Columns>
-                    <asp:BoundField DataField="EnrolmentId" HeaderText="ID" />
+                    <asp:BoundField DataField="RequestId" HeaderText="Request ID" />
+                    <asp:BoundField DataField="RequestType" HeaderText="Type" />
                     <asp:BoundField DataField="StudentNo" HeaderText="Student No" />
                     <asp:BoundField DataField="StudentName" HeaderText="Student" />
                     <asp:BoundField DataField="CourseCode" HeaderText="Course Code" />
@@ -88,13 +89,13 @@
                     <asp:TemplateField HeaderText="Actions">
                         <ItemTemplate>
                             <div class="action-btns">
-                                <asp:LinkButton ID="btnApprove" runat="server" CommandName="ApproveEnrolment" CommandArgument='<%# Eval("EnrolmentId") %>' CssClass="btn btn-sm btn-success" OnClientClick="return confirm('Approve this enrolment request?');">Approve</asp:LinkButton>
-                                <asp:LinkButton ID="btnReject" runat="server" CommandName="RejectEnrolment" CommandArgument='<%# Eval("EnrolmentId") %>' CssClass="btn btn-sm btn-danger" OnClientClick="return confirm('Reject this enrolment request?');">Reject</asp:LinkButton>
+                                <asp:LinkButton ID="btnApprove" runat="server" CommandName="ApproveRequest" CommandArgument='<%# Eval("RequestId") %>' CssClass="btn btn-sm btn-success" OnClientClick="return confirm('Approve this course request?');">Approve</asp:LinkButton>
+                                <asp:LinkButton ID="btnReject" runat="server" CommandName="RejectRequest" CommandArgument='<%# Eval("RequestId") %>' CssClass="btn btn-sm btn-danger" OnClientClick="return confirm('Reject this course request?');">Reject</asp:LinkButton>
                             </div>
                         </ItemTemplate>
                     </asp:TemplateField>
                 </Columns>
-                <EmptyDataTemplate><div class="empty-box">No pending enrolment requests found.</div></EmptyDataTemplate>
+                <EmptyDataTemplate><div class="empty-box">No pending course requests found.</div></EmptyDataTemplate>
             </asp:GridView>
         </div>
     </div>
@@ -149,11 +150,11 @@
 
     <div class="card-sims">
         <div class="card-header-sims">
-            <h5>Rejected Enrolments <asp:Label ID="lblRejectedCount" runat="server" CssClass="section-count"></asp:Label></h5>
+            <h5>Dropped Enrolments <asp:Label ID="lblRejectedCount" runat="server" CssClass="section-count"></asp:Label></h5>
         </div>
         <div class="card-body-sims">
             <div class="bulk-actions">
-                <asp:Button ID="btnDeleteSelected" runat="server" Text="Delete Selected" CssClass="btn btn-danger btn-sm" OnClick="btnDeleteSelected_Click" OnClientClick="return confirm('Delete all selected rejected/dropped enrolments? Records with attendance cannot be deleted.');" />
+                <asp:Button ID="btnDeleteSelected" runat="server" Text="Delete Selected" CssClass="btn btn-danger btn-sm" OnClick="btnDeleteSelected_Click" OnClientClick="return confirm('Delete all selected dropped enrolments? Records with attendance cannot be deleted.');" />
             </div>
             <asp:GridView ID="gvRejected" runat="server"
                 CssClass="table table-bordered table-hover"
@@ -164,7 +165,7 @@
                 <Columns>
                     <asp:TemplateField HeaderStyle-CssClass="select-col" ItemStyle-CssClass="select-col">
                         <HeaderTemplate>
-                            <asp:CheckBox ID="chkSelectAllRejected" runat="server" onclick="toggleRejected(this);" ToolTip="Select all rejected/dropped enrolments" />
+                            <asp:CheckBox ID="chkSelectAllRejected" runat="server" onclick="toggleRejected(this);" ToolTip="Select all dropped enrolments" />
                         </HeaderTemplate>
                         <ItemTemplate>
                             <asp:CheckBox ID="chkSelectRejected" runat="server" />
@@ -178,18 +179,18 @@
                     <asp:BoundField DataField="AcademicYear" HeaderText="Year" />
                     <asp:BoundField DataField="Semester" HeaderText="Sem" />
                     <asp:BoundField DataField="RequestedAt" HeaderText="Requested Date" DataFormatString="{0:yyyy-MM-dd HH:mm}" NullDisplayText="-" />
-                    <asp:BoundField DataField="DroppedAt" HeaderText="Rejected Date" DataFormatString="{0:yyyy-MM-dd HH:mm}" NullDisplayText="-" />
+                    <asp:BoundField DataField="DroppedAt" HeaderText="Dropped Date" DataFormatString="{0:yyyy-MM-dd HH:mm}" NullDisplayText="-" />
                     <asp:TemplateField HeaderText="Status">
                         <ItemTemplate><asp:Label ID="lblStatus" runat="server" Text='<%# Eval("Status") %>'></asp:Label></ItemTemplate>
                     </asp:TemplateField>
-                    <asp:BoundField DataField="LastActionBy" HeaderText="Rejected By" />
+                    <asp:BoundField DataField="LastActionBy" HeaderText="Dropped By" />
                     <asp:TemplateField HeaderText="Actions">
                         <ItemTemplate>
-                            <asp:LinkButton ID="btnDeleteRejected" runat="server" CommandName="DeleteEnrolment" CommandArgument='<%# Eval("EnrolmentId") %>' CssClass="btn btn-sm btn-danger" OnClientClick="return confirm('Delete this rejected enrolment record?');">Delete</asp:LinkButton>
+                            <asp:LinkButton ID="btnDeleteRejected" runat="server" CommandName="DeleteEnrolment" CommandArgument='<%# Eval("EnrolmentId") %>' CssClass="btn btn-sm btn-danger" OnClientClick="return confirm('Delete this dropped enrolment record?');">Delete</asp:LinkButton>
                         </ItemTemplate>
                     </asp:TemplateField>
                 </Columns>
-                <EmptyDataTemplate><div class="empty-box">No rejected enrolments found.</div></EmptyDataTemplate>
+                <EmptyDataTemplate><div class="empty-box">No dropped enrolments found.</div></EmptyDataTemplate>
             </asp:GridView>
         </div>
     </div>
