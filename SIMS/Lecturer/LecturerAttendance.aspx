@@ -210,6 +210,24 @@
             gap: 10px;
         }
 
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: white;
+            text-decoration: none;
+            font-size: 13px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 6px 12px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            transition: background 0.2s ease;
+        }
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+        }
+
         @media (max-width: 768px) {
             .control-row { grid-template-columns: 1fr; }
             .action-buttons { flex-direction: column; }
@@ -222,6 +240,9 @@
 <asp:Content ID="Main" ContentPlaceHolderID="MainContent" runat="server">
 
     <div class="attendance-header">
+        <a href="LecturerCourses.aspx" class="back-btn">
+            <i class="fa fa-arrow-left"></i> Back to Courses
+        </a>
         <h3><i class="fa fa-calendar-check" style="margin-right: 10px;"></i>Record Attendance</h3>
         <p>Course: <strong><asp:Literal ID="litCourseName" runat="server" /></strong></p>
     </div>
