@@ -26,7 +26,7 @@
 
 <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" runat="server">
     <h2 class="page-title">Manage Course Registration Requests</h2>
-    <p class="page-subtitle">Students submit Add or Drop course requests. Pending requests are stored separately from final enrolment records.</p>
+    <p class="page-subtitle">Students submit Register or Drop course requests. Pending requests are stored separately from final enrolment records.</p>
 
     <asp:Label ID="lblMessage" runat="server" CssClass="message-box d-block"></asp:Label>
 
@@ -49,7 +49,7 @@
                         <label class="form-label">Request Type</label>
                         <asp:DropDownList ID="ddlFilterRequestType" runat="server" CssClass="form-select">
                             <asp:ListItem Text="All Types" Value=""></asp:ListItem>
-                            <asp:ListItem Text="Add" Value="Add"></asp:ListItem>
+                            <asp:ListItem Text="Register" Value="Register"></asp:ListItem>
                             <asp:ListItem Text="Drop" Value="Drop"></asp:ListItem>
                         </asp:DropDownList>
                     </div>
