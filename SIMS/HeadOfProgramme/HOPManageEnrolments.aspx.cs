@@ -382,8 +382,11 @@ namespace SIMS.HeadOfProgramme
 
                     if (string.Equals(request.RequestType, "Drop", StringComparison.OrdinalIgnoreCase))
                         ApproveDropRequest(conn, tran, request);
-                    else
+                    else if (string.Equals(request.RequestType, "Register", StringComparison.OrdinalIgnoreCase) ||
+                             string.Equals(request.RequestType, "Add", StringComparison.OrdinalIgnoreCase))
                         ApproveAddRequest(conn, tran, request);
+                    else
+                        throw new Exception("Invalid request type. Only Register and Drop are allowed.");
 
                     DeleteCourseRequest(conn, tran, requestId);
 
@@ -443,10 +446,10 @@ namespace SIMS.HeadOfProgramme
                 conn,
                 tran,
                 CurrentUserId,
-                "Approved add course request",
+                "Approved registration request",
                 "Enrolments",
                 enrolmentId,
-                "CourseRegistrationRequests.RequestId=" + request.RequestId + "; Status=Pending; Type=Add",
+                "CourseRegistrationRequests.RequestId=" + request.RequestId + "; Status=Pending; Type=Register",
                 "Status=Approved; Student=" + request.StudentName + "; Course=" + request.CourseCode
             );
         }
