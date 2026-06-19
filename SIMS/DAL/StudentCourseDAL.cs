@@ -119,7 +119,12 @@ namespace SIMS.DAL
                         c.CourseName,
                         r.RequestType,
                         r.Status,
-                        r.RequestedAt,
+                        CAST(
+                            r.RequestedAt
+                                AT TIME ZONE 'UTC'
+                                AT TIME ZONE 'Singapore Standard Time'
+                            AS DATETIME2
+                        ) AS RequestedAt,
                         ISNULL(r.AdminRemarks, '-') AS AdminRemarks
                     FROM CourseRegistrationRequests r
                     INNER JOIN Courses c ON r.CourseId = c.CourseId
