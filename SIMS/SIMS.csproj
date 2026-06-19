@@ -108,7 +108,6 @@
     <Content Include="Lecturer\LecturerCourses.aspx" />
     <Content Include="Lecturer\LecturerDashboard.aspx" />
     <Content Include="Lecturer\LecturerGrades.aspx" />
-    <Content Include="Lecturer\LecturerLogin.aspx" />
     <Content Include="Lecturer\LecturerMaterials.aspx" />
     <Content Include="Lecturer\LecturerProfile.aspx" />
     <Content Include="Lecturer\LecturerStudentProgress.aspx" />
@@ -128,7 +127,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AuthenticationHelper.cs" />
-
     <Compile Include="BLL\StudentAccountBLL.cs" />
     <Compile Include="BLL\StudentAttendanceBLL.cs" />
     <Compile Include="BLL\StudentCourseBLL.cs" />
@@ -145,7 +143,6 @@
     <Compile Include="DAL\StudentNotificationDAL.cs" />
     <Compile Include="DAL\StudentPaymentDAL.cs" />
     <Compile Include="DAL\Student_ResultDAL.cs" />
-
     <Compile Include="HeadOfProgramme\HOPAnnouncements.aspx.cs">
       <DependentUpon>HOPAnnouncements.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -167,7 +164,6 @@
     <Compile Include="HeadOfProgramme\HOPArchivedEnrolments.aspx.designer.cs">
       <DependentUpon>HOPArchivedEnrolments.aspx</DependentUpon>
     </Compile>
-
     <Compile Include="HeadOfProgramme\HOPAssignUserRole.aspx.cs">
       <DependentUpon>HOPAssignUserRole.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -296,13 +292,6 @@
     <Compile Include="Lecturer\LecturerGrades.aspx.designer.cs">
       <DependentUpon>LecturerGrades.aspx</DependentUpon>
     </Compile>
-    <Compile Include="Lecturer\LecturerLogin.aspx.cs">
-      <DependentUpon>LecturerLogin.aspx</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
-    </Compile>
-    <Compile Include="Lecturer\LecturerLogin.aspx.designer.cs">
-      <DependentUpon>LecturerLogin.aspx</DependentUpon>
-    </Compile>
     <Compile Include="Lecturer\LecturerMaster.Master.cs">
       <DependentUpon>LecturerMaster.Master</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -339,7 +328,6 @@
       <DependentUpon>Login.aspx</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-
     <Compile Include="Student\AcademicResults.aspx.cs">
       <DependentUpon>AcademicResults.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -417,9 +405,7 @@
     <Compile Include="Student\StudentPayment.aspx.designer.cs">
       <DependentUpon>StudentPayment.aspx</DependentUpon>
     </Compile>
-
     <Compile Include="Services\AcademicProgressService.cs" />
-
   </ItemGroup>
   <ItemGroup>
     <Content Include="Lecturer\LecturerMaster.Master" />
