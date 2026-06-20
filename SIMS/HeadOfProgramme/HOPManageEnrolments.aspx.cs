@@ -425,7 +425,7 @@ namespace SIMS.HeadOfProgramme
                     @AcademicYear,
                     @Semester,
                     'Active',
-                    SYSUTCDATETIME(),
+                    DATEADD(HOUR, 8, SYSUTCDATETIME()),
                     NULL,
                     @RequestedAt
                 );
@@ -464,7 +464,7 @@ namespace SIMS.HeadOfProgramme
             string updateSql = @"
                 UPDATE Enrolments
                 SET Status = 'Dropped',
-                    DroppedAt = SYSUTCDATETIME()
+                    DroppedAt = DATEADD(HOUR, 8, SYSUTCDATETIME())
                 WHERE EnrolmentId = @EnrolmentId
                   AND Status IN ('Active', 'Completed')";
 
@@ -506,6 +506,21 @@ namespace SIMS.HeadOfProgramme
                     if (request.Status != "Pending")
                         throw new Exception("Only pending course requests can be rejected.");
 
+                    string updateSql = @"
+                        UPDATE CourseRegistrationRequests
+                        SET Status = 'Rejected'
+                        WHERE RequestId = @RequestId
+                          AND Status = 'Pending'";
+
+                    using (SqlCommand updateCmd = new SqlCommand(updateSql, conn, tran))
+                    {
+                        updateCmd.Parameters.AddWithValue("@RequestId", requestId);
+                        int affected = updateCmd.ExecuteNonQuery();
+
+                        if (affected == 0)
+                            throw new Exception("Unable to reject. The request may already have been processed.");
+                    }
+
                     InsertAuditLog(
                         conn,
                         tran,
@@ -514,13 +529,11 @@ namespace SIMS.HeadOfProgramme
                         "CourseRegistrationRequests",
                         request.RequestId,
                         "Status=Pending; Type=" + request.RequestType + "; Student=" + request.StudentName + "; Course=" + request.CourseCode,
-                        "Request deleted; no enrolment record created/changed"
+                        "Status=Rejected; Request kept in CourseRegistrationRequests"
                     );
 
-                    DeleteCourseRequest(conn, tran, requestId);
-
                     tran.Commit();
-                    ShowMessage("Course request rejected and removed successfully.", true);
+                    ShowMessage("Course request rejected successfully. The request is kept with Rejected status.", true);
                 }
                 catch (Exception ex)
                 {
@@ -855,7 +868,7 @@ namespace SIMS.HeadOfProgramme
                     @RecordId,
                     @OldValue,
                     @NewValue,
-                    SYSUTCDATETIME()
+                    DATEADD(HOUR, 8, SYSUTCDATETIME())
                 )";
 
             using (SqlCommand cmd = new SqlCommand(sql, conn, tran))
