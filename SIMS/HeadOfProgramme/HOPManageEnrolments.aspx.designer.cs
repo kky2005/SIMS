@@ -19,6 +19,7 @@ namespace SIMS.HeadOfProgramme
         protected global::System.Web.UI.WebControls.TextBox txtToDate;
         protected global::System.Web.UI.WebControls.Button btnFilter;
         protected global::System.Web.UI.WebControls.Button btnReset;
+        protected global::System.Web.UI.WebControls.Button btnCleanupRejected;
         protected global::System.Web.UI.WebControls.Label lblPendingCount;
         protected global::System.Web.UI.WebControls.GridView gvPending;
         protected global::System.Web.UI.WebControls.Label lblApprovedCount;
