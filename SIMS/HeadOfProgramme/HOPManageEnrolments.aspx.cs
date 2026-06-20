@@ -253,6 +253,28 @@ namespace SIMS.HeadOfProgramme
             LoadAllTables();
         }
 
+        protected void btnCleanupRejected_Click(object sender, EventArgs e)
+        {
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                string sql = @"
+                    DELETE FROM CourseRegistrationRequests
+                    WHERE Status = 'Rejected'
+                      AND RejectedAt IS NOT NULL
+                      AND RejectedAt < DATEADD(DAY, -7, DATEADD(HOUR, 8, SYSUTCDATETIME()))";
+
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                {
+                    conn.Open();
+                    int deleted = cmd.ExecuteNonQuery();
+
+                    ShowMessage(deleted + " old rejected request(s) cleaned up successfully.", true);
+                }
+            }
+
+            LoadAllTables();
+        }
+
         private List<int> GetSelectedIds(GridView grid, string checkboxId)
         {
             List<int> selectedIds = new List<int>();
@@ -508,7 +530,8 @@ namespace SIMS.HeadOfProgramme
 
                     string updateSql = @"
                         UPDATE CourseRegistrationRequests
-                        SET Status = 'Rejected'
+                        SET Status = 'Rejected',
+                            RejectedAt = DATEADD(HOUR, 8, SYSUTCDATETIME())
                         WHERE RequestId = @RequestId
                           AND Status = 'Pending'";
 

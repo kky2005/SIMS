@@ -65,6 +65,7 @@
                 <div class="mt-3">
                     <asp:Button ID="btnFilter" runat="server" Text="Apply Filter" CssClass="btn btn-primary" OnClick="btnFilter_Click" />
                     <asp:Button ID="btnReset" runat="server" Text="Reset" CssClass="btn btn-secondary ms-2" OnClick="btnReset_Click" />
+                    <asp:Button ID="btnCleanupRejected" runat="server" Text="Clean Up Old Rejected Requests" CssClass="btn btn-warning ms-2" OnClick="btnCleanupRejected_Click" OnClientClick="return confirm('Delete rejected requests older than 7 days?');" />
                 </div>
             </div>
         </div>
