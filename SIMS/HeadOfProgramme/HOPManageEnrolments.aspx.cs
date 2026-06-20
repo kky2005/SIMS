@@ -60,7 +60,7 @@ namespace SIMS.HeadOfProgramme
 
         private void LoadApprovedEnrolments()
         {
-            DataTable dt = LoadEnrolmentsByStatus("Approved");
+            DataTable dt = LoadEnrolmentsByStatus("Active");
             gvApproved.DataSource = dt;
             gvApproved.DataBind();
             lblApprovedCount.Text = "(" + dt.Rows.Count + ")";
@@ -155,7 +155,7 @@ namespace SIMS.HeadOfProgramme
 
                 AddEnrolmentFilters(ref sql, cmd);
 
-                if (status == "Approved")
+                if (status == "Active")
                     sql += " ORDER BY e.EnrolledAt DESC, e.RequestedAt DESC";
                 else
                     sql += " ORDER BY e.DroppedAt DESC, e.RequestedAt DESC";
@@ -277,7 +277,7 @@ namespace SIMS.HeadOfProgramme
 
             if (selectedIds.Count == 0)
             {
-                ShowMessage("Please select at least one approved enrolment to archive.", false);
+                ShowMessage("Please select at least one active enrolment to complete.", false);
                 return;
             }
 
@@ -296,9 +296,9 @@ namespace SIMS.HeadOfProgramme
             LoadAllTables();
 
             if (errors.Count == 0)
-                ShowMessage(successCount + " selected enrolment(s) archived successfully.", true);
+                ShowMessage(successCount + " selected enrolment(s) completed successfully.", true);
             else
-                ShowMessage(successCount + " archived. Some records failed: " + string.Join(" | ", errors), false);
+                ShowMessage(successCount + " completed. Some records failed: " + string.Join(" | ", errors), false);
         }
 
         protected void btnDeleteSelected_Click(object sender, EventArgs e)
@@ -404,7 +404,7 @@ namespace SIMS.HeadOfProgramme
         private void ApproveAddRequest(SqlConnection conn, SqlTransaction tran, CourseRequestInfo request)
         {
             if (HasActiveEnrolment(conn, tran, request.StudentId, request.CourseId))
-                throw new Exception("This student already has an approved or archived enrolment for this course.");
+                throw new Exception("This student already has an active or completed enrolment for this course.");
 
             string insertSql = @"
                 INSERT INTO Enrolments
@@ -424,7 +424,7 @@ namespace SIMS.HeadOfProgramme
                     @CourseId,
                     @AcademicYear,
                     @Semester,
-                    'Approved',
+                    'Active',
                     SYSUTCDATETIME(),
                     NULL,
                     @RequestedAt
@@ -446,11 +446,11 @@ namespace SIMS.HeadOfProgramme
                 conn,
                 tran,
                 CurrentUserId,
-                "Approved registration request",
+                "Activated registration request",
                 "Enrolments",
                 enrolmentId,
                 "CourseRegistrationRequests.RequestId=" + request.RequestId + "; Status=Pending; Type=Register",
-                "Status=Approved; Student=" + request.StudentName + "; Course=" + request.CourseCode
+                "Status=Active; Student=" + request.StudentName + "; Course=" + request.CourseCode
             );
         }
 
@@ -459,14 +459,14 @@ namespace SIMS.HeadOfProgramme
             EnrolmentInfo enrolment = GetApprovedEnrolment(conn, tran, request.StudentId, request.CourseId);
 
             if (enrolment == null)
-                throw new Exception("This student does not have an approved or archived enrolment for this course to drop.");
+                throw new Exception("This student does not have an active or completed enrolment for this course to drop.");
 
             string updateSql = @"
                 UPDATE Enrolments
                 SET Status = 'Dropped',
                     DroppedAt = SYSUTCDATETIME()
                 WHERE EnrolmentId = @EnrolmentId
-                  AND Status IN ('Approved', 'Archived')";
+                  AND Status IN ('Active', 'Completed')";
 
             using (SqlCommand cmd = new SqlCommand(updateSql, conn, tran))
             {
@@ -534,7 +534,7 @@ namespace SIMS.HeadOfProgramme
         {
             string error;
             if (TryArchiveEnrolment(enrolmentId, out error))
-                ShowMessage("Enrolment archived successfully. You can view it from the archived enrolments page.", true);
+                ShowMessage("Enrolment completed successfully. You can view it from the completed enrolments page.", true);
             else
                 ShowMessage("Error archiving enrolment: " + error, false);
         }
@@ -555,14 +555,14 @@ namespace SIMS.HeadOfProgramme
                     if (info == null)
                         throw new Exception("Enrolment record not found.");
 
-                    if (info.Status != "Approved")
-                        throw new Exception("Only approved enrolments can be archived.");
+                    if (info.Status != "Active")
+                        throw new Exception("Only active enrolments can be completed.");
 
                     string updateSql = @"
                         UPDATE Enrolments
-                        SET Status = 'Archived'
+                        SET Status = 'Completed'
                         WHERE EnrolmentId = @EnrolmentId
-                          AND Status = 'Approved'";
+                          AND Status = 'Active'";
 
                     using (SqlCommand updateCmd = new SqlCommand(updateSql, conn, tran))
                     {
@@ -570,18 +570,18 @@ namespace SIMS.HeadOfProgramme
                         int affected = updateCmd.ExecuteNonQuery();
 
                         if (affected == 0)
-                            throw new Exception("Unable to archive. The enrolment may already have been updated.");
+                            throw new Exception("Unable to complete. The enrolment may already have been updated.");
                     }
 
                     InsertAuditLog(
                         conn,
                         tran,
                         CurrentUserId,
-                        "Archived enrolment record",
+                        "Completed enrolment record",
                         "Enrolments",
                         enrolmentId,
-                        "Status=Approved; Student=" + info.StudentName + "; Course=" + info.CourseCode,
-                        "Status=Archived; Record moved to archived enrolments"
+                        "Status=Active; Student=" + info.StudentName + "; Course=" + info.CourseCode,
+                        "Status=Completed; Record moved to completed enrolments"
                     );
 
                     tran.Commit();
@@ -631,7 +631,7 @@ namespace SIMS.HeadOfProgramme
                         int attendanceCount = Convert.ToInt32(checkCmd.ExecuteScalar());
 
                         if (attendanceCount > 0)
-                            throw new Exception("This enrolment cannot be deleted because it has attendance records. Archive or keep the record instead.");
+                            throw new Exception("This enrolment cannot be deleted because it has attendance records. Complete or keep the record instead.");
                     }
 
                     InsertAuditLog(
@@ -774,9 +774,9 @@ namespace SIMS.HeadOfProgramme
                 INNER JOIN Courses c ON c.CourseId = e.CourseId
                 WHERE e.StudentId = @StudentId
                   AND e.CourseId = @CourseId
-                  AND e.Status IN ('Approved', 'Archived')
+                  AND e.Status IN ('Active', 'Completed')
                 ORDER BY
-                    CASE WHEN e.Status = 'Approved' THEN 0 ELSE 1 END,
+                    CASE WHEN e.Status = 'Active' THEN 0 ELSE 1 END,
                     e.EnrolledAt DESC,
                     e.EnrolmentId DESC";
 
@@ -813,7 +813,7 @@ namespace SIMS.HeadOfProgramme
                 FROM Enrolments
                 WHERE StudentId = @StudentId
                   AND CourseId = @CourseId
-                  AND Status IN ('Approved', 'Archived')";
+                  AND Status IN ('Active', 'Completed')";
 
             using (SqlCommand cmd = new SqlCommand(sql, conn, tran))
             {
@@ -884,11 +884,11 @@ namespace SIMS.HeadOfProgramme
 
             if (status == "Pending")
                 lblStatus.CssClass += " status-pending";
-            else if (status == "Approved")
+            else if (status == "Active")
                 lblStatus.CssClass += " status-approved";
             else if (status == "Rejected" || status == "Dropped")
                 lblStatus.CssClass += " status-rejected";
-            else if (status == "Archived")
+            else if (status == "Completed")
                 lblStatus.CssClass += " status-archived";
         }
 

@@ -110,12 +110,12 @@
 
     <div class="card-sims mb-4">
         <div class="card-header-sims">
-            <h5>Approved Enrolments <asp:Label ID="lblApprovedCount" runat="server" CssClass="section-count"></asp:Label></h5>
-            <asp:HyperLink ID="lnkArchivedEnrolments" runat="server" NavigateUrl="~/HeadOfProgramme/HOPArchivedEnrolments.aspx" CssClass="btn btn-sm btn-outline-secondary">View Archived Enrolments</asp:HyperLink>
+            <h5>Active Enrolments <asp:Label ID="lblApprovedCount" runat="server" CssClass="section-count"></asp:Label></h5>
+            <asp:HyperLink ID="lnkArchivedEnrolments" runat="server" NavigateUrl="~/HeadOfProgramme/HOPArchivedEnrolments.aspx" CssClass="btn btn-sm btn-outline-secondary">View Completed Enrolments</asp:HyperLink>
         </div>
         <div class="card-body-sims">
             <div class="bulk-actions">
-                <asp:Button ID="btnArchiveSelected" runat="server" Text="Archive Selected" CssClass="btn btn-warning btn-sm" OnClick="btnArchiveSelected_Click" OnClientClick="return confirm('Archive all selected approved enrolments?');" />
+                <asp:Button ID="btnArchiveSelected" runat="server" Text="Mark Completed Selected" CssClass="btn btn-warning btn-sm" OnClick="btnArchiveSelected_Click" OnClientClick="return confirm('Mark all selected active enrolments as completed?');" />
             </div>
             <asp:GridView ID="gvApproved" runat="server"
                 CssClass="table table-bordered table-hover"
@@ -126,7 +126,7 @@
                 <Columns>
                     <asp:TemplateField HeaderStyle-CssClass="select-col" ItemStyle-CssClass="select-col">
                         <HeaderTemplate>
-                            <asp:CheckBox ID="chkSelectAllApproved" runat="server" onclick="toggleApproved(this);" ToolTip="Select all approved enrolments" />
+                            <asp:CheckBox ID="chkSelectAllApproved" runat="server" onclick="toggleApproved(this);" ToolTip="Select all active enrolments" />
                         </HeaderTemplate>
                         <ItemTemplate>
                             <asp:CheckBox ID="chkSelectApproved" runat="server" />
@@ -140,18 +140,18 @@
                     <asp:BoundField DataField="AcademicYear" HeaderText="Year" />
                     <asp:BoundField DataField="Semester" HeaderText="Sem" />
                     <asp:BoundField DataField="RequestedAt" HeaderText="Requested Date" DataFormatString="{0:yyyy-MM-dd HH:mm}" NullDisplayText="-" />
-                    <asp:BoundField DataField="EnrolledAt" HeaderText="Approved Date" DataFormatString="{0:yyyy-MM-dd HH:mm}" NullDisplayText="-" />
+                    <asp:BoundField DataField="EnrolledAt" HeaderText="Active Date" DataFormatString="{0:yyyy-MM-dd HH:mm}" NullDisplayText="-" />
                     <asp:TemplateField HeaderText="Status">
                         <ItemTemplate><asp:Label ID="lblStatus" runat="server" Text='<%# Eval("Status") %>'></asp:Label></ItemTemplate>
                     </asp:TemplateField>
-                    <asp:BoundField DataField="LastActionBy" HeaderText="Approved By" />
+                    <asp:BoundField DataField="LastActionBy" HeaderText="Activated By" />
                     <asp:TemplateField HeaderText="Actions">
                         <ItemTemplate>
-                            <asp:LinkButton ID="btnDeleteApproved" runat="server" CommandName="ArchiveEnrolment" CommandArgument='<%# Eval("EnrolmentId") %>' CssClass="btn btn-sm btn-warning" OnClientClick="return confirm('Archive this approved enrolment record? It will be moved to the archived enrolments page.');">Archive</asp:LinkButton>
+                            <asp:LinkButton ID="btnDeleteApproved" runat="server" CommandName="ArchiveEnrolment" CommandArgument='<%# Eval("EnrolmentId") %>' CssClass="btn btn-sm btn-warning" OnClientClick="return confirm('Mark this active enrolment record as completed? It will be moved to the completed enrolments page.');">Mark Completed</asp:LinkButton>
                         </ItemTemplate>
                     </asp:TemplateField>
                 </Columns>
-                <EmptyDataTemplate><div class="empty-box">No approved enrolments found.</div></EmptyDataTemplate>
+                <EmptyDataTemplate><div class="empty-box">No active enrolments found.</div></EmptyDataTemplate>
             </asp:GridView>
         </div>
     </div>
