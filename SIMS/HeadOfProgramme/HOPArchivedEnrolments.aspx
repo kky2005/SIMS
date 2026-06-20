@@ -1,4 +1,4 @@
-<%@ Page Title="Archived Enrolments" Language="C#" MasterPageFile="~/HeadOfProgramme/HOPMaster.master"
+<%@ Page Title="Completed Enrolments" Language="C#" MasterPageFile="~/HeadOfProgramme/HOPMaster.master"
     AutoEventWireup="true" CodeBehind="HOPArchivedEnrolments.aspx.cs"
     Inherits="SIMS.HeadOfProgramme.HOPArchivedEnrolments" %>
 
@@ -22,8 +22,8 @@
 <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" runat="server">
     <div class="top-action-bar">
         <div>
-            <h2 class="page-title">Archived Enrolments</h2>
-            <p class="page-subtitle">These are approved enrolments that were archived instead of deleted.</p>
+            <h2 class="page-title">Completed Enrolments</h2>
+            <p class="page-subtitle">These are active enrolments that were completed instead of deleted.</p>
         </div>
         <div class="right-actions">
             <asp:HyperLink ID="lnkBack" runat="server"
@@ -38,7 +38,7 @@
 
     <div class="card-sims mb-4">
         <div class="card-header-sims">
-            <h5>Filter Archived Enrolments</h5>
+            <h5>Filter Completed Enrolments</h5>
         </div>
         <div class="card-body-sims">
             <div class="filter-box">
@@ -70,7 +70,7 @@
 
     <div class="card-sims">
         <div class="card-header-sims d-flex justify-content-between align-items-center">
-            <h5>Archived Enrolments <asp:Label ID="lblArchivedCount" runat="server" CssClass="section-count"></asp:Label></h5>
+            <h5>Completed Enrolments <asp:Label ID="lblArchivedCount" runat="server" CssClass="section-count"></asp:Label></h5>
             <div>
                 <asp:Button ID="btnExportArchived" runat="server"
                     Text="Export CSV"
@@ -106,12 +106,12 @@
                     <asp:BoundField DataField="AcademicYear" HeaderText="Year" />
                     <asp:BoundField DataField="Semester" HeaderText="Sem" />
                     <asp:BoundField DataField="RequestedAt" HeaderText="Requested Date" DataFormatString="{0:yyyy-MM-dd HH:mm}" NullDisplayText="-" />
-                    <asp:BoundField DataField="EnrolledAt" HeaderText="Approved Date" DataFormatString="{0:yyyy-MM-dd HH:mm}" NullDisplayText="-" />
+                    <asp:BoundField DataField="EnrolledAt" HeaderText="Active Date" DataFormatString="{0:yyyy-MM-dd HH:mm}" NullDisplayText="-" />
                     <asp:TemplateField HeaderText="Status">
                         <ItemTemplate><asp:Label ID="lblStatus" runat="server" Text='<%# Eval("Status") %>' CssClass="status-badge"></asp:Label></ItemTemplate>
                     </asp:TemplateField>
-                    <asp:BoundField DataField="LastActionBy" HeaderText="Archived By" />
-                    <asp:BoundField DataField="LastActionDate" HeaderText="Archived Date" DataFormatString="{0:yyyy-MM-dd HH:mm}" NullDisplayText="-" />
+                    <asp:BoundField DataField="LastActionBy" HeaderText="Completed By" />
+                    <asp:BoundField DataField="LastActionDate" HeaderText="Completed Date" DataFormatString="{0:yyyy-MM-dd HH:mm}" NullDisplayText="-" />
                     <asp:TemplateField HeaderText="Action">
                         <ItemTemplate>
                             <asp:LinkButton ID="btnRestore" runat="server"
@@ -119,12 +119,12 @@
                                 CssClass="btn btn-success btn-sm"
                                 CommandName="RestoreEnrolment"
                                 CommandArgument='<%# Eval("EnrolmentId") %>'
-                                OnClientClick="return confirm('Restore this archived enrolment back to Approved?');">
+                                OnClientClick="return confirm('Restore this completed enrolment back to Active?');">
                             </asp:LinkButton>
                         </ItemTemplate>
                     </asp:TemplateField>
                 </Columns>
-                <EmptyDataTemplate><div class="empty-box">No archived enrolments found.</div></EmptyDataTemplate>
+                <EmptyDataTemplate><div class="empty-box">No completed enrolments found.</div></EmptyDataTemplate>
             </asp:GridView>
         </div>
     </div>
