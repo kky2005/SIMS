@@ -50,12 +50,32 @@
             align-items: center;
             gap: 10px;
         }
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: white;
+            text-decoration: none;
+            font-size: 13px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 6px 12px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            transition: background 0.2s ease;
+        }
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+        }
     </style>
 </asp:Content>
 
 <asp:Content ID="Main" ContentPlaceHolderID="MainContent" runat="server">
 
     <div class="assessments-header">
+        <a href="LecturerCourses.aspx" class="back-btn">
+            <i class="fa fa-arrow-left"></i> Back to Courses
+        </a>
         <h3><i class="fa fa-clipboard" style="margin-right:10px;"></i>Assessment Management</h3>
         <p style="margin:0;"><asp:Literal ID="litCourseHeader" runat="server" Text="Loading..." /></p>
     </div>

@@ -477,7 +477,7 @@ namespace SIMS.HeadOfProgramme
                     string updateAdmissionSql = @"
                         UPDATE Admissions
                         SET Status = 'Admitted',
-                            AdmittedAt = SYSUTCDATETIME(),
+                            AdmittedAt = DATEADD(HOUR, 8, SYSUTCDATETIME()),
                             RejectedAt = NULL,
                             RejectionReason = NULL
                         WHERE AdmissionId = @AdmissionId
@@ -500,7 +500,7 @@ namespace SIMS.HeadOfProgramme
                                 IntakeYear = @IntakeYear,
                                 IntakeSemester = @IntakeSemester,
                                 CurrentSemester = 1,
-                                AdmissionDate = SYSUTCDATETIME(),
+                                AdmissionDate = DATEADD(HOUR, 8, SYSUTCDATETIME()),
                                 Status = 'Active'
                             WHERE StudentId = @StudentId";
 
@@ -556,7 +556,7 @@ namespace SIMS.HeadOfProgramme
                         UPDATE Admissions
                         SET Status = 'Rejected',
                             AdmittedAt = NULL,
-                            RejectedAt = SYSUTCDATETIME(),
+                            RejectedAt = DATEADD(HOUR, 8, SYSUTCDATETIME()),
                             RejectionReason = ISNULL(RejectionReason, 'Rejected by Head of Programme')
                         WHERE AdmissionId = @AdmissionId
                           AND Status = 'Pending'";
@@ -770,7 +770,7 @@ namespace SIMS.HeadOfProgramme
                     @RecordId,
                     @OldValue,
                     @NewValue,
-                    SYSUTCDATETIME()
+                    DATEADD(HOUR, 8, SYSUTCDATETIME())
                 )";
 
             using (SqlCommand cmd = new SqlCommand(sql, conn, tran))

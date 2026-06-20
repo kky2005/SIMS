@@ -86,7 +86,7 @@ namespace SIMS.HeadOfProgramme
                         ORDER BY al.ActionDate DESC
                     ) lastLog
                     LEFT JOIN Users adminUser ON adminUser.UserId = lastLog.UserId
-                    WHERE e.Status = 'Archived'";
+                    WHERE e.Status = 'Completed'";
 
                 SqlCommand cmd = new SqlCommand();
                 cmd.Connection = conn;
@@ -174,7 +174,7 @@ namespace SIMS.HeadOfProgramme
 
             if (selectedIds.Count == 0)
             {
-                ShowMessage("Please select at least one archived enrolment to restore.", false);
+                ShowMessage("Please select at least one completed enrolment to restore.", false);
                 return;
             }
 
@@ -187,7 +187,7 @@ namespace SIMS.HeadOfProgramme
             }
 
             LoadArchivedEnrolments();
-            ShowMessage(restoredCount + " archived enrolment(s) restored successfully.", true);
+            ShowMessage(restoredCount + " completed enrolment(s) restored to active successfully.", true);
         }
 
 
@@ -202,11 +202,11 @@ namespace SIMS.HeadOfProgramme
 
             if (dt.Rows.Count == 0)
             {
-                ShowMessage("No archived enrolment records found to export.", false);
+                ShowMessage("No completed enrolment records found to export.", false);
                 return;
             }
 
-            string fileName = "Archived_Enrolments_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".csv";
+            string fileName = "Completed_Enrolments_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".csv";
 
             StringBuilder csv = new StringBuilder();
             string[] exportColumns = new string[]
@@ -283,19 +283,19 @@ namespace SIMS.HeadOfProgramme
                     EnrolmentInfo info = GetEnrolmentInfo(conn, tran, enrolmentId);
 
                     if (info == null)
-                        throw new Exception("Archived enrolment record not found.");
+                        throw new Exception("Completed enrolment record not found.");
 
-                    if (info.Status != "Archived")
-                        throw new Exception("Only archived enrolments can be restored.");
+                    if (info.Status != "Completed")
+                        throw new Exception("Only completed enrolments can be restored.");
 
                     if (HasApprovedDuplicate(conn, tran, info))
-                        throw new Exception("This student already has an approved enrolment for this course in the same academic year and semester.");
+                        throw new Exception("This student already has an active enrolment for this course in the same academic year and semester.");
 
                     string updateSql = @"
                         UPDATE Enrolments
-                        SET Status = 'Approved'
+                        SET Status = 'Active'
                         WHERE EnrolmentId = @EnrolmentId
-                          AND Status = 'Archived'";
+                          AND Status = 'Completed'";
 
                     using (SqlCommand updateCmd = new SqlCommand(updateSql, conn, tran))
                     {
@@ -310,10 +310,10 @@ namespace SIMS.HeadOfProgramme
                         conn,
                         tran,
                         CurrentUserId,
-                        "Restored archived enrolment record",
+                        "Restored completed enrolment record",
                         enrolmentId,
-                        "Status=Archived; Student=" + info.StudentName + "; Course=" + info.CourseCode,
-                        "Status=Approved; Record restored from archived enrolments"
+                        "Status=Completed; Student=" + info.StudentName + "; Course=" + info.CourseCode,
+                        "Status=Active; Record restored from completed enrolments"
                     );
 
                     tran.Commit();
@@ -388,7 +388,7 @@ namespace SIMS.HeadOfProgramme
                   AND CourseId = @CourseId
                   AND AcademicYear = @AcademicYear
                   AND Semester = @Semester
-                  AND Status = 'Approved'
+                  AND Status = 'Active'
                   AND EnrolmentId <> @EnrolmentId";
 
             using (SqlCommand cmd = new SqlCommand(sql, conn, tran))
@@ -425,7 +425,7 @@ namespace SIMS.HeadOfProgramme
                     @RecordId,
                     @OldValue,
                     @NewValue,
-                    SYSUTCDATETIME()
+                    DATEADD(HOUR, 8, SYSUTCDATETIME())
                 )";
 
             using (SqlCommand cmd = new SqlCommand(sql, conn, tran))

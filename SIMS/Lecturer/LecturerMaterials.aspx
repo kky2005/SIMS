@@ -349,12 +349,32 @@
         
         /* New context-specific layout helpers */
         .btn-sm-action { padding: 4px 8px; font-size: 12px; margin-right: 2px; display: inline-block; }
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: white;
+            text-decoration: none;
+            font-size: 13px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 6px 12px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            transition: background 0.2s ease;
+        }
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+        }
     </style>
 </asp:Content>
 
 <asp:Content ID="Main" ContentPlaceHolderID="MainContent" runat="server">
 
     <div class="materials-header">
+        <a href="LecturerCourses.aspx" class="back-btn">
+            <i class="fa fa-arrow-left"></i> Back to Courses
+        </a>
         <h3><i class="fa fa-file" style="margin-right:8px;"></i>Course Materials</h3>
         <p style="margin:0;"><asp:Literal ID="litCourseHeader" runat="server" Text="Loading..." /></p>
     </div>
