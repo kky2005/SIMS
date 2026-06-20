@@ -425,7 +425,7 @@ namespace SIMS.HeadOfProgramme
                     @RecordId,
                     @OldValue,
                     @NewValue,
-                    SYSUTCDATETIME()
+                    DATEADD(HOUR, 8, SYSUTCDATETIME())
                 )";
 
             using (SqlCommand cmd = new SqlCommand(sql, conn, tran))
