@@ -60,31 +60,22 @@ namespace SIMS.Lecturer
         protected global::System.Web.UI.WebControls.Literal litErrorMsg;
 
         /// <summary>
-        /// ddlAcademicYear control.
+        /// litAcademicYear control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.DropDownList ddlAcademicYear;
+        protected global::System.Web.UI.WebControls.Literal litAcademicYear;
 
         /// <summary>
-        /// ddlSemester control.
+        /// litSemester control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.DropDownList ddlSemester;
-
-        /// <summary>
-        /// btnLoadAssessments control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnLoadAssessments;
+        protected global::System.Web.UI.WebControls.Literal litSemester;
 
         /// <summary>
         /// pnlEnterGrades control.
@@ -130,5 +121,23 @@ namespace SIMS.Lecturer
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.HiddenField hidCourseId;
+
+        /// <summary>
+        /// hidAcademicYear control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HiddenField hidAcademicYear;
+
+        /// <summary>
+        /// hidSemester control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HiddenField hidSemester;
     }
 }
