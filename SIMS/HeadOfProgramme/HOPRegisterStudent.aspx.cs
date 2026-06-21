@@ -209,6 +209,11 @@ namespace SIMS.HeadOfProgramme
                         if (StudentNoExists(con, tx, studentNo))
                             throw new Exception("Student No already exists: " + studentNo);
 
+                        string nationalId = GetNationalIdByAdmissionId(con, tx, admissionId);
+
+                        if (string.IsNullOrWhiteSpace(nationalId))
+                            throw new Exception("National ID not found for Admission ID " + admissionId);
+
                         SqlCommand userCmd = new SqlCommand(
                             "INSERT INTO Users(RoleId,FullName,Email,PasswordHash,Phone,IsActive) OUTPUT INSERTED.UserId VALUES(@Role,@Name,@Email,@Pass,@Phone,1)",
                             con,
@@ -217,7 +222,7 @@ namespace SIMS.HeadOfProgramme
                         userCmd.Parameters.AddWithValue("@Role", GetRoleId("Student"));
                         userCmd.Parameters.AddWithValue("@Name", fullName);
                         userCmd.Parameters.AddWithValue("@Email", email);
-                        userCmd.Parameters.AddWithValue("@Pass", HashPassword("Student@123"));
+                        userCmd.Parameters.AddWithValue("@Pass", HashPassword(nationalId));
                         userCmd.Parameters.AddWithValue("@Phone", phone);
                         int userId = Convert.ToInt32(userCmd.ExecuteScalar());
 
@@ -249,7 +254,7 @@ namespace SIMS.HeadOfProgramme
                             "Students",
                             studentId,
                             "Imported from Admissions CSV AdmissionId=" + admissionId,
-                            "Name=" + fullName + "; Email=" + email + "; StudentNo=" + studentNo + "; ProgrammeId=" + programmeId + "; UserId=" + userId
+                            "Name=" + fullName + "; Email=" + email + "; StudentNo=" + studentNo + "; ProgrammeId=" + programmeId + "; UserId=" + userId + "; DefaultPassword=NationalId"
                         );
 
                         tx.Commit();
@@ -270,7 +275,7 @@ namespace SIMS.HeadOfProgramme
             btnCancelImport.Visible = false;
             BindGrid();
 
-            string message = imported + " student(s) imported successfully.";
+            string message = imported + " student(s) imported successfully. Default password is the student's National ID.";
             if (skipped > 0)
                 message += " " + skipped + " record(s) skipped. " + string.Join(" | ", errors.ToArray());
 
@@ -436,6 +441,22 @@ namespace SIMS.HeadOfProgramme
             cmd.Parameters.AddWithValue("@ProgrammeName", programmeName);
             object result = cmd.ExecuteScalar();
             return result == null ? 0 : Convert.ToInt32(result);
+        }
+
+        private string GetNationalIdByAdmissionId(SqlConnection con, SqlTransaction tx, int admissionId)
+        {
+            SqlCommand cmd = new SqlCommand(@"
+        SELECT NationalId
+        FROM Admissions
+        WHERE AdmissionId = @AdmissionId",
+                con,
+                tx);
+
+            cmd.Parameters.AddWithValue("@AdmissionId", admissionId);
+
+            object result = cmd.ExecuteScalar();
+
+            return result == null ? "" : result.ToString().Trim();
         }
 
         private bool EmailExists(SqlConnection con, SqlTransaction tx, string email)
