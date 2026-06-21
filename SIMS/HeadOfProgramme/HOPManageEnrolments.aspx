@@ -71,6 +71,88 @@
         </div>
     </div>
 
+
+    <div class="card-sims mb-4">
+        <div class="card-header-sims">
+            <h5>Registration Period Setup <asp:Label ID="lblPeriodCount" runat="server" CssClass="section-count"></asp:Label></h5>
+        </div>
+        <div class="card-body-sims">
+            <asp:HiddenField ID="hfPeriodId" runat="server" />
+            <div class="filter-box">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Programme</label>
+                        <asp:DropDownList ID="ddlPeriodProgramme" runat="server" CssClass="form-select"></asp:DropDownList>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Academic Year</label>
+                        <asp:TextBox ID="txtPeriodAcademicYear" runat="server" CssClass="form-control" TextMode="Number" placeholder="2026"></asp:TextBox>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Semester</label>
+                        <asp:DropDownList ID="ddlPeriodSemester" runat="server" CssClass="form-select">
+                            <asp:ListItem Text="Semester 1" Value="1"></asp:ListItem>
+                            <asp:ListItem Text="Semester 2" Value="2"></asp:ListItem>
+                            <asp:ListItem Text="Semester 3" Value="3"></asp:ListItem>
+                        </asp:DropDownList>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Period Type</label>
+                        <asp:DropDownList ID="ddlPeriodType" runat="server" CssClass="form-select">
+                            <asp:ListItem Text="Register" Value="Register"></asp:ListItem>
+                            <asp:ListItem Text="Drop" Value="Drop"></asp:ListItem>
+                        </asp:DropDownList>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Status</label><br />
+                        <asp:CheckBox ID="chkPeriodIsActive" runat="server" Text=" Active" Checked="true" CssClass="form-check-input" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Start Date</label>
+                        <asp:TextBox ID="txtPeriodStartDate" runat="server" CssClass="form-control" TextMode="Date"></asp:TextBox>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">End Date</label>
+                        <asp:TextBox ID="txtPeriodEndDate" runat="server" CssClass="form-control" TextMode="Date"></asp:TextBox>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <asp:Button ID="btnSavePeriod" runat="server" Text="Add Period" CssClass="btn btn-primary" OnClick="btnSavePeriod_Click" />
+                    <asp:Button ID="btnClearPeriod" runat="server" Text="Clear" CssClass="btn btn-secondary ms-2" OnClick="btnClearPeriod_Click" />
+                </div>
+            </div>
+
+            <asp:GridView ID="gvRegistrationPeriods" runat="server"
+                CssClass="table table-bordered table-hover"
+                AutoGenerateColumns="False"
+                DataKeyNames="PeriodId"
+                OnRowCommand="gvRegistrationPeriods_RowCommand"
+                OnRowDataBound="gvRegistrationPeriods_RowDataBound">
+                <Columns>
+                    <asp:BoundField DataField="PeriodId" HeaderText="ID" />
+                    <asp:BoundField DataField="ProgrammeName" HeaderText="Programme" />
+                    <asp:BoundField DataField="AcademicYear" HeaderText="Year" />
+                    <asp:BoundField DataField="Semester" HeaderText="Sem" />
+                    <asp:BoundField DataField="PeriodType" HeaderText="Type" />
+                    <asp:BoundField DataField="StartDate" HeaderText="Start Date" DataFormatString="{0:yyyy-MM-dd}" />
+                    <asp:BoundField DataField="EndDate" HeaderText="End Date" DataFormatString="{0:yyyy-MM-dd}" />
+                    <asp:TemplateField HeaderText="Status">
+                        <ItemTemplate><asp:Label ID="lblPeriodStatus" runat="server" Text='<%# Convert.ToBoolean(Eval("IsActive")) ? "Active" : "Inactive" %>'></asp:Label></ItemTemplate>
+                    </asp:TemplateField>
+                    <asp:TemplateField HeaderText="Actions">
+                        <ItemTemplate>
+                            <div class="action-btns">
+                                <asp:LinkButton ID="btnEditPeriod" runat="server" CommandName="EditPeriod" CommandArgument='<%# Eval("PeriodId") %>' CssClass="btn btn-sm btn-primary">Edit</asp:LinkButton>
+                                <asp:LinkButton ID="btnTogglePeriod" runat="server" CommandName="TogglePeriod" CommandArgument='<%# Eval("PeriodId") %>' CssClass="btn btn-sm btn-warning" OnClientClick="return confirm('Change this registration period status?');"><%# Convert.ToBoolean(Eval("IsActive")) ? "Deactivate" : "Activate" %></asp:LinkButton>
+                            </div>
+                        </ItemTemplate>
+                    </asp:TemplateField>
+                </Columns>
+                <EmptyDataTemplate><div class="empty-box">No registration periods found.</div></EmptyDataTemplate>
+            </asp:GridView>
+        </div>
+    </div>
+
     <div class="card-sims mb-4">
         <div class="card-header-sims">
             <h5>Pending Course Requests <asp:Label ID="lblPendingCount" runat="server" CssClass="section-count"></asp:Label></h5>
