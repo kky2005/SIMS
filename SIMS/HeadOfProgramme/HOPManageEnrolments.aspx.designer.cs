@@ -20,6 +20,18 @@ namespace SIMS.HeadOfProgramme
         protected global::System.Web.UI.WebControls.Button btnFilter;
         protected global::System.Web.UI.WebControls.Button btnReset;
         protected global::System.Web.UI.WebControls.Button btnCleanupRejected;
+        protected global::System.Web.UI.WebControls.Label lblPeriodCount;
+        protected global::System.Web.UI.WebControls.HiddenField hfPeriodId;
+        protected global::System.Web.UI.WebControls.DropDownList ddlPeriodProgramme;
+        protected global::System.Web.UI.WebControls.TextBox txtPeriodAcademicYear;
+        protected global::System.Web.UI.WebControls.DropDownList ddlPeriodSemester;
+        protected global::System.Web.UI.WebControls.DropDownList ddlPeriodType;
+        protected global::System.Web.UI.WebControls.CheckBox chkPeriodIsActive;
+        protected global::System.Web.UI.WebControls.TextBox txtPeriodStartDate;
+        protected global::System.Web.UI.WebControls.TextBox txtPeriodEndDate;
+        protected global::System.Web.UI.WebControls.Button btnSavePeriod;
+        protected global::System.Web.UI.WebControls.Button btnClearPeriod;
+        protected global::System.Web.UI.WebControls.GridView gvRegistrationPeriods;
         protected global::System.Web.UI.WebControls.Label lblPendingCount;
         protected global::System.Web.UI.WebControls.GridView gvPending;
         protected global::System.Web.UI.WebControls.Label lblApprovedCount;

@@ -18,6 +18,7 @@ namespace SIMS.HeadOfProgramme
             if (!IsPostBack)
             {
                 LoadCourseFilter();
+                LoadPeriodProgrammeDropdown();
                 LoadAllTables();
             }
         }
@@ -45,9 +46,62 @@ namespace SIMS.HeadOfProgramme
 
         private void LoadAllTables()
         {
+            LoadRegistrationPeriods();
             LoadPendingRequests();
             LoadApprovedEnrolments();
             LoadDroppedEnrolments();
+        }
+
+
+
+        private void LoadPeriodProgrammeDropdown()
+        {
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                string sql = @"
+                    SELECT ProgrammeId, ProgrammeCode + ' - ' + ProgrammeName AS ProgrammeDisplay
+                    FROM Programmes
+                    ORDER BY ProgrammeCode";
+
+                SqlDataAdapter da = new SqlDataAdapter(sql, conn);
+                DataTable dt = new DataTable();
+                da.Fill(dt);
+
+                ddlPeriodProgramme.DataSource = dt;
+                ddlPeriodProgramme.DataTextField = "ProgrammeDisplay";
+                ddlPeriodProgramme.DataValueField = "ProgrammeId";
+                ddlPeriodProgramme.DataBind();
+                ddlPeriodProgramme.Items.Insert(0, new ListItem("Select Programme", ""));
+            }
+        }
+
+        private void LoadRegistrationPeriods()
+        {
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                string sql = @"
+                    SELECT
+                        rp.PeriodId,
+                        rp.ProgrammeId,
+                        p.ProgrammeCode + ' - ' + p.ProgrammeName AS ProgrammeName,
+                        rp.AcademicYear,
+                        rp.Semester,
+                        rp.PeriodType,
+                        rp.StartDate,
+                        rp.EndDate,
+                        ISNULL(rp.IsActive, 0) AS IsActive
+                    FROM RegistrationPeriods rp
+                    INNER JOIN Programmes p ON p.ProgrammeId = rp.ProgrammeId
+                    ORDER BY rp.AcademicYear DESC, rp.Semester DESC, p.ProgrammeCode, rp.PeriodType";
+
+                SqlDataAdapter da = new SqlDataAdapter(sql, conn);
+                DataTable dt = new DataTable();
+                da.Fill(dt);
+
+                gvRegistrationPeriods.DataSource = dt;
+                gvRegistrationPeriods.DataBind();
+                lblPeriodCount.Text = "(" + dt.Rows.Count + ")";
+            }
         }
 
         private void LoadPendingRequests()
@@ -236,6 +290,277 @@ namespace SIMS.HeadOfProgramme
                     cmd.Parameters.AddWithValue("@ToDate", toDate.Date);
                 }
             }
+        }
+
+
+
+        protected void btnSavePeriod_Click(object sender, EventArgs e)
+        {
+            int programmeId;
+            short academicYear;
+            byte semester;
+            DateTime startDate;
+            DateTime endDate;
+
+            if (!int.TryParse(ddlPeriodProgramme.SelectedValue, out programmeId))
+            {
+                ShowMessage("Please select a programme for the registration period.", false);
+                return;
+            }
+
+            if (!short.TryParse(txtPeriodAcademicYear.Text.Trim(), out academicYear) || academicYear < 2000)
+            {
+                ShowMessage("Please enter a valid academic year.", false);
+                return;
+            }
+
+            if (!byte.TryParse(ddlPeriodSemester.SelectedValue, out semester))
+            {
+                ShowMessage("Please select a valid semester.", false);
+                return;
+            }
+
+            if (!DateTime.TryParse(txtPeriodStartDate.Text, out startDate) || !DateTime.TryParse(txtPeriodEndDate.Text, out endDate))
+            {
+                ShowMessage("Please enter both start date and end date.", false);
+                return;
+            }
+
+            if (endDate.Date < startDate.Date)
+            {
+                ShowMessage("End date cannot be earlier than start date.", false);
+                return;
+            }
+
+            string periodType = ddlPeriodType.SelectedValue;
+            int periodId;
+            bool isEdit = int.TryParse(hfPeriodId.Value, out periodId) && periodId > 0;
+
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                conn.Open();
+                SqlTransaction tran = conn.BeginTransaction();
+
+                try
+                {
+                    string duplicateSql = @"
+                        SELECT COUNT(*)
+                        FROM RegistrationPeriods
+                        WHERE ProgrammeId = @ProgrammeId
+                          AND AcademicYear = @AcademicYear
+                          AND Semester = @Semester
+                          AND PeriodType = @PeriodType
+                          AND PeriodId <> @PeriodId";
+
+                    using (SqlCommand duplicateCmd = new SqlCommand(duplicateSql, conn, tran))
+                    {
+                        duplicateCmd.Parameters.AddWithValue("@ProgrammeId", programmeId);
+                        duplicateCmd.Parameters.AddWithValue("@AcademicYear", academicYear);
+                        duplicateCmd.Parameters.AddWithValue("@Semester", semester);
+                        duplicateCmd.Parameters.AddWithValue("@PeriodType", periodType);
+                        duplicateCmd.Parameters.AddWithValue("@PeriodId", isEdit ? periodId : 0);
+
+                        int duplicateCount = Convert.ToInt32(duplicateCmd.ExecuteScalar());
+                        if (duplicateCount > 0)
+                            throw new Exception("A registration period already exists for this programme, year, semester and type.");
+                    }
+
+                    string sql;
+                    if (isEdit)
+                    {
+                        sql = @"
+                            UPDATE RegistrationPeriods
+                            SET ProgrammeId = @ProgrammeId,
+                                AcademicYear = @AcademicYear,
+                                Semester = @Semester,
+                                PeriodType = @PeriodType,
+                                StartDate = @StartDate,
+                                EndDate = @EndDate,
+                                IsActive = @IsActive
+                            WHERE PeriodId = @PeriodId";
+                    }
+                    else
+                    {
+                        sql = @"
+                            INSERT INTO RegistrationPeriods
+                            (ProgrammeId, AcademicYear, Semester, PeriodType, StartDate, EndDate, IsActive)
+                            VALUES
+                            (@ProgrammeId, @AcademicYear, @Semester, @PeriodType, @StartDate, @EndDate, @IsActive);
+                            SELECT CAST(SCOPE_IDENTITY() AS INT);";
+                    }
+
+                    using (SqlCommand cmd = new SqlCommand(sql, conn, tran))
+                    {
+                        cmd.Parameters.AddWithValue("@ProgrammeId", programmeId);
+                        cmd.Parameters.AddWithValue("@AcademicYear", academicYear);
+                        cmd.Parameters.AddWithValue("@Semester", semester);
+                        cmd.Parameters.AddWithValue("@PeriodType", periodType);
+                        cmd.Parameters.AddWithValue("@StartDate", startDate.Date);
+                        cmd.Parameters.AddWithValue("@EndDate", endDate.Date);
+                        cmd.Parameters.AddWithValue("@IsActive", chkPeriodIsActive.Checked);
+
+                        if (isEdit)
+                        {
+                            cmd.Parameters.AddWithValue("@PeriodId", periodId);
+                            cmd.ExecuteNonQuery();
+                        }
+                        else
+                        {
+                            periodId = Convert.ToInt32(cmd.ExecuteScalar());
+                        }
+                    }
+
+                    InsertAuditLog(
+                        conn,
+                        tran,
+                        CurrentUserId,
+                        isEdit ? "Updated registration period" : "Created registration period",
+                        "RegistrationPeriods",
+                        periodId,
+                        isEdit ? "Registration period edited" : "New registration period",
+                        "ProgrammeId=" + programmeId + "; Year=" + academicYear + "; Semester=" + semester + "; Type=" + periodType + "; Start=" + startDate.ToString("yyyy-MM-dd") + "; End=" + endDate.ToString("yyyy-MM-dd") + "; Active=" + chkPeriodIsActive.Checked
+                    );
+
+                    tran.Commit();
+                    ClearPeriodForm();
+                    LoadRegistrationPeriods();
+                    ShowMessage(isEdit ? "Registration period updated successfully." : "Registration period added successfully.", true);
+                }
+                catch (Exception ex)
+                {
+                    tran.Rollback();
+                    ShowMessage("Error saving registration period: " + ex.Message, false);
+                }
+            }
+        }
+
+        protected void btnClearPeriod_Click(object sender, EventArgs e)
+        {
+            ClearPeriodForm();
+        }
+
+        private void ClearPeriodForm()
+        {
+            hfPeriodId.Value = "";
+            if (ddlPeriodProgramme.Items.Count > 0)
+                ddlPeriodProgramme.SelectedIndex = 0;
+            txtPeriodAcademicYear.Text = "";
+            ddlPeriodSemester.SelectedValue = "1";
+            ddlPeriodType.SelectedValue = "Register";
+            txtPeriodStartDate.Text = "";
+            txtPeriodEndDate.Text = "";
+            chkPeriodIsActive.Checked = true;
+            btnSavePeriod.Text = "Add Period";
+        }
+
+        protected void gvRegistrationPeriods_RowCommand(object sender, GridViewCommandEventArgs e)
+        {
+            int periodId;
+            if (!int.TryParse(Convert.ToString(e.CommandArgument), out periodId))
+                return;
+
+            if (e.CommandName == "EditPeriod")
+                LoadPeriodForEdit(periodId);
+            else if (e.CommandName == "TogglePeriod")
+                ToggleRegistrationPeriod(periodId);
+        }
+
+        private void LoadPeriodForEdit(int periodId)
+        {
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                string sql = @"
+                    SELECT PeriodId, ProgrammeId, AcademicYear, Semester, PeriodType, StartDate, EndDate, ISNULL(IsActive, 0) AS IsActive
+                    FROM RegistrationPeriods
+                    WHERE PeriodId = @PeriodId";
+
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@PeriodId", periodId);
+                    conn.Open();
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (!reader.Read())
+                        {
+                            ShowMessage("Registration period not found.", false);
+                            return;
+                        }
+
+                        hfPeriodId.Value = reader["PeriodId"].ToString();
+                        ddlPeriodProgramme.SelectedValue = reader["ProgrammeId"].ToString();
+                        txtPeriodAcademicYear.Text = reader["AcademicYear"].ToString();
+                        ddlPeriodSemester.SelectedValue = reader["Semester"].ToString();
+                        ddlPeriodType.SelectedValue = reader["PeriodType"].ToString();
+                        txtPeriodStartDate.Text = Convert.ToDateTime(reader["StartDate"]).ToString("yyyy-MM-dd");
+                        txtPeriodEndDate.Text = Convert.ToDateTime(reader["EndDate"]).ToString("yyyy-MM-dd");
+                        chkPeriodIsActive.Checked = Convert.ToBoolean(reader["IsActive"]);
+                        btnSavePeriod.Text = "Update Period";
+                    }
+                }
+            }
+        }
+
+        private void ToggleRegistrationPeriod(int periodId)
+        {
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                conn.Open();
+                SqlTransaction tran = conn.BeginTransaction();
+
+                try
+                {
+                    string sql = @"
+                        UPDATE RegistrationPeriods
+                        SET IsActive = CASE WHEN ISNULL(IsActive, 0) = 1 THEN 0 ELSE 1 END
+                        WHERE PeriodId = @PeriodId";
+
+                    using (SqlCommand cmd = new SqlCommand(sql, conn, tran))
+                    {
+                        cmd.Parameters.AddWithValue("@PeriodId", periodId);
+                        int affected = cmd.ExecuteNonQuery();
+                        if (affected == 0)
+                            throw new Exception("Registration period not found.");
+                    }
+
+                    InsertAuditLog(
+                        conn,
+                        tran,
+                        CurrentUserId,
+                        "Toggled registration period status",
+                        "RegistrationPeriods",
+                        periodId,
+                        "Status changed",
+                        "IsActive toggled"
+                    );
+
+                    tran.Commit();
+                    ClearPeriodForm();
+                    LoadRegistrationPeriods();
+                    ShowMessage("Registration period status updated successfully.", true);
+                }
+                catch (Exception ex)
+                {
+                    tran.Rollback();
+                    ShowMessage("Error updating registration period: " + ex.Message, false);
+                }
+            }
+        }
+
+        protected void gvRegistrationPeriods_RowDataBound(object sender, GridViewRowEventArgs e)
+        {
+            if (e.Row.RowType != DataControlRowType.DataRow)
+                return;
+
+            Label lblStatus = e.Row.FindControl("lblPeriodStatus") as Label;
+            if (lblStatus == null)
+                return;
+
+            lblStatus.CssClass = "status-badge";
+            if (lblStatus.Text == "Active")
+                lblStatus.CssClass += " status-approved";
+            else
+                lblStatus.CssClass += " status-archived";
         }
 
         protected void btnFilter_Click(object sender, EventArgs e)
