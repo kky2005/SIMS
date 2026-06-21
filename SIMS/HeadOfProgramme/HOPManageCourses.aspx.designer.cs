@@ -103,6 +103,11 @@ namespace SIMS.HeadOfProgramme
         protected global::System.Web.UI.WebControls.TextBox txtAcademicYear;
 
         /// <summary>
+        /// txtAssignedDate control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.TextBox txtAssignedDate;
+
+        /// <summary>
         /// lbLecturers control.
         /// </summary>
         protected global::System.Web.UI.WebControls.ListBox lbLecturers;

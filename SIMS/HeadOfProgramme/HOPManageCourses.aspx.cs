@@ -17,6 +17,7 @@ namespace SIMS.HeadOfProgramme
                 BindFilterProgrammes();
                 BindLecturers();
                 txtAcademicYear.Text = DateTime.Now.Year.ToString();
+                txtAssignedDate.Text = DateTime.Now.ToString("yyyy-MM-dd");
                 BindGrid();
             }
         }
@@ -52,7 +53,8 @@ namespace SIMS.HeadOfProgramme
                 SELECT c.*, p.ProgrammeName,
                     CASE WHEN c.IsActive = 1 THEN 'Yes' ELSE 'No' END AS IsActiveText,
                     ISNULL(lecturers.LecturerNames, '-') AS LecturerNames,
-                    ISNULL(assignments.AssignmentYears, '-') AS AssignmentYears
+                    ISNULL(assignments.AssignmentYears, '-') AS AssignmentYears,
+                    ISNULL(assignmentDates.AssignmentDates, '-') AS AssignmentDates
                 FROM Courses c
                 INNER JOIN Programmes p ON c.ProgrammeId = p.ProgrammeId
                 OUTER APPLY
@@ -63,6 +65,10 @@ namespace SIMS.HeadOfProgramme
                 (
                     SELECT STUFF((SELECT DISTINCT ', ' + CAST(ca.AcademicYear AS NVARCHAR(10)) + ' S' + CAST(ca.Semester AS NVARCHAR(10)) FROM CourseAssignments ca WHERE ca.CourseId = c.CourseId ORDER BY ', ' + CAST(ca.AcademicYear AS NVARCHAR(10)) + ' S' + CAST(ca.Semester AS NVARCHAR(10)) FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 2, '') AS AssignmentYears
                 ) assignments
+                OUTER APPLY
+                (
+                    SELECT STUFF((SELECT DISTINCT ', ' + CONVERT(NVARCHAR(10), ca.AssignedDate, 23) FROM CourseAssignments ca WHERE ca.CourseId = c.CourseId AND ca.AssignedDate IS NOT NULL ORDER BY ', ' + CONVERT(NVARCHAR(10), ca.AssignedDate, 23) FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 2, '') AS AssignmentDates
+                ) assignmentDates
                 WHERE 1 = 1";
 
             System.Collections.Generic.List<SqlParameter> parameters = new System.Collections.Generic.List<SqlParameter>();
@@ -114,6 +120,13 @@ namespace SIMS.HeadOfProgramme
                     return;
                 }
 
+                DateTime assignedDate;
+                if (!DateTime.TryParse(txtAssignedDate.Text.Trim(), out assignedDate))
+                {
+                    ShowMessage(lblMessage, "Please enter a valid assigned date.", false);
+                    return;
+                }
+
                 string selectedLecturers = GetSelectedLecturerAuditValue();
                 string newValue = "ProgrammeId=" + ddlProgramme.SelectedValue +
                                   "; Code=" + txtCourseCode.Text.Trim() +
@@ -123,6 +136,7 @@ namespace SIMS.HeadOfProgramme
                                   "; IsActive=" + ddlIsActive.SelectedValue +
                                   "; AssignmentAcademicYear=" + academicYear +
                                   "; AssignmentSemester=" + semester +
+                                  "; AssignedDate=" + assignedDate.ToString("yyyy-MM-dd") +
                                   "; Lecturers=" + selectedLecturers;
 
                 using (SqlConnection con = new SqlConnection(ConnStr))
@@ -151,7 +165,7 @@ namespace SIMS.HeadOfProgramme
                                 courseId = Convert.ToInt32(cmd.ExecuteScalar());
                             }
 
-                            SaveCourseAssignments(con, tx, courseId, academicYear, semester);
+                            SaveCourseAssignments(con, tx, courseId, academicYear, semester, assignedDate);
                             InsertAuditLog(con, tx, "Created course", "Courses", courseId, "New course record", newValue);
                         }
                         else
@@ -179,7 +193,7 @@ namespace SIMS.HeadOfProgramme
                                 cmd.ExecuteNonQuery();
                             }
 
-                            SaveCourseAssignments(con, tx, courseId, academicYear, semester);
+                            SaveCourseAssignments(con, tx, courseId, academicYear, semester, assignedDate);
                             InsertAuditLog(con, tx, "Updated course", "Courses", courseId, oldValue, newValue);
                         }
 
@@ -223,8 +237,20 @@ namespace SIMS.HeadOfProgramme
                     txtSemester.Text = r["Semester"].ToString();
                     ddlIsActive.SelectedValue = Convert.ToBoolean(r["IsActive"]) ? "1" : "0";
 
-                    short academicYear = GetLatestAssignmentAcademicYear(id);
-                    txtAcademicYear.Text = academicYear == 0 ? DateTime.Now.Year.ToString() : academicYear.ToString();
+                    CourseAssignmentFormInfo assignmentInfo = GetLatestAssignmentFormInfo(id);
+                    if (assignmentInfo == null)
+                    {
+                        txtAcademicYear.Text = DateTime.Now.Year.ToString();
+                        txtAssignedDate.Text = DateTime.Now.ToString("yyyy-MM-dd");
+                    }
+                    else
+                    {
+                        txtAcademicYear.Text = assignmentInfo.AcademicYear.ToString();
+                        txtSemester.Text = assignmentInfo.Semester.ToString();
+                        txtAssignedDate.Text = assignmentInfo.AssignedDate.HasValue
+                            ? assignmentInfo.AssignedDate.Value.ToString("yyyy-MM-dd")
+                            : DateTime.Now.ToString("yyyy-MM-dd");
+                    }
 
                     LoadSelectedLecturers(id, Convert.ToInt16(txtAcademicYear.Text), Convert.ToByte(txtSemester.Text));
                 }
@@ -268,7 +294,7 @@ namespace SIMS.HeadOfProgramme
             }
         }
 
-        private void SaveCourseAssignments(SqlConnection con, SqlTransaction tx, int courseId, short academicYear, byte semester)
+        private void SaveCourseAssignments(SqlConnection con, SqlTransaction tx, int courseId, short academicYear, byte semester, DateTime assignedDate)
         {
             using (SqlCommand deleteCmd = new SqlCommand(@"
                 DELETE FROM CourseAssignments
@@ -288,12 +314,13 @@ namespace SIMS.HeadOfProgramme
 
                 using (SqlCommand insertCmd = new SqlCommand(@"
                     INSERT INTO CourseAssignments(CourseId, LecturerId, AcademicYear, Semester, AssignedDate)
-                    VALUES(@CourseId, @LecturerId, @AcademicYear, @Semester, CONVERT(date, GETDATE()))", con, tx))
+                    VALUES(@CourseId, @LecturerId, @AcademicYear, @Semester, @AssignedDate)", con, tx))
                 {
                     insertCmd.Parameters.AddWithValue("@CourseId", courseId);
                     insertCmd.Parameters.AddWithValue("@LecturerId", item.Value);
                     insertCmd.Parameters.AddWithValue("@AcademicYear", academicYear);
                     insertCmd.Parameters.AddWithValue("@Semester", semester);
+                    insertCmd.Parameters.AddWithValue("@AssignedDate", assignedDate.Date);
                     insertCmd.ExecuteNonQuery();
                 }
             }
@@ -321,19 +348,26 @@ namespace SIMS.HeadOfProgramme
             }
         }
 
-        private short GetLatestAssignmentAcademicYear(int courseId)
+        private CourseAssignmentFormInfo GetLatestAssignmentFormInfo(int courseId)
         {
-            object value = ExecuteScalar(@"
-                SELECT TOP 1 AcademicYear
+            DataTable dt = GetData(@"
+                SELECT TOP 1 AcademicYear, Semester, AssignedDate
                 FROM CourseAssignments
                 WHERE CourseId = @CourseId
-                ORDER BY AcademicYear DESC, AssignedDate DESC",
+                ORDER BY AssignedDate DESC, AcademicYear DESC, Semester DESC, AssignmentId DESC",
                 new SqlParameter("@CourseId", courseId));
 
-            if (value == null || value == DBNull.Value)
-                return 0;
+            if (dt.Rows.Count == 0)
+                return null;
 
-            return Convert.ToInt16(value);
+            DataRow row = dt.Rows[0];
+
+            return new CourseAssignmentFormInfo
+            {
+                AcademicYear = Convert.ToInt16(row["AcademicYear"]),
+                Semester = Convert.ToByte(row["Semester"]),
+                AssignedDate = row["AssignedDate"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(row["AssignedDate"])
+            };
         }
 
         private string GetSelectedLecturerAuditValue()
@@ -367,7 +401,7 @@ namespace SIMS.HeadOfProgramme
                 OUTER APPLY
                 (
                     SELECT STUFF((
-                        SELECT ', ' + u.FullName + ' (' + CAST(ca.AcademicYear AS NVARCHAR(10)) + ' S' + CAST(ca.Semester AS NVARCHAR(10)) + ')'
+                        SELECT ', ' + u.FullName + ' (' + CAST(ca.AcademicYear AS NVARCHAR(10)) + ' S' + CAST(ca.Semester AS NVARCHAR(10)) + ', AssignedDate=' + ISNULL(CONVERT(NVARCHAR(10), ca.AssignedDate, 23), '-') + ')'
                         FROM CourseAssignments ca
                         INNER JOIN Lecturers l ON l.LecturerId = ca.LecturerId
                         INNER JOIN Users u ON u.UserId = l.UserId
@@ -452,6 +486,7 @@ namespace SIMS.HeadOfProgramme
             txtCreditHours.Text = "3";
             txtSemester.Text = "";
             txtAcademicYear.Text = DateTime.Now.Year.ToString();
+            txtAssignedDate.Text = DateTime.Now.ToString("yyyy-MM-dd");
             ddlIsActive.SelectedValue = "1";
 
             if (ddlProgramme.Items.Count > 0)
@@ -459,6 +494,13 @@ namespace SIMS.HeadOfProgramme
 
             foreach (ListItem item in lbLecturers.Items)
                 item.Selected = false;
+        }
+
+        private class CourseAssignmentFormInfo
+        {
+            public short AcademicYear { get; set; }
+            public byte Semester { get; set; }
+            public DateTime? AssignedDate { get; set; }
         }
     }
 }

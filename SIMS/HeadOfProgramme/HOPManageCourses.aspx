@@ -49,6 +49,11 @@
                     <asp:TextBox ID="txtAcademicYear" runat="server" CssClass="form-control" TextMode="Number"></asp:TextBox>
                     <small class="text-muted">Used for lecturer assignment.</small>
                 </div>
+                <div class="col-md-2">
+                    <label class="form-label">Assigned Date</label>
+                    <asp:TextBox ID="txtAssignedDate" runat="server" CssClass="form-control" TextMode="Date"></asp:TextBox>
+                    <small class="text-muted">Saved into CourseAssignments.</small>
+                </div>
                 <div class="col-md-4">
                     <label class="form-label">Teaching Lecturer(s)</label>
                     <asp:ListBox ID="lbLecturers" runat="server" CssClass="form-select" SelectionMode="Multiple" Rows="4"></asp:ListBox>
@@ -92,6 +97,7 @@
                     <asp:BoundField DataField="ProgrammeName" HeaderText="Programme" />
                     <asp:BoundField DataField="LecturerNames" HeaderText="Teaching Lecturer(s)" />
                     <asp:BoundField DataField="AssignmentYears" HeaderText="Assignment Year/Sem" />
+                    <asp:BoundField DataField="AssignmentDates" HeaderText="Assigned Date(s)" />
                     <asp:BoundField DataField="CreditHours" HeaderText="Credits" />
                     <asp:BoundField DataField="Semester" HeaderText="Semester" />
                     <asp:BoundField DataField="IsActiveText" HeaderText="Active" />
