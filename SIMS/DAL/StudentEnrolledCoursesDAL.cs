@@ -78,37 +78,47 @@ namespace SIMS.DAL
             using (SqlConnection conn = new SqlConnection(connStr))
             {
                 string query = @"
-                    SELECT
-                        cm.MaterialId,
-                        cm.CourseId,
-                        cm.Title,
-                        cm.Description,
-                        cm.FileUrl,
-                        cm.FileType,
-                        cm.FileSizeKB,
-                        cm.AcademicYear,
-                        cm.Semester,
-                        cm.UploadedAt
-                    FROM CourseMaterials cm
-                    INNER JOIN Enrolments e
-                        ON cm.CourseId = e.CourseId
-                       AND cm.AcademicYear = e.AcademicYear
-                       AND cm.Semester = e.Semester
-                    WHERE e.StudentId = @StudentId
-                      AND e.CourseId = @CourseId
-                      AND e.Status = 'Active'
-                      AND cm.IsVisible = 1
-                    ORDER BY cm.UploadedAt DESC";
+            SELECT
+                cm.MaterialId,
+                cm.CourseId,
+                cm.Title,
+                cm.Description,
+                cm.FileUrl,
+                cm.FileType,
+                cm.FileSizeKB,
+                cm.AcademicYear,
+                cm.Semester,
+                cm.UploadedAt
+            FROM CourseMaterials cm
+            WHERE cm.CourseId = @CourseId
+              AND cm.IsVisible = 1
+              AND EXISTS
+              (
+                  SELECT 1
+                  FROM Enrolments e
+                  WHERE e.StudentId = @StudentId
+                    AND e.CourseId = cm.CourseId
+                    AND e.Status = 'Active'
+              )
+            ORDER BY cm.UploadedAt DESC;";
 
-                SqlCommand cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@StudentId", studentId);
-                cmd.Parameters.AddWithValue("@CourseId", courseId);
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.Add(
+                        "@StudentId",
+                        SqlDbType.Int).Value = studentId;
 
-                SqlDataAdapter da = new SqlDataAdapter(cmd);
-                DataTable dt = new DataTable();
-                da.Fill(dt);
+                    cmd.Parameters.Add(
+                        "@CourseId",
+                        SqlDbType.Int).Value = courseId;
 
-                return dt;
+                    using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                    {
+                        DataTable dt = new DataTable();
+                        da.Fill(dt);
+                        return dt;
+                    }
+                }
             }
         }
 
@@ -134,7 +144,7 @@ namespace SIMS.DAL
               AND e.CourseId = @CourseId
               AND e.Status = 'Active'
               AND a.CourseId = @CourseId
-              AND a.Audience IN ('Student', 'All', 'Course')
+              AND a.Audience IN ('Student', 'All', 'Course', 'CourseStudents')
               AND (a.ExpiresAt IS NULL OR a.ExpiresAt >= GETDATE())
             ORDER BY a.PublishedAt DESC";
 
