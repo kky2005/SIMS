@@ -446,7 +446,7 @@ namespace SIMS.HeadOfProgramme
                 ddlPeriodProgramme.SelectedIndex = 0;
             txtPeriodAcademicYear.Text = "";
             ddlPeriodSemester.SelectedValue = "1";
-            ddlPeriodType.SelectedValue = "Register";
+            ddlPeriodType.SelectedValue = "Registration";
             txtPeriodStartDate.Text = "";
             txtPeriodEndDate.Text = "";
             chkPeriodIsActive.Checked = true;

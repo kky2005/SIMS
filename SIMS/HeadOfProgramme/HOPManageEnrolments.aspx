@@ -99,7 +99,7 @@
                     <div class="col-md-2">
                         <label class="form-label">Period Type</label>
                         <asp:DropDownList ID="ddlPeriodType" runat="server" CssClass="form-select">
-                            <asp:ListItem Text="Register" Value="Register"></asp:ListItem>
+                            <asp:ListItem Text="Registration" Value="Registration"></asp:ListItem>
                             <asp:ListItem Text="Drop" Value="Drop"></asp:ListItem>
                         </asp:DropDownList>
                     </div>
