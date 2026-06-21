@@ -1,509 +1,528 @@
-CREATE DATABASE SIMS_DB;
+-- 1. DATABASE CREATION
+CREATE DATABASE [SIMS_DB];
 GO
 
-USE SIMS_DB;
+USE [SIMS_DB];
 GO
 
--- =========================================
--- Roles
--- =========================================
-CREATE TABLE Roles (
-    RoleId INT IDENTITY(1,1) PRIMARY KEY,
-    RoleName NVARCHAR(20) NOT NULL UNIQUE,
-    Description NVARCHAR(255),
-    CreatedAt DATETIME2 DEFAULT SYSUTCDATETIME()
-);
-
--- =========================================
--- Users
--- =========================================
-CREATE TABLE Users (
-    UserId INT IDENTITY(1,1) PRIMARY KEY,
-    RoleId INT NOT NULL,
-    FullName NVARCHAR(150) NOT NULL,
-    Email NVARCHAR(150) NOT NULL UNIQUE,
-    PasswordHash NVARCHAR(255) NOT NULL,
-    Phone NVARCHAR(20),
-    PhotoUrl NVARCHAR(500),
-    IsActive BIT DEFAULT 1,
-    CreatedAt DATETIME2 DEFAULT SYSUTCDATETIME(),
-    LastLoginAt DATETIME2,
-
-    CONSTRAINT FK_Users_Roles
-        FOREIGN KEY (RoleId) REFERENCES Roles(RoleId)
-);
-
--- =========================================
--- Programmes
--- =========================================
-CREATE TABLE Programmes (
-    ProgrammeId INT IDENTITY(1,1) PRIMARY KEY,
-    ProgrammeCode NVARCHAR(20) NOT NULL UNIQUE,
-    ProgrammeName NVARCHAR(200) NOT NULL,
-    DurationYears TINYINT DEFAULT 3,
-    Description NVARCHAR(500),
-    IsActive BIT DEFAULT 1,
-    CreatedAt DATETIME2 DEFAULT SYSUTCDATETIME()
-);
-
--- =========================================
--- Students
--- =========================================
-CREATE TABLE Students (
-    StudentId INT IDENTITY(1,1) PRIMARY KEY,
-    UserId INT NOT NULL UNIQUE,
-    ProgrammeId INT NOT NULL,
-    StudentNo NVARCHAR(20) NOT NULL UNIQUE,
-    IntakeYear SMALLINT,
-    IntakeSemester TINYINT,
-    AdmissionDate DATE,
-    CurrentSemester TINYINT,
-    Status NVARCHAR(30) DEFAULT 'Active',
-
-    CONSTRAINT FK_Students_Users
-        FOREIGN KEY (UserId) REFERENCES Users(UserId),
-
-    CONSTRAINT FK_Students_Programmes
-        FOREIGN KEY (ProgrammeId) REFERENCES Programmes(ProgrammeId)
-);
-
--- =========================================
--- Lecturers
--- =========================================
-CREATE TABLE Lecturers (
-    LecturerId INT IDENTITY(1,1) PRIMARY KEY,
-    UserId INT NOT NULL UNIQUE,
-    StaffNo NVARCHAR(20) NOT NULL UNIQUE,
-    Department NVARCHAR(100),
-    Specialisation NVARCHAR(150),
-    EmploymentStatus NVARCHAR(30) DEFAULT 'Active',
-
-    CONSTRAINT FK_Lecturers_Users
-        FOREIGN KEY (UserId) REFERENCES Users(UserId)
-);
-
--- =========================================
--- Courses
--- =========================================
-CREATE TABLE Courses (
-    CourseId INT IDENTITY(1,1) PRIMARY KEY,
-    ProgrammeId INT NOT NULL,
-    CourseCode NVARCHAR(20) NOT NULL UNIQUE,
-    CourseName NVARCHAR(200) NOT NULL,
-    CreditHours TINYINT DEFAULT 3,
-    Semester TINYINT NOT NULL,
-    IsActive BIT DEFAULT 1,
-
-    CONSTRAINT FK_Courses_Programmes
-        FOREIGN KEY (ProgrammeId) REFERENCES Programmes(ProgrammeId)
-);
-
--- =========================================
--- CourseAssignments
--- =========================================
-CREATE TABLE CourseAssignments (
-    AssignmentId INT IDENTITY(1,1) PRIMARY KEY,
-    CourseId INT NOT NULL,
-    LecturerId INT NOT NULL,
-    AcademicYear SMALLINT NOT NULL,
-    Semester TINYINT NOT NULL,
-    AssignedDate DATE DEFAULT CAST(GETDATE() AS DATE),
-
-    CONSTRAINT FK_CourseAssignments_Courses
-        FOREIGN KEY (CourseId) REFERENCES Courses(CourseId),
-
-    CONSTRAINT FK_CourseAssignments_Lecturers
-        FOREIGN KEY (LecturerId) REFERENCES Lecturers(LecturerId)
-);
-
--- =========================================
--- RegistrationPeriods
--- =========================================
-CREATE TABLE RegistrationPeriods (
-    PeriodId INT IDENTITY(1,1) PRIMARY KEY,
-    ProgrammeId INT NOT NULL,
-    AcademicYear SMALLINT NOT NULL,
-    Semester TINYINT NOT NULL,
-    PeriodType NVARCHAR(20) NOT NULL,
-    StartDate DATE NOT NULL,
-    EndDate DATE NOT NULL,
-    IsActive BIT DEFAULT 1,
-
-    CONSTRAINT FK_RegistrationPeriods_Programmes
-        FOREIGN KEY (ProgrammeId) REFERENCES Programmes(ProgrammeId)
-);
-
--- =========================================
--- Enrolments
--- =========================================
-CREATE TABLE Enrolments (
-    EnrolmentId INT IDENTITY(1,1) PRIMARY KEY,
-    StudentId INT NOT NULL,
-    CourseId INT NOT NULL,
-    AcademicYear SMALLINT NOT NULL,
-    Semester TINYINT NOT NULL,
-    Status NVARCHAR(20) DEFAULT 'Pending',
-    EnrolledAt DATETIME2 DEFAULT SYSUTCDATETIME(),
-    DroppedAt DATETIME2,
-
-    CONSTRAINT FK_Enrolments_Students
-        FOREIGN KEY (StudentId) REFERENCES Students(StudentId),
-
-    CONSTRAINT FK_Enrolments_Courses
-        FOREIGN KEY (CourseId) REFERENCES Courses(CourseId)
-);
-
--- =========================================
--- Attendance
--- =========================================
-CREATE TABLE Attendance (
-    AttendanceId INT IDENTITY(1,1) PRIMARY KEY,
-    EnrolmentId INT NOT NULL,
-    AttendanceDate DATE NOT NULL,
-    Status NVARCHAR(10) NOT NULL,
-    Remarks NVARCHAR(300),
-    RecordedBy INT NOT NULL,
-    RecordedAt DATETIME2 DEFAULT SYSUTCDATETIME(),
-
-    CONSTRAINT FK_Attendance_Enrolments
-        FOREIGN KEY (EnrolmentId) REFERENCES Enrolments(EnrolmentId),
-
-    CONSTRAINT FK_Attendance_Users
-        FOREIGN KEY (RecordedBy) REFERENCES Users(UserId)
-);
-
--- =========================================
--- Assessments
--- =========================================
-CREATE TABLE Assessments (
-    AssessmentId INT IDENTITY(1,1) PRIMARY KEY,
-    CourseId INT NOT NULL,
-    AcademicYear SMALLINT NOT NULL,
-    Semester TINYINT NOT NULL,
-    AssessmentName NVARCHAR(100) NOT NULL,
-    MaxMark DECIMAL(5,2) DEFAULT 100,
-    Weightage DECIMAL(5,2) NOT NULL,
-    IsPublished BIT DEFAULT 0,
-    DueDate DATETIME2 NULL,
-    IsSubmissionRequired BIT NOT NULL DEFAULT 0,
-    Description NVARCHAR(500) NULL;
-
-    CONSTRAINT FK_Assessments_Courses
-        FOREIGN KEY (CourseId) REFERENCES Courses(CourseId)
-);
-
--- =========================================
--- GradeScale
--- =========================================
-CREATE TABLE GradeScale (
-    GradeScaleId INT IDENTITY(1,1) PRIMARY KEY,
-    MinMark DECIMAL(5,2) NOT NULL,
-    MaxMark DECIMAL(5,2) NOT NULL,
-    GradeLetter NVARCHAR(5) NOT NULL,
-    GradePoint DECIMAL(3,2) NOT NULL,
-    Description NVARCHAR(100)
-);
-
--- =========================================
--- StudentMarks
--- =========================================
-CREATE TABLE StudentMarks (
-    MarkId INT IDENTITY(1,1) PRIMARY KEY,
-    AssessmentId INT NOT NULL,
-    StudentId INT NOT NULL,
-    GradeScaleId INT,
-    MarksObtained DECIMAL(5,2) NOT NULL,
-    WeightedMark DECIMAL(5,2),
-    GradedBy INT NOT NULL,
-    GradedAt DATETIME2 DEFAULT SYSUTCDATETIME(),
-    IsPublished BIT DEFAULT 0,
-
-    CONSTRAINT FK_StudentMarks_Assessments
-        FOREIGN KEY (AssessmentId) REFERENCES Assessments(AssessmentId),
-
-    CONSTRAINT FK_StudentMarks_Students
-        FOREIGN KEY (StudentId) REFERENCES Students(StudentId),
-
-    CONSTRAINT FK_StudentMarks_GradeScale
-        FOREIGN KEY (GradeScaleId) REFERENCES GradeScale(GradeScaleId),
-
-    CONSTRAINT FK_StudentMarks_Users
-        FOREIGN KEY (GradedBy) REFERENCES Users(UserId)
-);
-
--- =========================================
--- GPARecords
--- =========================================
-CREATE TABLE GPARecords (
-    GPARecordId INT IDENTITY(1,1) PRIMARY KEY,
-    StudentId INT NOT NULL,
-    AcademicYear SMALLINT NOT NULL,
-    Semester TINYINT NOT NULL,
-    GPA DECIMAL(3,2) NOT NULL,
-    CGPA DECIMAL(3,2) NOT NULL,
-    TotalCreditHours SMALLINT NOT NULL,
-    CalculatedAt DATETIME2 DEFAULT SYSUTCDATETIME(),
-
-    CONSTRAINT FK_GPARecords_Students
-        FOREIGN KEY (StudentId) REFERENCES Students(StudentId)
-);
-
--- =========================================
--- Announcements
--- =========================================
-CREATE TABLE Announcements (
-    AnnouncementId INT IDENTITY(1,1) PRIMARY KEY,
-    AuthorUserId INT NOT NULL,
-    CourseId INT,
-    Title NVARCHAR(200) NOT NULL,
-    Body NVARCHAR(MAX) NOT NULL,
-    Audience NVARCHAR(20) NOT NULL,
-    PublishedAt DATETIME2 DEFAULT SYSUTCDATETIME(),
-    ExpiresAt DATETIME2,
-
-    CONSTRAINT FK_Announcements_Users
-        FOREIGN KEY (AuthorUserId) REFERENCES Users(UserId),
-
-    CONSTRAINT FK_Announcements_Courses
-        FOREIGN KEY (CourseId) REFERENCES Courses(CourseId)
-);
-
--- =========================================
--- Notifications
--- =========================================
-CREATE TABLE Notifications (
-    NotificationId INT IDENTITY(1,1) PRIMARY KEY,
-    UserId INT NOT NULL,
-    Title NVARCHAR(200) NOT NULL,
-    Message NVARCHAR(MAX) NOT NULL,
-    NotificationType NVARCHAR(50) NOT NULL,
-    IsRead BIT DEFAULT 0,
-    CreatedAt DATETIME2 DEFAULT SYSUTCDATETIME(),
-    LinkUrl NVARCHAR(500),
-
-    CONSTRAINT FK_Notifications_Users
-        FOREIGN KEY (UserId) REFERENCES Users(UserId)
-);
-
--- =========================================
--- AcademicWarnings
--- =========================================
-CREATE TABLE AcademicWarnings (
-    WarningId INT IDENTITY(1,1) PRIMARY KEY,
-    StudentId INT NOT NULL,
-    CourseId INT,
-    WarningType NVARCHAR(50) NOT NULL,
-    Reason NVARCHAR(500) NOT NULL,
-    Severity NVARCHAR(20) DEFAULT 'Medium',
-    Status NVARCHAR(20) DEFAULT 'Active',
-    IssuedBy INT,
-    IssuedAt DATETIME2 DEFAULT SYSUTCDATETIME(),
-
-    CONSTRAINT FK_AcademicWarnings_Students
-        FOREIGN KEY (StudentId) REFERENCES Students(StudentId),
-
-    CONSTRAINT FK_AcademicWarnings_Courses
-        FOREIGN KEY (CourseId) REFERENCES Courses(CourseId),
-
-    CONSTRAINT FK_AcademicWarnings_Users
-        FOREIGN KEY (IssuedBy) REFERENCES Users(UserId)
-);
-
--- =========================================
--- AcademicCalendar
--- =========================================
-CREATE TABLE AcademicCalendar (
-    CalendarId INT IDENTITY(1,1) PRIMARY KEY,
-    EventName NVARCHAR(200) NOT NULL,
-    EventType NVARCHAR(50) NOT NULL,
-    StartDate DATE NOT NULL,
-    EndDate DATE NOT NULL,
-    AcademicYear SMALLINT NOT NULL,
-    Semester TINYINT,
-    Description NVARCHAR(MAX)
-);
-
--- =========================================
--- CourseMaterials
--- =========================================
-CREATE TABLE CourseMaterials (
-    MaterialId INT IDENTITY(1,1) PRIMARY KEY,
-    CourseId INT NOT NULL,
-    UploadedBy INT NOT NULL,
-    Title NVARCHAR(200) NOT NULL,
-    Description NVARCHAR(500),
-    FileUrl NVARCHAR(500) NOT NULL,
-    FileType NVARCHAR(50) NOT NULL,
-    FileSizeKB INT,
-    AcademicYear SMALLINT NOT NULL,
-    Semester TINYINT NOT NULL,
-    IsVisible BIT DEFAULT 1,
-    UploadedAt DATETIME2 DEFAULT SYSUTCDATETIME(),
-
-    CONSTRAINT FK_CourseMaterials_Courses
-        FOREIGN KEY (CourseId) REFERENCES Courses(CourseId),
-
-    CONSTRAINT FK_CourseMaterials_Users
-        FOREIGN KEY (UploadedBy) REFERENCES Users(UserId)
-);
-
--- =========================================
--- Reports
--- =========================================
-CREATE TABLE Reports (
-    ReportId INT IDENTITY(1,1) PRIMARY KEY,
-    GeneratedBy INT NOT NULL,
-    ReportType NVARCHAR(100) NOT NULL,
-    AcademicYear SMALLINT,
-    Semester TINYINT,
-    FilterCriteria NVARCHAR(MAX),
-    GeneratedAt DATETIME2 DEFAULT SYSUTCDATETIME(),
-
-    CONSTRAINT FK_Reports_Users
-        FOREIGN KEY (GeneratedBy) REFERENCES Users(UserId)
-);
-
--- =========================================
--- ReportExports
--- =========================================
-CREATE TABLE ReportExports (
-    ExportId INT IDENTITY(1,1) PRIMARY KEY,
-    ReportId INT NOT NULL,
-    ExportFormat NVARCHAR(20) NOT NULL,
-    FilePath NVARCHAR(500) NOT NULL,
-    ExportedAt DATETIME2 DEFAULT SYSUTCDATETIME(),
-
-    CONSTRAINT FK_ReportExports_Reports
-        FOREIGN KEY (ReportId) REFERENCES Reports(ReportId)
-);
-
--- =========================================
--- Fees
--- =========================================
-CREATE TABLE Fees (
-    FeeId INT IDENTITY(1,1) PRIMARY KEY,
-    StudentId INT NOT NULL,
-    AcademicYear SMALLINT NOT NULL,
-    Semester TINYINT NOT NULL,
-    TotalAmount DECIMAL(10,2) NOT NULL,
-    PaidAmount DECIMAL(10,2) DEFAULT 0,
-    Balance DECIMAL(10,2) NOT NULL,
-    DueDate DATE,
-    Status NVARCHAR(20) DEFAULT 'Unpaid',
-
-    CONSTRAINT FK_Fees_Students
-        FOREIGN KEY (StudentId) REFERENCES Students(StudentId)
-);
-
--- =========================================
--- AuditLogs
--- =========================================
-CREATE TABLE AuditLogs (
-    LogId INT IDENTITY(1,1) PRIMARY KEY,
-    UserId INT NOT NULL,
-    Action NVARCHAR(200) NOT NULL,
-    TableAffected NVARCHAR(100),
-    RecordId INT,
-    OldValue NVARCHAR(MAX),
-    NewValue NVARCHAR(MAX),
-    ActionDate DATETIME2 DEFAULT SYSUTCDATETIME(),
-
-    CONSTRAINT FK_AuditLogs_Users
-        FOREIGN KEY (UserId) REFERENCES Users(UserId)
-);
-
--- =========================================
--- LoginAttempts
--- =========================================
-CREATE TABLE LoginAttempts (
-    AttemptId INT IDENTITY(1,1) PRIMARY KEY,
-    UserId INT,
-    Email NVARCHAR(150) NOT NULL,
-    IsSuccessful BIT NOT NULL,
-    AttemptDate DATETIME2 DEFAULT SYSUTCDATETIME(),
-
-    CONSTRAINT FK_LoginAttempts_Users
-        FOREIGN KEY (UserId) REFERENCES Users(UserId)
+-- 2. TABLE CREATIONS
+CREATE TABLE [dbo].[Roles](
+	[RoleId] [int] IDENTITY(1,1) NOT NULL,
+	[RoleName] [nvarchar](20) NOT NULL,
+	[Description] [nvarchar](255) NULL,
+	[CreatedAt] [datetime2](7) NULL,
+	PRIMARY KEY CLUSTERED ([RoleId] ASC),
+	UNIQUE NONCLUSTERED ([RoleName] ASC)
 );
 GO
 
-CREATE TABLE [dbo].[Admissions] (
-    [AdmissionId]    INT           IDENTITY (1, 1) NOT NULL,
-    [StudentId]      INT           NOT NULL,
-    [ProgrammeId]    INT           NOT NULL,
-    [IntakeYear]     SMALLINT      NOT NULL,
-    [IntakeSemester] TINYINT       NOT NULL,
-    [Status]         NVARCHAR (20) CONSTRAINT [DF_Admissions_Status] DEFAULT ('Pending') NULL,
-    [RequestedAt]    DATETIME2 (7) CONSTRAINT [DF_Admissions_RequestedAt] DEFAULT (sysutcdatetime()) NOT NULL,
-    [AdmittedAt]     DATETIME2 (7) NULL,
-    [RejectedAt]     DATETIME2 (7) NULL,
-    PRIMARY KEY CLUSTERED ([AdmissionId] ASC),
-    CONSTRAINT [FK_Admissions_Students] FOREIGN KEY ([StudentId]) REFERENCES [dbo].[Students] ([StudentId]),
-    CONSTRAINT [FK_Admissions_Programmes] FOREIGN KEY ([ProgrammeId]) REFERENCES [dbo].[Programmes] ([ProgrammeId])
-);
-
-
-GO
-CREATE NONCLUSTERED INDEX [IX_Admissions_Status_RequestedAt]
-    ON [dbo].[Admissions]([Status] ASC, [RequestedAt] DESC);
-
-
-GO
-CREATE NONCLUSTERED INDEX [IX_Admissions_Student_Programme_Intake]
-    ON [dbo].[Admissions]([StudentId] ASC, [ProgrammeId] ASC, [IntakeYear] ASC, [IntakeSemester] ASC);
-
-CREATE TABLE CourseRegistrationRequests (
-    RequestId INT IDENTITY(1,1) PRIMARY KEY,
-    StudentId INT NOT NULL,
-    CourseId INT NOT NULL,
-    RequestType NVARCHAR(20) NOT NULL, -- Register or Drop
-    Status NVARCHAR(20) DEFAULT 'Pending', -- Pending, Approved, Rejected
-    RequestedAt DATETIME2 DEFAULT SYSUTCDATETIME(),
-    ReviewedBy INT NULL,
-    ReviewedAt DATETIME2 NULL,
-    AdminRemarks NVARCHAR(300) NULL,
-
-    CONSTRAINT FK_CourseRegistrationRequests_Students
-        FOREIGN KEY (StudentId) REFERENCES Students(StudentId),
-
-    CONSTRAINT FK_CourseRegistrationRequests_Courses
-        FOREIGN KEY (CourseId) REFERENCES Courses(CourseId),
-
-    CONSTRAINT FK_CourseRegistrationRequests_Users
-        FOREIGN KEY (ReviewedBy) REFERENCES Users(UserId)
-);
-
-CREATE UNIQUE INDEX UX_CourseRegistrationRequests_Pending
-ON CourseRegistrationRequests (StudentId, CourseId, RequestType)
-WHERE Status = 'Pending';
-GO
-
-CREATE TABLE AssessmentSubmissions (
-    SubmissionId INT IDENTITY(1,1) PRIMARY KEY,
-
-    AssessmentId INT NOT NULL,
-    StudentId INT NOT NULL,
-
-    FileUrl NVARCHAR(500) NOT NULL,
-    FileName NVARCHAR(255) NULL,
-
-    AttemptNo INT NOT NULL DEFAULT 1,
-    IsLatest BIT NOT NULL DEFAULT 1,
-
-    SubmittedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
-    Status NVARCHAR(30) NOT NULL DEFAULT 'Submitted',
-
-    CONSTRAINT FK_AssessmentSubmissions_Assessments
-        FOREIGN KEY (AssessmentId) REFERENCES Assessments(AssessmentId),
-
-    CONSTRAINT FK_AssessmentSubmissions_Students
-        FOREIGN KEY (StudentId) REFERENCES Students(StudentId)
+CREATE TABLE [dbo].[Users](
+	[UserId] [int] IDENTITY(1,1) NOT NULL,
+	[RoleId] [int] NOT NULL,
+	[FullName] [nvarchar](150) NOT NULL,
+	[Email] [nvarchar](150) NOT NULL,
+	[PasswordHash] [nvarchar](255) NOT NULL,
+	[Phone] [nvarchar](20) NULL,
+	[PhotoUrl] [nvarchar](500) NULL,
+	[IsActive] [bit] NULL,
+	[CreatedAt] [datetime2](7) NULL,
+	[LastLoginAt] [datetime2](7) NULL,
+	PRIMARY KEY CLUSTERED ([UserId] ASC),
+	UNIQUE NONCLUSTERED ([Email] ASC)
 );
 GO
 
-CREATE UNIQUE INDEX UX_AssessmentSubmissions_Latest
-ON AssessmentSubmissions (AssessmentId, StudentId)
-WHERE IsLatest = 1;
+CREATE TABLE [dbo].[Applicants](
+	[UserId] [int] IDENTITY(1,1) NOT NULL,
+	[Email] [nvarchar](256) NOT NULL,
+	[PasswordHash] [nvarchar](256) NOT NULL,
+	[AdmissionId] [int] NULL,
+	[IsActive] [bit] NOT NULL,
+	[CreatedAt] [datetime2](7) NOT NULL,
+	PRIMARY KEY CLUSTERED ([UserId] ASC)
+);
+GO
+
+CREATE TABLE [dbo].[Programmes](
+	[ProgrammeId] [int] IDENTITY(1,1) NOT NULL,
+	[ProgrammeCode] [nvarchar](20) NOT NULL,
+	[ProgrammeName] [nvarchar](200) NOT NULL,
+	[DurationYears] [tinyint] NULL,
+	[Description] [nvarchar](500) NULL,
+	[IsActive] [bit] NULL,
+	[CreatedAt] [datetime2](7) NULL,
+	PRIMARY KEY CLUSTERED ([ProgrammeId] ASC),
+	UNIQUE NONCLUSTERED ([ProgrammeCode] ASC)
+);
+GO
+
+CREATE TABLE [dbo].[Students](
+	[StudentId] [int] IDENTITY(1,1) NOT NULL,
+	[UserId] [int] NOT NULL,
+	[ProgrammeId] [int] NOT NULL,
+	[StudentNo] [nvarchar](20) NOT NULL,
+	[IntakeYear] [smallint] NULL,
+	[IntakeSemester] [tinyint] NULL,
+	[AdmissionDate] [date] NULL,
+	[CurrentSemester] [tinyint] NULL,
+	[Status] [nvarchar](30) NULL,
+	PRIMARY KEY CLUSTERED ([StudentId] ASC),
+	UNIQUE NONCLUSTERED ([UserId] ASC),
+	UNIQUE NONCLUSTERED ([StudentNo] ASC)
+);
+GO
+
+CREATE TABLE [dbo].[Lecturers](
+	[LecturerId] [int] IDENTITY(1,1) NOT NULL,
+	[UserId] [int] NOT NULL,
+	[StaffNo] [nvarchar](20) NOT NULL,
+	[Department] [nvarchar](100) NULL,
+	[Specialisation] [nvarchar](150) NULL,
+	[EmploymentStatus] [nvarchar](30) NULL,
+	PRIMARY KEY CLUSTERED ([LecturerId] ASC),
+	UNIQUE NONCLUSTERED ([UserId] ASC),
+	UNIQUE NONCLUSTERED ([StaffNo] ASC)
+);
+GO
+
+CREATE TABLE [dbo].[Courses](
+	[CourseId] [int] IDENTITY(1,1) NOT NULL,
+	[ProgrammeId] [int] NOT NULL,
+	[CourseCode] [nvarchar](20) NOT NULL,
+	[CourseName] [nvarchar](200) NOT NULL,
+	[CreditHours] [tinyint] NULL,
+	[Semester] [tinyint] NOT NULL,
+	[IsActive] [bit] NULL,
+	PRIMARY KEY CLUSTERED ([CourseId] ASC),
+	UNIQUE NONCLUSTERED ([CourseCode] ASC)
+);
+GO
+
+CREATE TABLE [dbo].[Admissions](
+	[AdmissionId] [int] IDENTITY(1,1) NOT NULL,
+	[StudentId] [int] NULL,
+	[ProgrammeId] [int] NOT NULL,
+	[IntakeYear] [smallint] NOT NULL,
+	[IntakeSemester] [tinyint] NOT NULL,
+	[Status] [nvarchar](20) NOT NULL,
+	[RequestedAt] [datetime2](7) NOT NULL,
+	[AdmittedAt] [datetime2](7) NULL,
+	[RejectedAt] [datetime2](7) NULL,
+	[UserId] [int] NOT NULL,
+	[FullName] [nvarchar](100) NOT NULL,
+	[DateOfBirth] [date] NOT NULL,
+	[Gender] [nvarchar](10) NOT NULL,
+	[NationalId] [nvarchar](20) NOT NULL,
+	[Nationality] [nvarchar](50) NOT NULL,
+	[PhoneNumber] [nvarchar](20) NOT NULL,
+	[PreviousInstitution] [nvarchar](150) NOT NULL,
+	[HighestQualification] [nvarchar](50) NOT NULL,
+	[PreviousCGPA] [decimal](3, 2) NULL,
+	[RejectionReason] [nvarchar](255) NULL,
+	PRIMARY KEY CLUSTERED ([AdmissionId] ASC)
+);
+GO
+
+CREATE TABLE [dbo].[Admissions_Backup_BeforeNewStructure](
+	[AdmissionId] [int] IDENTITY(1,1) NOT NULL,
+	[StudentId] [int] NOT NULL,
+	[ProgrammeId] [int] NOT NULL,
+	[IntakeYear] [smallint] NOT NULL,
+	[IntakeSemester] [tinyint] NOT NULL,
+	[Status] [nvarchar](20) NULL,
+	[RequestedAt] [datetime2](7) NOT NULL,
+	[AdmittedAt] [datetime2](7) NULL,
+	[RejectedAt] [datetime2](7) NULL
+);
+GO
+
+CREATE TABLE [dbo].[AcademicCalendar](
+	[CalendarId] [int] IDENTITY(1,1) NOT NULL,
+	[EventName] [nvarchar](200) NOT NULL,
+	[EventType] [nvarchar](50) NOT NULL,
+	[StartDate] [date] NOT NULL,
+	[EndDate] [date] NOT NULL,
+	[AcademicYear] [smallint] NOT NULL,
+	[Semester] [tinyint] NULL,
+	[Description] [nvarchar](max) NULL,
+	PRIMARY KEY CLUSTERED ([CalendarId] ASC)
+);
+GO
+
+CREATE TABLE [dbo].[AcademicWarnings](
+	[WarningId] [int] IDENTITY(1,1) NOT NULL,
+	[StudentId] [int] NOT NULL,
+	[CourseId] [int] NULL,
+	[WarningType] [nvarchar](50) NOT NULL,
+	[Reason] [nvarchar](500) NOT NULL,
+	[Severity] [nvarchar](20) NULL,
+	[Status] [nvarchar](20) NULL,
+	[IssuedBy] [int] NULL,
+	[IssuedAt] [datetime2](7) NULL,
+	PRIMARY KEY CLUSTERED ([WarningId] ASC)
+);
+GO
+
+CREATE TABLE [dbo].[Announcements](
+	[AnnouncementId] [int] IDENTITY(1,1) NOT NULL,
+	[AuthorUserId] [int] NOT NULL,
+	[CourseId] [int] NULL,
+	[Title] [nvarchar](200) NOT NULL,
+	[Body] [nvarchar](max) NOT NULL,
+	[Audience] [nvarchar](20) NOT NULL,
+	[PublishedAt] [datetime2](7) NULL,
+	[ExpiresAt] [datetime2](7) NULL,
+	PRIMARY KEY CLUSTERED ([AnnouncementId] ASC)
+);
+GO
+
+CREATE TABLE [dbo].[Assessments](
+	[AssessmentId] [int] IDENTITY(1,1) NOT NULL,
+	[CourseId] [int] NOT NULL,
+	[AcademicYear] [smallint] NOT NULL,
+	[Semester] [tinyint] NOT NULL,
+	[AssessmentName] [nvarchar](100) NOT NULL,
+	[MaxMark] [decimal](5, 2) NULL,
+	[Weightage] [decimal](5, 2) NOT NULL,
+	[IsPublished] [bit] NULL,
+	PRIMARY KEY CLUSTERED ([AssessmentId] ASC)
+);
+GO
+
+CREATE TABLE [dbo].[Attendance](
+	[AttendanceId] [int] IDENTITY(1,1) NOT NULL,
+	[EnrolmentId] [int] NOT NULL,
+	[AttendanceDate] [date] NOT NULL,
+	[Status] [nvarchar](10) NOT NULL,
+	[Remarks] [nvarchar](300) NULL,
+	[RecordedBy] [int] NOT NULL,
+	[RecordedAt] [datetime2](7) NULL,
+	PRIMARY KEY CLUSTERED ([AttendanceId] ASC)
+);
+GO
+
+CREATE TABLE [dbo].[AuditLogs](
+	[LogId] [int] IDENTITY(1,1) NOT NULL,
+	[UserId] [int] NOT NULL,
+	[Action] [nvarchar](200) NOT NULL,
+	[TableAffected] [nvarchar](100) NULL,
+	[RecordId] [int] NULL,
+	[OldValue] [nvarchar](max) NULL,
+	[NewValue] [nvarchar](max) NULL,
+	[ActionDate] [datetime2](7) NULL,
+	PRIMARY KEY CLUSTERED ([LogId] ASC)
+);
+GO
+
+CREATE TABLE [dbo].[CourseAssignments](
+	[AssignmentId] [int] IDENTITY(1,1) NOT NULL,
+	[CourseId] [int] NOT NULL,
+	[LecturerId] [int] NOT NULL,
+	[AcademicYear] [smallint] NOT NULL,
+	[Semester] [tinyint] NOT NULL,
+	[AssignedDate] [date] NULL,
+	PRIMARY KEY CLUSTERED ([AssignmentId] ASC)
+);
+GO
+
+CREATE TABLE [dbo].[CourseMaterials](
+	[MaterialId] [int] IDENTITY(1,1) NOT NULL,
+	[CourseId] [int] NOT NULL,
+	[UploadedBy] [int] NOT NULL,
+	[Title] [nvarchar](200) NOT NULL,
+	[Description] [nvarchar](500) NULL,
+	[FileUrl] [nvarchar](500) NOT NULL,
+	[FileType] [nvarchar](50) NOT NULL,
+	[FileSizeKB] [int] NULL,
+	[AcademicYear] [smallint] NOT NULL,
+	[Semester] [tinyint] NOT NULL,
+	[IsVisible] [bit] NULL,
+	[UploadedAt] [datetime2](7) NULL,
+	PRIMARY KEY CLUSTERED ([MaterialId] ASC)
+);
+GO
+
+CREATE TABLE [dbo].[CourseRegistrationRequests](
+	[RequestId] [int] IDENTITY(1,1) NOT NULL,
+	[StudentId] [int] NOT NULL,
+	[CourseId] [int] NOT NULL,
+	[RequestType] [nvarchar](20) NOT NULL,
+	[Status] [nvarchar](20) NULL,
+	[RequestedAt] [datetime2](7) NULL,
+	[ReviewedBy] [int] NULL,
+	[ReviewedAt] [datetime2](7) NULL,
+	[AdminRemarks] [nvarchar](300) NULL,
+	[RejectedAt] [datetime] NULL,
+	PRIMARY KEY CLUSTERED ([RequestId] ASC)
+);
+GO
+
+CREATE TABLE [dbo].[Enrolments](
+	[EnrolmentId] [int] IDENTITY(1,1) NOT NULL,
+	[StudentId] [int] NOT NULL,
+	[CourseId] [int] NOT NULL,
+	[AcademicYear] [smallint] NOT NULL,
+	[Semester] [tinyint] NOT NULL,
+	[Status] [nvarchar](20) NULL,
+	[EnrolledAt] [datetime2](7) NULL,
+	[DroppedAt] [datetime2](7) NULL,
+	[RequestedAt] [datetime2](7) NOT NULL,
+	PRIMARY KEY CLUSTERED ([EnrolmentId] ASC)
+);
+GO
+
+CREATE TABLE [dbo].[Fees](
+	[FeeId] [int] IDENTITY(1,1) NOT NULL,
+	[StudentId] [int] NOT NULL,
+	[AcademicYear] [smallint] NOT NULL,
+	[Semester] [tinyint] NOT NULL,
+	[TotalAmount] [decimal](10, 2) NOT NULL,
+	[PaidAmount] [decimal](10, 2) NULL,
+	[Balance] [decimal](10, 2) NOT NULL,
+	[DueDate] [date] NULL,
+	[Status] [nvarchar](20) NULL,
+	PRIMARY KEY CLUSTERED ([FeeId] ASC)
+);
+GO
+
+CREATE TABLE [dbo].[GPARecords](
+	[GPARecordId] [int] IDENTITY(1,1) NOT NULL,
+	[StudentId] [int] NOT NULL,
+	[AcademicYear] [smallint] NOT NULL,
+	[Semester] [tinyint] NOT NULL,
+	[GPA] [decimal](3, 2) NOT NULL,
+	[CGPA] [decimal](3, 2) NOT NULL,
+	[TotalCreditHours] [smallint] NOT NULL,
+	[CalculatedAt] [datetime2](7) NULL,
+	PRIMARY KEY CLUSTERED ([GPARecordId] ASC)
+);
+GO
+
+CREATE TABLE [dbo].[GradeScale](
+	[GradeScaleId] [int] IDENTITY(1,1) NOT NULL,
+	[MinMark] [decimal](5, 2) NOT NULL,
+	[MaxMark] [decimal](5, 2) NOT NULL,
+	[GradeLetter] [nvarchar](5) NOT NULL,
+	[GradePoint] [decimal](3, 2) NOT NULL,
+	[Description] [nvarchar](100) NULL,
+	PRIMARY KEY CLUSTERED ([GradeScaleId] ASC)
+);
+GO
+
+CREATE TABLE [dbo].[LoginAttempts](
+	[AttemptId] [int] IDENTITY(1,1) NOT NULL,
+	[UserId] [int] NULL,
+	[Email] [nvarchar](150) NOT NULL,
+	[IsSuccessful] [bit] NOT NULL,
+	[AttemptDate] [datetime2](7) NULL,
+	PRIMARY KEY CLUSTERED ([AttemptId] ASC)
+);
+GO
+
+CREATE TABLE [dbo].[Notifications](
+	[NotificationId] [int] IDENTITY(1,1) NOT NULL,
+	[UserId] [int] NOT NULL,
+	[Title] [nvarchar](200) NOT NULL,
+	[Message] [nvarchar](max) NOT NULL,
+	[NotificationType] [nvarchar](50) NOT NULL,
+	[IsRead] [bit] NULL,
+	[CreatedAt] [datetime2](7) NULL,
+	[LinkUrl] [nvarchar](500) NULL,
+	PRIMARY KEY CLUSTERED ([NotificationId] ASC)
+);
+GO
+
+CREATE TABLE [dbo].[RegistrationPeriods](
+	[PeriodId] [int] IDENTITY(1,1) NOT NULL,
+	[ProgrammeId] [int] NOT NULL,
+	[AcademicYear] [smallint] NOT NULL,
+	[Semester] [tinyint] NOT NULL,
+	[PeriodType] [nvarchar](20) NOT NULL,
+	[StartDate] [date] NOT NULL,
+	[EndDate] [date] NOT NULL,
+	[IsActive] [bit] NULL,
+	PRIMARY KEY CLUSTERED ([PeriodId] ASC)
+);
+GO
+
+CREATE TABLE [dbo].[ReportExports](
+	[ExportId] [int] IDENTITY(1,1) NOT NULL,
+	[ReportId] [int] NOT NULL,
+	[ExportFormat] [nvarchar](20) NOT NULL,
+	[FilePath] [nvarchar](500) NOT NULL,
+	[ExportedAt] [datetime2](7) NULL,
+	PRIMARY KEY CLUSTERED ([ExportId] ASC)
+);
+GO
+
+CREATE TABLE [dbo].[Reports](
+	[ReportId] [int] IDENTITY(1,1) NOT NULL,
+	[GeneratedBy] [int] NOT NULL,
+	[ReportType] [nvarchar](100) NOT NULL,
+	[AcademicYear] [smallint] NULL,
+	[Semester] [tinyint] NULL,
+	[FilterCriteria] [nvarchar](max) NULL,
+	[GeneratedAt] [datetime2](7) NULL,
+	PRIMARY KEY CLUSTERED ([ReportId] ASC)
+);
+GO
+
+CREATE TABLE [dbo].[StudentMarks](
+	[MarkId] [int] IDENTITY(1,1) NOT NULL,
+	[AssessmentId] [int] NOT NULL,
+	[StudentId] [int] NOT NULL,
+	[GradeScaleId] [int] NULL,
+	[MarksObtained] [decimal](5, 2) NOT NULL,
+	[WeightedMark] [decimal](5, 2) NULL,
+	[GradedBy] [int] NOT NULL,
+	[GradedAt] [datetime2](7) NULL,
+	[IsPublished] [bit] NULL,
+	PRIMARY KEY CLUSTERED ([MarkId] ASC)
+);
+GO
+
+CREATE TABLE [dbo].[StudentPayments](
+	[PaymentId] [int] IDENTITY(1,1) NOT NULL,
+	[StudentId] [int] NOT NULL,
+	[AcademicYear] [smallint] NOT NULL,
+	[Semester] [tinyint] NOT NULL,
+	[Amount] [decimal](10, 2) NOT NULL,
+	[PaymentStatus] [nvarchar](20) NOT NULL,
+	[CreatedAt] [datetime2](7) NOT NULL,
+	[PaidAt] [datetime2](7) NULL,
+	PRIMARY KEY CLUSTERED ([PaymentId] ASC)
+);
 GO
 
 
+-- 3. INDEXES
+CREATE NONCLUSTERED INDEX [IX_Admissions_Applicant_Programme_Intake] ON [dbo].[Admissions] ([UserId] ASC, [ProgrammeId] ASC, [IntakeYear] ASC, [IntakeSemester] ASC);
+CREATE NONCLUSTERED INDEX [IX_Admissions_Status_RequestedAt] ON [dbo].[Admissions] ([Status] ASC, [RequestedAt] DESC);
+CREATE UNIQUE NONCLUSTERED INDEX [UQ_CourseAssignments_Course_Lecturer_Year_Semester] ON [dbo].[CourseAssignments] ([CourseId] ASC, [LecturerId] ASC, [AcademicYear] ASC, [Semester] ASC);
+CREATE UNIQUE NONCLUSTERED INDEX [UX_CourseRegistrationRequests_Pending] ON [dbo].[CourseRegistrationRequests] ([StudentId] ASC, [CourseId] ASC, [RequestType] ASC) WHERE ([Status]='Pending');
+CREATE NONCLUSTERED INDEX [IX_Enrolments_Status_RequestedAt] ON [dbo].[Enrolments] ([Status] ASC, [RequestedAt] DESC);
+CREATE UNIQUE NONCLUSTERED INDEX [UX_StudentPayments_StudentSemester] ON [dbo].[StudentPayments] ([StudentId] ASC, [AcademicYear] ASC, [Semester] ASC);
+GO
+
+
+-- 4. DEFAULT CONSTRAINTS
+ALTER TABLE [dbo].[AcademicWarnings] ADD DEFAULT ('Medium') FOR [Severity];
+ALTER TABLE [dbo].[AcademicWarnings] ADD DEFAULT ('Active') FOR [Status];
+ALTER TABLE [dbo].[AcademicWarnings] ADD DEFAULT (sysutcdatetime()) FOR [IssuedAt];
+ALTER TABLE [dbo].[Admissions] ADD CONSTRAINT [DF_Admissions_Status] DEFAULT ('Pending') FOR [Status];
+ALTER TABLE [dbo].[Admissions] ADD CONSTRAINT [DF_Admissions_RequestedAt] DEFAULT (sysutcdatetime()) FOR [RequestedAt];
+ALTER TABLE [dbo].[Announcements] ADD DEFAULT (sysutcdatetime()) FOR [PublishedAt];
+ALTER TABLE [dbo].[Applicants] ADD CONSTRAINT [DF_Applicants_IsActive] DEFAULT ((1)) FOR [IsActive];
+ALTER TABLE [dbo].[Applicants] ADD CONSTRAINT [DF_Applicants_CreatedAt] DEFAULT (sysutcdatetime()) FOR [CreatedAt];
+ALTER TABLE [dbo].[Assessments] ADD DEFAULT ((100)) FOR [MaxMark];
+ALTER TABLE [dbo].[Assessments] ADD DEFAULT ((0)) FOR [IsPublished];
+ALTER TABLE [dbo].[Attendance] ADD DEFAULT (sysutcdatetime()) FOR [RecordedAt];
+ALTER TABLE [dbo].[AuditLogs] ADD DEFAULT (sysutcdatetime()) FOR [ActionDate];
+ALTER TABLE [dbo].[CourseAssignments] ADD DEFAULT (CONVERT([date],getdate())) FOR [AssignedDate];
+ALTER TABLE [dbo].[CourseMaterials] ADD DEFAULT ((1)) FOR [IsVisible];
+ALTER TABLE [dbo].[CourseMaterials] ADD DEFAULT (sysutcdatetime()) FOR [UploadedAt];
+ALTER TABLE [dbo].[CourseRegistrationRequests] ADD DEFAULT ('Pending') FOR [Status];
+ALTER TABLE [dbo].[CourseRegistrationRequests] ADD DEFAULT (sysutcdatetime()) FOR [RequestedAt];
+ALTER TABLE [dbo].[Courses] ADD DEFAULT ((3)) FOR [CreditHours];
+ALTER TABLE [dbo].[Courses] ADD DEFAULT ((1)) FOR [IsActive];
+ALTER TABLE [dbo].[Enrolments] ADD CONSTRAINT [DF_Enrolments_Status] DEFAULT ('Pending') FOR [Status];
+ALTER TABLE [dbo].[Enrolments] ADD CONSTRAINT [DF_Enrolments_RequestedAt] DEFAULT (sysutcdatetime()) FOR [RequestedAt];
+ALTER TABLE [dbo].[Fees] ADD DEFAULT ((0)) FOR [PaidAmount];
+ALTER TABLE [dbo].[Fees] ADD DEFAULT ('Unpaid') FOR [Status];
+ALTER TABLE [dbo].[GPARecords] ADD DEFAULT (sysutcdatetime()) FOR [CalculatedAt];
+ALTER TABLE [dbo].[Lecturers] ADD DEFAULT ('Active') FOR [EmploymentStatus];
+ALTER TABLE [dbo].[LoginAttempts] ADD DEFAULT (sysutcdatetime()) FOR [AttemptDate];
+ALTER TABLE [dbo].[Notifications] ADD DEFAULT ((0)) FOR [IsRead];
+ALTER TABLE [dbo].[Notifications] ADD DEFAULT (sysutcdatetime()) FOR [CreatedAt];
+ALTER TABLE [dbo].[Programmes] ADD DEFAULT ((3)) FOR [DurationYears];
+ALTER TABLE [dbo].[Programmes] ADD DEFAULT ((1)) FOR [IsActive];
+ALTER TABLE [dbo].[Programmes] ADD DEFAULT (sysutcdatetime()) FOR [CreatedAt];
+ALTER TABLE [dbo].[RegistrationPeriods] ADD DEFAULT ((1)) FOR [IsActive];
+ALTER TABLE [dbo].[ReportExports] ADD DEFAULT (sysutcdatetime()) FOR [ExportedAt];
+ALTER TABLE [dbo].[Reports] ADD DEFAULT (sysutcdatetime()) FOR [GeneratedAt];
+ALTER TABLE [dbo].[Roles] ADD DEFAULT (sysutcdatetime()) FOR [CreatedAt];
+ALTER TABLE [dbo].[StudentMarks] ADD DEFAULT (sysutcdatetime()) FOR [GradedAt];
+ALTER TABLE [dbo].[StudentMarks] ADD DEFAULT ((0)) FOR [IsPublished];
+ALTER TABLE [dbo].[StudentPayments] ADD DEFAULT ('Pending') FOR [PaymentStatus];
+ALTER TABLE [dbo].[StudentPayments] ADD DEFAULT (sysutcdatetime()) FOR [CreatedAt];
+ALTER TABLE [dbo].[Students] ADD DEFAULT ('Active') FOR [Status];
+ALTER TABLE [dbo].[Users] ADD DEFAULT ((1)) FOR [IsActive];
+ALTER TABLE [dbo].[Users] ADD DEFAULT (sysutcdatetime()) FOR [CreatedAt];
+GO
+
+
+-- 5. FOREIGN KEY RELATIONSHIPS
+ALTER TABLE [dbo].[AcademicWarnings] WITH CHECK ADD CONSTRAINT [FK_AcademicWarnings_Courses] FOREIGN KEY([CourseId]) REFERENCES [dbo].[Courses] ([CourseId]);
+ALTER TABLE [dbo].[AcademicWarnings] WITH CHECK ADD CONSTRAINT [FK_AcademicWarnings_Students] FOREIGN KEY([StudentId]) REFERENCES [dbo].[Students] ([StudentId]);
+ALTER TABLE [dbo].[AcademicWarnings] WITH CHECK ADD CONSTRAINT [FK_AcademicWarnings_Users] FOREIGN KEY([IssuedBy]) REFERENCES [dbo].[Users] ([UserId]);
+ALTER TABLE [dbo].[Admissions] WITH NOCHECK ADD CONSTRAINT [FK_Admissions_Applicants] FOREIGN KEY([UserId]) REFERENCES [dbo].[Applicants] ([UserId]);
+ALTER TABLE [dbo].[Admissions] WITH CHECK ADD CONSTRAINT [FK_Admissions_Programmes] FOREIGN KEY([ProgrammeId]) REFERENCES [dbo].[Programmes] ([ProgrammeId]);
+ALTER TABLE [dbo].[Admissions] WITH CHECK ADD CONSTRAINT [FK_Admissions_Students] FOREIGN KEY([StudentId]) REFERENCES [dbo].[Students] ([StudentId]);
+ALTER TABLE [dbo].[Announcements] WITH CHECK ADD CONSTRAINT [FK_Announcements_Courses] FOREIGN KEY([CourseId]) REFERENCES [dbo].[Courses] ([CourseId]);
+ALTER TABLE [dbo].[Announcements] WITH CHECK ADD CONSTRAINT [FK_Announcements_Users] FOREIGN KEY([AuthorUserId]) REFERENCES [dbo].[Users] ([UserId]);
+ALTER TABLE [dbo].[Assessments] WITH CHECK ADD CONSTRAINT [FK_Assessments_Courses] FOREIGN KEY([CourseId]) REFERENCES [dbo].[Courses] ([CourseId]);
+ALTER TABLE [dbo].[Attendance] WITH CHECK ADD CONSTRAINT [FK_Attendance_Enrolments] FOREIGN KEY([EnrolmentId]) REFERENCES [dbo].[Enrolments] ([EnrolmentId]);
+ALTER TABLE [dbo].[Attendance] WITH CHECK ADD CONSTRAINT [FK_Attendance_Lecturers] FOREIGN KEY([RecordedBy]) REFERENCES [dbo].[Lecturers] ([LecturerId]);
+ALTER TABLE [dbo].[AuditLogs] WITH CHECK ADD CONSTRAINT [FK_AuditLogs_Users] FOREIGN KEY([UserId]) REFERENCES [dbo].[Users] ([UserId]);
+ALTER TABLE [dbo].[CourseAssignments] WITH CHECK ADD CONSTRAINT [FK_CourseAssignments_Courses] FOREIGN KEY([CourseId]) REFERENCES [dbo].[Courses] ([CourseId]);
+ALTER TABLE [dbo].[CourseAssignments] WITH CHECK ADD CONSTRAINT [FK_CourseAssignments_Lecturers] FOREIGN KEY([LecturerId]) REFERENCES [dbo].[Lecturers] ([LecturerId]);
+ALTER TABLE [dbo].[CourseMaterials] WITH CHECK ADD CONSTRAINT [FK_CourseMaterials_Courses] FOREIGN KEY([CourseId]) REFERENCES [dbo].[Courses] ([CourseId]);
+ALTER TABLE [dbo].[CourseMaterials] WITH CHECK ADD CONSTRAINT [FK_CourseMaterials_Lecturers] FOREIGN KEY([UploadedBy]) REFERENCES [dbo].[Lecturers] ([LecturerId]);
+ALTER TABLE [dbo].[CourseRegistrationRequests] WITH CHECK ADD CONSTRAINT [FK_CourseRegistrationRequests_Courses] FOREIGN KEY([CourseId]) REFERENCES [dbo].[Courses] ([CourseId]);
+ALTER TABLE [dbo].[CourseRegistrationRequests] WITH CHECK ADD CONSTRAINT [FK_CourseRegistrationRequests_Students] FOREIGN KEY([StudentId]) REFERENCES [dbo].[Students] ([StudentId]);
+ALTER TABLE [dbo].[CourseRegistrationRequests] WITH CHECK ADD CONSTRAINT [FK_CourseRegistrationRequests_Users] FOREIGN KEY([ReviewedBy]) REFERENCES [dbo].[Users] ([UserId]);
+ALTER TABLE [dbo].[Courses] WITH CHECK ADD CONSTRAINT [FK_Courses_Programmes] FOREIGN KEY([ProgrammeId]) REFERENCES [dbo].[Programmes] ([ProgrammeId]);
+ALTER TABLE [dbo].[Enrolments] WITH CHECK ADD CONSTRAINT [FK_Enrolments_Courses] FOREIGN KEY([CourseId]) REFERENCES [dbo].[Courses] ([CourseId]);
+ALTER TABLE [dbo].[Enrolments] WITH CHECK ADD CONSTRAINT [FK_Enrolments_Students] FOREIGN KEY([StudentId]) REFERENCES [dbo].[Students] ([StudentId]);
+ALTER TABLE [dbo].[Fees] WITH CHECK ADD CONSTRAINT [FK_Fees_Students] FOREIGN KEY([StudentId]) REFERENCES [dbo].[Students] ([StudentId]);
+ALTER TABLE [dbo].[GPARecords] WITH CHECK ADD CONSTRAINT [FK_GPARecords_Students] FOREIGN KEY([StudentId]) REFERENCES [dbo].[Students] ([StudentId]);
+ALTER TABLE [dbo].[Lecturers] WITH CHECK ADD CONSTRAINT [FK_Lecturers_Users] FOREIGN KEY([UserId]) REFERENCES [dbo].[Users] ([UserId]);
+ALTER TABLE [dbo].[LoginAttempts] WITH CHECK ADD CONSTRAINT [FK_LoginAttempts_Users] FOREIGN KEY([UserId]) REFERENCES [dbo].[Users] ([UserId]);
+ALTER TABLE [dbo].[Notifications] WITH CHECK ADD CONSTRAINT [FK_Notifications_Users] FOREIGN KEY([UserId]) REFERENCES [dbo].[Users] ([UserId]);
+ALTER TABLE [dbo].[RegistrationPeriods] WITH CHECK ADD CONSTRAINT [FK_RegistrationPeriods_Programmes] FOREIGN KEY([ProgrammeId]) REFERENCES [dbo].[Programmes] ([ProgrammeId]);
+ALTER TABLE [dbo].[ReportExports] WITH CHECK ADD CONSTRAINT [FK_ReportExports_Reports] FOREIGN KEY([ReportId]) REFERENCES [dbo].[Reports] ([ReportId]);
+ALTER TABLE [dbo].[Reports] WITH CHECK ADD CONSTRAINT [FK_Reports_Users] FOREIGN KEY([GeneratedBy]) REFERENCES [dbo].[Users] ([UserId]);
+ALTER TABLE [dbo].[StudentMarks] WITH CHECK ADD CONSTRAINT [FK_StudentMarks_Assessments] FOREIGN KEY([AssessmentId]) REFERENCES [dbo].[Assessments] ([AssessmentId]);
+ALTER TABLE [dbo].[StudentMarks] WITH CHECK ADD CONSTRAINT [FK_StudentMarks_GradeScale] FOREIGN KEY([GradeScaleId]) REFERENCES [dbo].[GradeScale] ([GradeScaleId]);
+ALTER TABLE [dbo].[StudentMarks] WITH CHECK ADD CONSTRAINT [FK_StudentMarks_Lecturers] FOREIGN KEY([GradedBy]) REFERENCES [dbo].[Lecturers] ([LecturerId]);
+ALTER TABLE [dbo].[StudentMarks] WITH CHECK ADD CONSTRAINT [FK_StudentMarks_Students] FOREIGN KEY([StudentId]) REFERENCES [dbo].[Students] ([StudentId]);
+ALTER TABLE [dbo].[StudentPayments] WITH CHECK ADD CONSTRAINT [FK_StudentPayments_Students] FOREIGN KEY([StudentId]) REFERENCES [dbo].[Students] ([StudentId]);
+GO
+
+-- 6. CHECK CONSTRAINT VALIDATIONS
+ALTER TABLE [dbo].[AcademicWarnings] CHECK CONSTRAINT [FK_AcademicWarnings_Courses];
+ALTER TABLE [dbo].[AcademicWarnings] CHECK CONSTRAINT [FK_AcademicWarnings_Students];
+ALTER TABLE [dbo].[AcademicWarnings] CHECK CONSTRAINT [FK_AcademicWarnings_Users];
+ALTER TABLE [dbo].[Admissions] CHECK CONSTRAINT [FK_Admissions_Applicants];
+ALTER TABLE [dbo].[Admissions] CHECK CONSTRAINT [FK_Admissions_Programmes];
+ALTER TABLE [dbo].[Admissions] CHECK CONSTRAINT [FK_Admissions_Students];
+ALTER TABLE [dbo].[Announcements] CHECK CONSTRAINT [FK_Announcements_Courses];
+ALTER TABLE [dbo].[Announcements] CHECK CONSTRAINT [FK_Announcements_Users];
+ALTER TABLE [dbo].[Assessments] CHECK CONSTRAINT [FK_Assessments_Courses];
+ALTER TABLE [dbo].[Attendance] CHECK CONSTRAINT [FK_Attendance_Enrolments];
+ALTER TABLE [dbo].[Attendance] CHECK CONSTRAINT [FK_Attendance_Lecturers];
+ALTER TABLE [dbo].[AuditLogs] CHECK CONSTRAINT [FK_AuditLogs_Users];
+ALTER TABLE [dbo].[CourseAssignments] CHECK CONSTRAINT [FK_CourseAssignments_Courses];
+ALTER TABLE [dbo].[CourseAssignments] CHECK CONSTRAINT [FK_CourseAssignments_Lecturers];
+ALTER TABLE [dbo].[CourseMaterials] CHECK CONSTRAINT [FK_CourseMaterials_Courses];
+ALTER TABLE [dbo].[CourseMaterials] CHECK CONSTRAINT [FK_CourseMaterials_Lecturers];
+ALTER TABLE [dbo].[CourseRegistrationRequests] CHECK CONSTRAINT [FK_CourseRegistrationRequests_Courses];
+ALTER TABLE [dbo].[CourseRegistrationRequests] CHECK CONSTRAINT [FK_CourseRegistrationRequests_Students];
+ALTER TABLE [dbo].[CourseRegistrationRequests] CHECK CONSTRAINT [FK_CourseRegistrationRequests_Users];
+ALTER TABLE [dbo].[Courses] CHECK CONSTRAINT [FK_Courses_Programmes];
+ALTER TABLE [dbo].[Enrolments] CHECK CONSTRAINT [FK_Enrolments_Courses];
+ALTER TABLE [dbo].[Enrolments] CHECK CONSTRAINT [FK_Enrolments_Students];
+ALTER TABLE [dbo].[Fees] CHECK CONSTRAINT [FK_Fees_Students];
+ALTER TABLE [dbo].[GPARecords] CHECK CONSTRAINT [FK_GPARecords_Students];
+ALTER TABLE [dbo].[Lecturers] CHECK CONSTRAINT [FK_Lecturers_Users];
+ALTER TABLE [dbo].[LoginAttempts] CHECK CONSTRAINT [FK_LoginAttempts_Users];
+ALTER TABLE [dbo].[Notifications] CHECK CONSTRAINT [FK_Notifications_Users];
+ALTER TABLE [dbo].[RegistrationPeriods] CHECK CONSTRAINT [FK_RegistrationPeriods_Programmes];
+ALTER TABLE [dbo].[ReportExports] CHECK CONSTRAINT [FK_ReportExports_Reports];
+ALTER TABLE [dbo].[Reports] CHECK CONSTRAINT [FK_Reports_Users];
+ALTER TABLE [dbo].[StudentMarks] CHECK CONSTRAINT [FK_StudentMarks_Assessments];
+ALTER TABLE [dbo].[StudentMarks] CHECK CONSTRAINT [FK_StudentMarks_GradeScale];
+ALTER TABLE [dbo].[StudentMarks] CHECK CONSTRAINT [FK_StudentMarks_Lecturers];
+ALTER TABLE [dbo].[StudentMarks] CHECK CONSTRAINT [FK_StudentMarks_Students];
+ALTER TABLE [dbo].[StudentPayments] CHECK CONSTRAINT [FK_StudentPayments_Students];
+GO
