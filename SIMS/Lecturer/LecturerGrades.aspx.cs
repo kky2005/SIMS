@@ -28,19 +28,58 @@ namespace SIMS.Lecturer
                     return;
                 }
 
-                var assignment = GetMostRecentAssignment(courseId);
-                if (assignment.year <= 0 || assignment.semester <= 0)
+                if (!LecturerTeachesCourse(courseId))
                 {
-                    ShowError("No course assignment found for this lecturer.");
+                    Response.Redirect("LecturerCourses.aspx");
                     return;
                 }
 
                 hidCourseId.Value = courseId.ToString();
                 LoadCourseInfo(courseId);
-                LoadAcademicYears(assignment.year);
-                LoadSemesters(assignment.semester);
-                btnLoadAssessments_Click(null, null);
+
+                var assignment = GetMostRecentAssignment(courseId);
+                int academicYear = assignment.year > 0 ? assignment.year : DateTime.Now.Year;
+                int semester = assignment.semester > 0 ? assignment.semester : GetCurrentSemester();
+
+                hidAcademicYear.Value = academicYear.ToString();
+                hidSemester.Value = semester.ToString();
+
+                litAcademicYear.Text = academicYear.ToString();
+                litSemester.Text = $"Semester {semester}";
+
+                // Load data directly without requiring button click
+                LoadAssessmentsForGrading();
+                LoadCourseSummaryMatrix();
             }
+        }
+
+        private bool LecturerTeachesCourse(int courseId)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(connStr))
+                {
+                    string sql = "SELECT COUNT(1) FROM CourseAssignments WHERE CourseId = @CourseId AND LecturerId = @LecturerId";
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@CourseId", courseId);
+                        cmd.Parameters.AddWithValue("@LecturerId", CurrentLecturerId);
+                        conn.Open();
+                        int c = Convert.ToInt32(cmd.ExecuteScalar());
+                        conn.Close();
+                        return c > 0;
+                    }
+                }
+            }
+            catch { return false; }
+        }
+
+        private int GetCurrentSemester()
+        {
+            int m = DateTime.Now.Month;
+            if (m <= 4) return 1;
+            if (m <= 8) return 2;
+            return 3;
         }
 
         private (int year, int semester) GetMostRecentAssignment(int courseId)
@@ -99,92 +138,11 @@ namespace SIMS.Lecturer
             }
         }
 
-        private void LoadAcademicYears(int selectedYear)
-        {
-            try
-            {
-                using (SqlConnection conn = new SqlConnection(connStr))
-                {
-                    using (SqlCommand cmd = new SqlCommand(
-                        "SELECT DISTINCT AcademicYear FROM CourseAssignments WHERE LecturerId = @LecturerId ORDER BY AcademicYear DESC", conn))
-                    {
-                        cmd.Parameters.AddWithValue("@LecturerId", CurrentLecturerId);
-                        SqlDataAdapter da = new SqlDataAdapter(cmd);
-                        DataTable dt = new DataTable();
-                        da.Fill(dt);
-
-                        ddlAcademicYear.Items.Clear();
-                        foreach (DataRow row in dt.Rows)
-                        {
-                            int year = Convert.ToInt32(row["AcademicYear"]);
-                            ddlAcademicYear.Items.Add(new ListItem(year.ToString(), year.ToString()));
-                        }
-
-                        if (ddlAcademicYear.Items.FindByValue(selectedYear.ToString()) != null)
-                            ddlAcademicYear.SelectedValue = selectedYear.ToString();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error loading years: {ex.Message}");
-            }
-        }
-
-        private void LoadSemesters(int selectedSemester)
-        {
-            try
-            {
-                using (SqlConnection conn = new SqlConnection(connStr))
-                {
-                    using (SqlCommand cmd = new SqlCommand(
-                        "SELECT DISTINCT Semester FROM CourseAssignments WHERE LecturerId = @LecturerId AND Semester IS NOT NULL ORDER BY Semester ASC", conn))
-                    {
-                        cmd.Parameters.AddWithValue("@LecturerId", CurrentLecturerId);
-                        SqlDataAdapter da = new SqlDataAdapter(cmd);
-                        DataTable dt = new DataTable();
-                        da.Fill(dt);
-
-                        ddlSemester.Items.Clear();
-                        foreach (DataRow row in dt.Rows)
-                        {
-                            if (row["Semester"] != DBNull.Value)
-                            {
-                                int sem = Convert.ToInt32(row["Semester"]);
-                                ddlSemester.Items.Add(new ListItem($"Semester {sem}", sem.ToString()));
-                            }
-                        }
-
-                        if (selectedSemester > 0 && ddlSemester.Items.FindByValue(selectedSemester.ToString()) != null)
-                            ddlSemester.SelectedValue = selectedSemester.ToString();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error loading semesters: {ex.Message}");
-            }
-        }
-
-        protected void btnLoadAssessments_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                LoadAssessmentsForGrading();
-                LoadCourseSummaryMatrix(); // Dynamically generates tab 2 grid output
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}");
-                ShowError("Error loading course database metrics.");
-            }
-        }
-
         private void LoadAssessmentsForGrading()
         {
             int courseId = int.Parse(hidCourseId.Value);
-            int year = int.Parse(ddlAcademicYear.SelectedValue);
-            int semester = int.Parse(ddlSemester.SelectedValue);
+            int year = int.Parse(hidAcademicYear.Value);
+            int semester = int.Parse(hidSemester.Value);
 
             using (SqlConnection conn = new SqlConnection(connStr))
             {
@@ -227,31 +185,31 @@ namespace SIMS.Lecturer
         private void LoadStudentMarksForAssessment(int assessmentId, Repeater rpt)
         {
             int courseId = int.Parse(hidCourseId.Value);
-            int year = int.Parse(ddlAcademicYear.SelectedValue);
-            int semester = int.Parse(ddlSemester.SelectedValue);
+            int year = int.Parse(hidAcademicYear.Value);
+            int semester = int.Parse(hidSemester.Value);
 
             using (SqlConnection conn = new SqlConnection(connStr))
             {
                 string sql = @"
-    SELECT
-        s.StudentId,
-        s.StudentNo,
-        u.FullName,
-        u.Email,
-        a.MaxMark,
-        sm.MarksObtained
-    FROM Enrolments e
-    INNER JOIN Students s ON s.StudentId = e.StudentId
-    INNER JOIN Users u ON u.UserId = s.UserId
-    INNER JOIN Assessments a ON a.AssessmentId = @AssessmentId
-    LEFT JOIN StudentMarks sm
-        ON sm.AssessmentId = @AssessmentId
-        AND sm.StudentId = s.StudentId
-    WHERE e.CourseId = @CourseId
-      AND e.AcademicYear = @Year
-      AND e.Semester = @Semester
-      AND e.Status = 'Active'
-    ORDER BY s.StudentNo ASC";
+                    SELECT
+                        s.StudentId,
+                        s.StudentNo,
+                        u.FullName,
+                        u.Email,
+                        a.MaxMark,
+                        sm.MarksObtained
+                    FROM Enrolments e
+                    INNER JOIN Students s ON s.StudentId = e.StudentId
+                    INNER JOIN Users u ON u.UserId = s.UserId
+                    INNER JOIN Assessments a ON a.AssessmentId = @AssessmentId
+                    LEFT JOIN StudentMarks sm
+                        ON sm.AssessmentId = @AssessmentId
+                        AND sm.StudentId = s.StudentId
+                    WHERE e.CourseId = @CourseId
+                      AND e.AcademicYear = @Year
+                      AND e.Semester = @Semester
+                      AND e.Status = 'Active'
+                    ORDER BY s.StudentNo ASC";
 
                 using (SqlCommand cmd = new SqlCommand(sql, conn))
                 {
@@ -282,8 +240,8 @@ namespace SIMS.Lecturer
         private void LoadCourseSummaryMatrix()
         {
             int courseId = int.Parse(hidCourseId.Value);
-            int year = int.Parse(ddlAcademicYear.SelectedValue);
-            int semester = int.Parse(ddlSemester.SelectedValue);
+            int year = int.Parse(hidAcademicYear.Value);
+            int semester = int.Parse(hidSemester.Value);
 
             StringBuilder sb = new StringBuilder();
 
@@ -362,7 +320,9 @@ namespace SIMS.Lecturer
             }
 
             // Explicitly embed the mathematical formula algorithm representation beside the Total Mark header
-            sb.Append("<th>Total Marks <span class='formula-box' title='Total Marks Calculation Rules Engine'>Algorithm: (&Sigma; Marks Obtained / &Sigma; Max Mark) &times; 100</span></th>"); sb.Append("<th>GPA</th>"); sb.Append("<th>Final Grade</th>");
+            sb.Append("<th>Total Marks <span class='formula-box' title='Total Marks Calculation Rules Engine'>Algorithm: (&Sigma; Marks Obtained / &Sigma; Max Mark) &times; 100</span></th>");
+            sb.Append("<th>GPA</th>");
+            sb.Append("<th>Final Grade</th>");
 
             sb.Append("</tr></thead>");
             sb.Append("<tbody>");
@@ -458,8 +418,8 @@ namespace SIMS.Lecturer
                 Button btn = (Button)sender;
                 int assessmentId = int.Parse(btn.CommandArgument);
                 int courseId = int.Parse(hidCourseId.Value);
-                int year = int.Parse(ddlAcademicYear.SelectedValue);
-                int semester = int.Parse(ddlSemester.SelectedValue);
+                int year = int.Parse(hidAcademicYear.Value);
+                int semester = int.Parse(hidSemester.Value);
 
                 int marksSaved = 0;
                 int marksUpdated = 0;

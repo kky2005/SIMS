@@ -25,9 +25,8 @@
 
         .control-row {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-columns: 1fr 1fr;
             gap: 20px;
-            margin-bottom: 15px;
         }
 
         .control-group label {
@@ -38,30 +37,13 @@
             font-size: 14px;
         }
 
-        .control-group input, .control-group select {
-            width: 100%;
+        .control-group .readonly-value {
+            display: block;
             padding: 10px 12px;
-            border: 1px solid #cbd5e1;
+            background: #f1f5f9;
             border-radius: 6px;
-            font-size: 14px;
-        }
-
-        .control-group input:focus, .control-group select:focus {
-            outline: none;
-            border-color: #059669;
-            box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-            flex-wrap: wrap;
-        }
-
-        .action-buttons .btn {
-            padding: 10px 20px;
-            font-size: 14px;
+            font-weight: bold;
+            color: #1e293b;
         }
 
         .assessment-card {
@@ -361,16 +343,12 @@
     <div class="grades-controls">
         <div class="control-row">
             <div class="control-group">
-                <label for="ddlAcademicYear">Academic Year:</label>
-                <asp:DropDownList ID="ddlAcademicYear" runat="server" />
+                <label>Academic Year:</label>
+                <span class="readonly-value"><asp:Literal ID="litAcademicYear" runat="server" /></span>
             </div>
             <div class="control-group">
-                <label for="ddlSemester">Semester:</label>
-                <asp:DropDownList ID="ddlSemester" runat="server" />
-            </div>
-            <div class="control-group" style="display: flex; flex-direction: column; justify-content: flex-end;">
-                <asp:Button ID="btnLoadAssessments" runat="server" Text="Load Course Data" 
-                    CssClass="btn btn-outline-success" OnClick="btnLoadAssessments_Click" />
+                <label>Semester:</label>
+                <span class="readonly-value"><asp:Literal ID="litSemester" runat="server" /></span>
             </div>
         </div>
     </div>
@@ -415,7 +393,6 @@
                                             <th>Student Name</th>
                                             <th>Email</th>
                                             <th style="width: 100px;">Mark</th>
-                                            <th style="width: 80px;">Grade</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -425,7 +402,6 @@
                                                     <td><%# Eval("StudentNo") %></td>
                                                     <td class="student-name"><%# Eval("FullName") %></td>
                                                     <td><%# Eval("Email") %></td>
-                                                    
                                                     <td>
                                                         <input type="number" 
                                                             id="mark_<%# Eval("StudentId") %>"
@@ -435,12 +411,7 @@
                                                             min="0" 
                                                             max="<%# Eval("MaxMark") %>"
                                                             step="0.01" />
-                                                     </td>
-                                                    <td>
-                                                        <span class='grade-badge grade-<%# GetGradeLetter(Eval("MarksObtained")).Substring(0, 1).ToLower() %>'>
-                                                            <%# GetGradeLetter(Eval("MarksObtained")) %>
-                                                        </span>
-                                                   </td>
+                                                    </td>
                                                 </tr>
                                             </ItemTemplate>
                                         </asp:Repeater>
@@ -478,9 +449,8 @@
     </div>
 
     <asp:HiddenField ID="hidCourseId" runat="server" />
-
-        </div>
-    </div>
+    <asp:HiddenField ID="hidAcademicYear" runat="server" />
+    <asp:HiddenField ID="hidSemester" runat="server" />
 
     <script type="text/javascript">
         // Client-side execution loop to alternate view states cleanly between tabular modules
@@ -507,8 +477,6 @@
         if (errorPanel && errorPanel.offsetParent !== null) {
             setTimeout(function () { errorPanel.style.display = 'none'; }, 5000);
         }
-
-        
     </script>
 
 </asp:Content>
