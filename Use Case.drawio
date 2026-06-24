@@ -1,0 +1,330 @@
+<mxfile host="app.diagrams.net" agent="ChatGPT">
+  <diagram id="SIMS-use-case" name="SIMS Use Case Diagram">
+    <mxGraphModel dx="3974" dy="1620" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1160" pageHeight="1600" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="system_boundary" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.2;" value="&amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; " vertex="1">
+          <mxGeometry height="1640" width="820" x="130" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;" value="Student Information Management System (SIMS)" vertex="1">
+          <mxGeometry height="30" width="470" x="310" y="25" as="geometry" />
+        </mxCell>
+        <mxCell id="actor_hqp" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;strokeColor=#000000;fontSize=12;" value="HOP" vertex="1">
+          <mxGeometry height="90" width="55" x="-260" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="actor_lecturer" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;strokeColor=#000000;fontSize=12;" value="Lecturer" vertex="1">
+          <mxGeometry height="90" width="55" x="-260" y="910" as="geometry" />
+        </mxCell>
+        <mxCell id="actor_student" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;strokeColor=#000000;fontSize=12;" value="Student" vertex="1">
+          <mxGeometry height="90" width="55" x="1120" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_manage_user_registration" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="Manage user&lt;br&gt;registration" vertex="1">
+          <mxGeometry height="55" width="145" x="200" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_assign_roles" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="Assign roles" vertex="1">
+          <mxGeometry height="55" width="140" x="420" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_manage_academic_programmes" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="Manage academic&lt;br&gt;programmes" vertex="1">
+          <mxGeometry height="60" width="160" x="200" y="185" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_add_courses" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="Add courses" vertex="1">
+          <mxGeometry height="55" width="140" x="420" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_edit_courses_info" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="Edit courses&lt;br&gt;information" vertex="1">
+          <mxGeometry height="60" width="150" x="420" y="215" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_remove_courses" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="Remove&lt;br&gt;existing courses" vertex="1">
+          <mxGeometry height="60" width="150" x="420" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_manage_enrolment" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="Manage&lt;br&gt;enrolment" vertex="1">
+          <mxGeometry height="55" width="140" x="200" y="380" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_approve_enrolment" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="Approve&lt;br&gt;student enrolment" vertex="1">
+          <mxGeometry height="60" width="160" x="420" y="375" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_view_performance_statistic" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="View student&lt;br&gt;performance&lt;br&gt;statistic" vertex="1">
+          <mxGeometry height="70" width="150" x="200" y="465" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_generate_report" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="Generate Report" vertex="1">
+          <mxGeometry height="55" width="140" x="200" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_manage_calendar_announcement" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="Manage&lt;br&gt;academic calendar&lt;br&gt;and announcement" vertex="1">
+          <mxGeometry height="75" width="160" x="200" y="655" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_login" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="Login" vertex="1">
+          <mxGeometry height="55" width="140" x="495" y="845" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_view_enrolled_course" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="View&lt;br&gt;enrolled course" vertex="1">
+          <mxGeometry height="60" width="150" x="565" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_register_course" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="Register course" vertex="1">
+          <mxGeometry height="55" width="145" x="570" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_drop_course" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="Drop course" vertex="1">
+          <mxGeometry height="55" width="145" x="570" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_view_profile_student" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="View Profile" vertex="1">
+          <mxGeometry height="55" width="140" x="780" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_manage_course_student" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="Manage course" vertex="1">
+          <mxGeometry height="55" width="150" x="775" y="205" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_view_attendance_student" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="View attendance" vertex="1">
+          <mxGeometry height="55" width="150" x="780" y="330" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_view_academic_result" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="View&lt;br&gt;academic result" vertex="1">
+          <mxGeometry height="60" width="150" x="780" y="465" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_generate_academic_perf_report" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="Generate&lt;br&gt;academic&lt;br&gt;performance&lt;br&gt;report" vertex="1">
+          <mxGeometry height="85" width="145" x="550" y="545" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_track_academic_history" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="Track academic&lt;br&gt;history" vertex="1">
+          <mxGeometry height="60" width="150" x="780" y="565" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_receive_notification" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="Receive&lt;br&gt;notification" vertex="1">
+          <mxGeometry height="60" width="150" x="780" y="690" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_manage_profile_lecturer" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="Manage Profile" vertex="1">
+          <mxGeometry height="55" width="140" x="170" y="910" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_view_assigned_course" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="View&lt;br&gt;assigned course" vertex="1">
+          <mxGeometry height="60" width="155" x="170" y="1000" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_view_registered_student" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="View&lt;br&gt;registered student" vertex="1">
+          <mxGeometry height="60" width="155" x="410" y="1000" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_manage_student_attendance" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="Manage student&lt;br&gt;attendance" vertex="1">
+          <mxGeometry height="60" width="155" x="170" y="1090" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_record_update_attendance" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="Record/update&lt;br&gt;attendance" vertex="1">
+          <mxGeometry height="60" width="155" x="410" y="1090" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_manage_student_marks" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="Manage&lt;br&gt;student marks" vertex="1">
+          <mxGeometry height="60" width="155" x="170" y="1195" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_enter_student_marks" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="Enter student&lt;br&gt;assessment marks" vertex="1">
+          <mxGeometry height="60" width="170" x="410" y="1160" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_update_student_marks" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="Update student&lt;br&gt;assessment marks" vertex="1">
+          <mxGeometry height="60" width="170" x="410" y="1240" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_publish_student_marks" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="Publish student&lt;br&gt;assessment marks" vertex="1">
+          <mxGeometry height="60" width="170" x="410" y="1320" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_post_announcements_materials" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="Post announcements&lt;br&gt;&amp;amp; course materials" vertex="1">
+          <mxGeometry height="65" width="170" x="170" y="1300" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_view_student_academic_attendance" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="View student&lt;br&gt;academic &amp;amp;&lt;br&gt;attendance" vertex="1">
+          <mxGeometry height="75" width="155" x="170" y="1400" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_view_poor_academic_students" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="View poor&lt;br&gt;academic performance&lt;br&gt;students" vertex="1">
+          <mxGeometry height="70" width="190" x="410" y="1385" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_view_poor_attendance_students" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="View poor&lt;br&gt;attendance students" vertex="1">
+          <mxGeometry height="60" width="170" x="410" y="1480" as="geometry" />
+        </mxCell>
+        <mxCell id="e_hqp_0" edge="1" parent="1" source="actor_hqp" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_manage_user_registration" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_hqp_1" edge="1" parent="1" source="actor_hqp" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_manage_academic_programmes" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_hqp_2" edge="1" parent="1" source="actor_hqp" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_manage_enrolment" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_hqp_3" edge="1" parent="1" source="actor_hqp" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_view_performance_statistic" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_hqp_4" edge="1" parent="1" source="actor_hqp" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_generate_report" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_hqp_5" edge="1" parent="1" source="actor_hqp" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_manage_calendar_announcement" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_hqp_6" edge="1" parent="1" source="actor_hqp" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_login" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_student_0" edge="1" parent="1" source="actor_student" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_view_profile_student" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_student_1" edge="1" parent="1" source="actor_student" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_manage_course_student" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_student_2" edge="1" parent="1" source="actor_student" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_view_attendance_student" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_student_3" edge="1" parent="1" source="actor_student" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_view_academic_result" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_student_4" edge="1" parent="1" source="actor_student" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_track_academic_history" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_student_5" edge="1" parent="1" source="actor_student" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_receive_notification" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_student_6" edge="1" parent="1" source="actor_student" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_login" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_lecturer_0" edge="1" parent="1" source="actor_lecturer" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_login" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_lecturer_1" edge="1" parent="1" source="actor_lecturer" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_manage_profile_lecturer" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_lecturer_2" edge="1" parent="1" source="actor_lecturer" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_view_assigned_course" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_lecturer_3" edge="1" parent="1" source="actor_lecturer" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_manage_student_attendance" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_lecturer_4" edge="1" parent="1" source="actor_lecturer" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_manage_student_marks" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_lecturer_5" edge="1" parent="1" source="actor_lecturer" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_post_announcements_materials" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_lecturer_6" edge="1" parent="1" source="actor_lecturer" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_view_student_academic_attendance" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="inc_user_assign" edge="1" parent="1" source="uc_manage_user_registration" style="endArrow=open;endFill=0;dashed=1;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_assign_roles" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="inc_user_assign_true_label" connectable="0" parent="inc_user_assign" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#000000;strokeColor=none;fillColor=none;spacing=0;spacingTop=0;spacingBottom=0;spacingLeft=0;spacingRight=0;" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-13" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="inc_prog_add" edge="1" parent="1" source="uc_manage_academic_programmes" style="endArrow=open;endFill=0;dashed=1;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_add_courses" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="inc_prog_add_true_label" connectable="0" parent="inc_prog_add" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#000000;strokeColor=none;fillColor=none;spacing=0;spacingTop=0;spacingBottom=0;spacingLeft=0;spacingRight=0;" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" vertex="1">
+          <mxGeometry relative="1" x="-0.1" as="geometry">
+            <mxPoint x="-2" y="-12" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="inc_prog_edit" edge="1" parent="1" source="uc_manage_academic_programmes" style="endArrow=open;endFill=0;dashed=1;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_edit_courses_info" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="inc_prog_edit_true_label" connectable="0" parent="inc_prog_edit" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#000000;strokeColor=none;fillColor=none;spacing=0;spacingTop=0;spacingBottom=0;spacingLeft=0;spacingRight=0;" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" vertex="1">
+          <mxGeometry relative="1" x="-0.15" as="geometry">
+            <mxPoint y="-12" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="inc_prog_remove" edge="1" parent="1" source="uc_manage_academic_programmes" style="endArrow=open;endFill=0;dashed=1;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_remove_courses" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="inc_prog_remove_true_label" connectable="0" parent="inc_prog_remove" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#000000;strokeColor=none;fillColor=none;spacing=0;spacingTop=0;spacingBottom=0;spacingLeft=0;spacingRight=0;" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" vertex="1">
+          <mxGeometry relative="1" x="-0.1" as="geometry">
+            <mxPoint y="12" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="inc_enrol_approve" edge="1" parent="1" source="uc_manage_enrolment" style="endArrow=open;endFill=0;dashed=1;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_approve_enrolment" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="inc_enrol_approve_true_label" connectable="0" parent="inc_enrol_approve" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#000000;strokeColor=none;fillColor=none;spacing=0;spacingTop=0;spacingBottom=0;spacingLeft=0;spacingRight=0;" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-13" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="inc_course_view_enrolled" edge="1" parent="1" source="uc_manage_course_student" style="endArrow=open;endFill=0;dashed=1;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_view_enrolled_course" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="inc_course_view_enrolled_true_label" connectable="0" parent="inc_course_view_enrolled" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#000000;strokeColor=none;fillColor=none;spacing=0;spacingTop=0;spacingBottom=0;spacingLeft=0;spacingRight=0;" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-12" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="inc_course_register" edge="1" parent="1" source="uc_manage_course_student" style="endArrow=open;endFill=0;dashed=1;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_register_course" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="inc_course_register_true_label" connectable="0" parent="inc_course_register" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#000000;strokeColor=none;fillColor=none;spacing=0;spacingTop=0;spacingBottom=0;spacingLeft=0;spacingRight=0;" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-12" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="inc_course_drop" edge="1" parent="1" source="uc_manage_course_student" style="endArrow=open;endFill=0;dashed=1;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_drop_course" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="inc_course_drop_true_label" connectable="0" parent="inc_course_drop" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#000000;strokeColor=none;fillColor=none;spacing=0;spacingTop=0;spacingBottom=0;spacingLeft=0;spacingRight=0;" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-12" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="inc_assigned_registered" edge="1" parent="1" source="uc_view_assigned_course" style="endArrow=open;endFill=0;dashed=1;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_view_registered_student" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="inc_assigned_registered_true_label" connectable="0" parent="inc_assigned_registered" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#000000;strokeColor=none;fillColor=none;spacing=0;spacingTop=0;spacingBottom=0;spacingLeft=0;spacingRight=0;" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-12" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="inc_attendance_record" edge="1" parent="1" source="uc_manage_student_attendance" style="endArrow=open;endFill=0;dashed=1;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_record_update_attendance" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="inc_attendance_record_true_label" connectable="0" parent="inc_attendance_record" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#000000;strokeColor=none;fillColor=none;spacing=0;spacingTop=0;spacingBottom=0;spacingLeft=0;spacingRight=0;" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-12" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="inc_marks_enter" edge="1" parent="1" source="uc_manage_student_marks" style="endArrow=open;endFill=0;dashed=1;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_enter_student_marks" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="inc_marks_enter_true_label" connectable="0" parent="inc_marks_enter" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#000000;strokeColor=none;fillColor=none;spacing=0;spacingTop=0;spacingBottom=0;spacingLeft=0;spacingRight=0;" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-12" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="inc_marks_update" edge="1" parent="1" source="uc_manage_student_marks" style="endArrow=open;endFill=0;dashed=1;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_update_student_marks" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="inc_marks_update_true_label" connectable="0" parent="inc_marks_update" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#000000;strokeColor=none;fillColor=none;spacing=0;spacingTop=0;spacingBottom=0;spacingLeft=0;spacingRight=0;" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-12" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="inc_marks_publish" edge="1" parent="1" source="uc_manage_student_marks" style="endArrow=open;endFill=0;dashed=1;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_publish_student_marks" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="inc_marks_publish_true_label" connectable="0" parent="inc_marks_publish" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#000000;strokeColor=none;fillColor=none;spacing=0;spacingTop=0;spacingBottom=0;spacingLeft=0;spacingRight=0;" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="12" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ext_generate_track" edge="1" parent="1" source="uc_generate_academic_perf_report" style="endArrow=open;endFill=0;dashed=1;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_track_academic_history" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_generate_track_true_label" connectable="0" parent="ext_generate_track" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#000000;strokeColor=none;fillColor=none;spacing=0;spacingTop=0;spacingBottom=0;spacingLeft=0;spacingRight=0;" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-12" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ext_poor_academic" edge="1" parent="1" source="uc_view_poor_academic_students" style="endArrow=open;endFill=0;dashed=1;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_view_student_academic_attendance" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_poor_academic_true_label" connectable="0" parent="ext_poor_academic" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#000000;strokeColor=none;fillColor=none;spacing=0;spacingTop=0;spacingBottom=0;spacingLeft=0;spacingRight=0;" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-12" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ext_poor_attendance" edge="1" parent="1" source="uc_view_poor_attendance_students" style="endArrow=open;endFill=0;dashed=1;html=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;" target="uc_view_student_academic_attendance" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_poor_attendance_true_label" connectable="0" parent="ext_poor_attendance" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#000000;strokeColor=none;fillColor=none;spacing=0;spacingTop=0;spacingBottom=0;spacingLeft=0;spacingRight=0;" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="12" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="z44gUs6HWc-QwqlFdi2D-4" edge="1" parent="1" source="z44gUs6HWc-QwqlFdi2D-2" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;dashed=1;" target="uc_view_student_academic_attendance">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="z44gUs6HWc-QwqlFdi2D-2" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=12;align=center;verticalAlign=middle;" value="View poor&lt;br&gt;attendance students" vertex="1">
+          <mxGeometry height="60" width="170" x="415" y="1570" as="geometry" />
+        </mxCell>
+        <mxCell id="z44gUs6HWc-QwqlFdi2D-5" connectable="0" parent="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#000000;strokeColor=none;fillColor=none;spacing=0;spacingTop=0;spacingBottom=0;spacingLeft=0;spacingRight=0;" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;" vertex="1">
+          <mxGeometry x="340" y="1560" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
